@@ -32,7 +32,7 @@ class AssetOrIcon extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (_, __, ___) => fallback,
+      errorBuilder: (_, _, _) => fallback,
     );
   }
 }
@@ -63,18 +63,18 @@ class GlassCircle extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: AppGradients.logo,
         border: Border.all(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           width: borderWidth,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryDark.withOpacity(0.45),
+            color: AppColors.primaryDark.withValues(alpha: 0.45),
             blurRadius: 12,
             offset: const Offset(0, 6),
           ),
           if (glow)
             BoxShadow(
-              color: Colors.white.withOpacity(0.35),
+              color: Colors.white.withValues(alpha: 0.35),
               blurRadius: 22,
               spreadRadius: 4,
             ),
@@ -152,6 +152,54 @@ class CircleMenuButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Botón central grande "+ Añadir tarea", reutilizable en cualquier pantalla.
+class AddTaskButton extends StatelessWidget {
+  final String? iconAsset;
+  final VoidCallback? onTap;
+  final double size;
+  final String label;
+
+  const AddTaskButton({
+    super.key,
+    this.iconAsset,
+    this.onTap,
+    this.size = 50,
+    this.label = 'Añadir tarea',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlassCircle(
+          size: size,
+          onTap: onTap,
+          glow: true,
+          borderWidth: 3,
+          child: AssetOrIcon(
+            asset: iconAsset,
+            icon: Icons.add_rounded,
+            size: size * 0.55,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            shadows: [
+              Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

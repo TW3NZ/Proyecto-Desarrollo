@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
 import '../theme.dart';
-import '../widgets/app_logo.dart';
+import '../widgets/auth/app_logo.dart';
 import '../widgets/auth/auth_widgets.dart';
-import '../widgets/labeled_text_field.dart';
-import '../widgets/primary_button.dart';
-import '../widgets/text_link.dart';
+import '../widgets/auth/labeled_text_field.dart';
+import '../widgets/common/primary_button.dart';
+import '../widgets/auth/text_link.dart';
 
 /// Pantalla de login (solo visual, sin estado).
 class LoginScreen extends StatelessWidget {
@@ -27,8 +27,8 @@ class LoginScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary.withOpacity(0.25),
-                    AppColors.primary.withOpacity(0),
+                    AppColors.primary.withValues(alpha: 0.25),
+                    AppColors.primary.withValues(alpha: 0),
                   ],
                 ),
               ),

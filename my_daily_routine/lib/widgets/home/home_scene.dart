@@ -32,7 +32,7 @@ class HomeBackground extends StatelessWidget {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            errorBuilder: (_, __, ___) => _placeholder(),
+            errorBuilder: (_, _, _) => _placeholder(),
           );
 
     return AnimatedSwitcher(
@@ -70,7 +70,7 @@ class AvatarSlot extends StatelessWidget {
       child: Image.asset(
         asset!,
         fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        errorBuilder: (_, _, _) => const SizedBox.shrink(),
       ),
     );
   }

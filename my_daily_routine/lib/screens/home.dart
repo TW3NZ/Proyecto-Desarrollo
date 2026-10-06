@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../assets_paths.dart';
+import '../data/estadisticas_store.dart';
+import '../data/tareas_store.dart';
 import '../routes.dart';
 import '../theme.dart';
+import '../utils/snackbar_utils.dart';
 import '../widgets/home/home_bottom_bar.dart';
 import '../widgets/home/home_scene.dart';
 import '../widgets/home/round_buttons.dart';
 
+import 'dart:async';
+import 'dart:math';
 
 /// Pantalla principal. Es StatefulWidget solo para recordar qué fondo se está
 /// mostrando (el botón de la esquina superior derecha los va alternando).
@@ -19,11 +25,90 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _bgIndex = 0;
+  String _estadisticaSeleccionada = 'Inteligencia';
+
+  static const _frases = [
+    '¡Vamos, tú puedes!',
+    '¡Sigue así!',
+    '¡Hoy es tu día!',
+    '¡Tú puedes!',
+    '¡Vamos!',
+    '¡Adelante!',
+    '¡Con ganas!',
+    '¡Sin miedo!',
+    '¡A por ello!',
+    '¡Hoy sí!',
+    '¡Tú marcas el ritmo!',
+    '¡Sigue así!',
+    '¡Ya casi!',
+    '¡Paso a paso!',
+    '¡Confía en ti!',
+    '¡Eres capaz!',
+    '¡Hazlo ahora!',
+    '¡No pares!',
+    '¡Tú puedes más!',
+    '¡Vas genial!',
+    '¡Mantén el ritmo!',
+    '¡Hoy suma!',
+    '¡Lo lograrás!',
+    '¡Sigue avanzando!',
+    '¡Cree en ti!',
+    '¡A brillar!',
+    '¡Un día más!',
+    '¡Constancia!',
+    '¡Hoy cuenta!',
+    '¡Dale con ganas!',
+    '¡Sigue firme!',
+    '¡Tú eres capaz!',
+    '¡Vamos por más!',
+  ];
+
+  late String _frase;
+  Timer? _timerFrase;
+
+  @override
+  void initState() {
+    super.initState();
+    _frase = _frases[Random().nextInt(_frases.length)];
+    _timerFrase = Timer.periodic(
+      const Duration(minutes: 2),
+      (_) => _cambiarFrase(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timerFrase?.cancel();
+    super.dispose();
+  }
+
+  void _cambiarFrase() {
+    if (_frases.length < 2) return;
+    String nueva;
+    do {
+      nueva = _frases[Random().nextInt(_frases.length)];
+    } while (nueva == _frase); // evita repetir la misma frase
+    setState(() => _frase = nueva);
+  }
 
   void _nextBackground() {
     final total = AppAssets.homeBackgrounds.length;
     if (total < 2) return;
     setState(() => _bgIndex = (_bgIndex + 1) % total);
+  }
+
+  void _onBottomBarTap(int index) {
+    // barra inferior
+    switch (index) {
+      case 0:
+        return;
+      case 1:
+        Navigator.pushNamed(context, AppRoutes.teams);
+        return;
+      case 2:
+        showAppSnackBar(context, message: 'Buscar próximamente');
+        return;
+    }
   }
 
   @override
@@ -41,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // 1. Fondo (intercambiable)
             HomeBackground(paths: AppAssets.homeBackgrounds, index: _bgIndex),
 
-            // 2. Avatar sobre el fondo (espacio reservado, aún sin definir)
+            // 2. Avatar sobre el fondo (espacio reservado, aún sin definir a falta de levis)
             const Align(
               alignment: Alignment(0, 0.25),
               child: AvatarSlot(asset: AppAssets.avatar),
@@ -57,8 +142,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _GreetingChip(
-                          text: '¡Vamos, sigue así!',
+                        _GreetingChip(
+                          text: _frase,
                           avatarAsset: AppAssets.avatarThumb,
                         ),
                         const Spacer(),
@@ -83,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
                     // ---- Columnas laterales (el centro queda libre para el avatar) ----
                     Expanded(
@@ -102,13 +187,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                     icon: Icons.checklist_rounded,
                                     iconAsset: AppAssets.iconTareasDiarias,
                                     size: menuSize,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.tareas,
+                                    ),
                                   ),
-                                  const SizedBox(height: 14),
+                                  const SizedBox(height: 20),
                                   CircleMenuButton(
-                                    label: 'Objetivos',
+                                    label: 'General',
                                     icon: Icons.track_changes_rounded,
                                     iconAsset: AppAssets.iconObjetivos,
                                     size: menuSize,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.estadisticas,
+                                    ),
                                   ),
                                   const SizedBox(height: 14),
                                   CircleMenuButton(
@@ -119,62 +212,165 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                               CircleMenuButton(
-                                label: 'Personalizar',
+                                label: 'Avatar',
                                 icon: Icons.person_rounded,
                                 iconAsset: AppAssets.iconPersonalizar,
                                 size: menuSize,
+                                onTap: () => showAppSnackBar(context),
                               ),
                             ],
                           ),
                           const Spacer(),
 
-                          // Derecha (datos de ejemplo, luego vendrán del dominio)
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              StatBubble(
-                                title: 'Nivel de aura',
-                                value: '80/100',
-                                progress: 0.8,
-                                icon: Icons.local_fire_department_rounded,
-                                iconAsset: AppAssets.iconAura,
-                                size: statSize,
-                              ),
-                              const SizedBox(height: 14),
-                              StatBubble(
-                                title: 'Inteligencia',
-                                value: '90/100',
-                                progress: 0.9,
-                                icon: Icons.psychology_rounded,
-                                iconAsset: AppAssets.iconInteligencia,
-                                size: statSize,
-                              ),
-                              const SizedBox(height: 14),
-                              StatBubble(
-                                title: 'Tareas realizadas',
-                                value: '55',
-                                progress: 0.55,
-                                icon: Icons.fact_check_rounded,
-                                iconAsset: AppAssets.iconTareasRealizadas,
-                                size: statSize,
-                                onTap: () => Navigator.pushNamed(context,AppRoutes.historial),
-                              ),
-                            ],
+                          // Derecha (estadísticas del dominio)
+                          AnimatedBuilder(
+                            animation: Listenable.merge([
+                              EstadisticasStore.instancia,
+                              TareasStore.instancia,
+                            ]),
+                            builder: (context, _) {
+                              final estadisticas = EstadisticasStore.instancia;
+                              final tareas = TareasStore.instancia.tareas;
+                              final tareasRealizadas = tareas
+                                  .where((tarea) => tarea.completada)
+                                  .length;
+                              final progresoTareas = tareas.isEmpty
+                                  ? 0.0
+                                  : tareasRealizadas / tareas.length;
+                              final estadisticasRotativas =
+                                  [
+                                        (
+                                          key: 'Inteligencia',
+                                          title: 'Inteligencia',
+                                          value: estadisticas.inteligencia,
+                                          icon: Icons.psychology_rounded,
+                                          asset: AppAssets.iconInteligencia,
+                                          activa:
+                                              estadisticas.inteligenciaActiva,
+                                        ),
+                                        (
+                                          key: 'Finanzas',
+                                          title: 'Finanzas',
+                                          value: estadisticas.finanzas,
+                                          icon: Icons
+                                              .account_balance_wallet_rounded,
+                                          asset: null,
+                                          activa: estadisticas.finanzasActiva,
+                                        ),
+                                        (
+                                          key: 'Salud',
+                                          title: 'Salud',
+                                          value: estadisticas.salud,
+                                          icon: Icons.favorite_rounded,
+                                          asset: null,
+                                          activa: estadisticas.saludActiva,
+                                        ),
+                                        (
+                                          key: 'Disciplina',
+                                          title: 'Disciplina',
+                                          value: estadisticas.disciplina,
+                                          icon: Icons.self_improvement_rounded,
+                                          asset: null,
+                                          activa: estadisticas.disciplinaActiva,
+                                        ),
+                                      ]
+                                      .where(
+                                        (estadistica) => estadistica.activa,
+                                      )
+                                      .toList();
+                              final indiceSeleccionado = estadisticasRotativas
+                                  .indexWhere(
+                                    (estadistica) =>
+                                        estadistica.key ==
+                                        _estadisticaSeleccionada,
+                                  );
+                              final estadisticaActual =
+                                  estadisticasRotativas.isEmpty
+                                  ? null
+                                  : estadisticasRotativas[indiceSeleccionado < 0
+                                        ? 0
+                                        : indiceSeleccionado];
+
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  StatBubble(
+                                    title: 'General',
+                                    value:
+                                        '${estadisticas.general.toStringAsFixed(0)}/100',
+                                    progress: estadisticas.general / 100,
+                                    icon: Icons.local_fire_department_rounded,
+                                    iconAsset: AppAssets.iconAura,
+                                    size: statSize,
+                                  ),
+                                  const SizedBox(height: 30),
+                                  StatBubble(
+                                    title:
+                                        estadisticaActual?.title ??
+                                        'Sin activas',
+                                    value: estadisticaActual == null
+                                        ? '--'
+                                        : '${estadisticaActual.value.toStringAsFixed(0)}/100',
+                                    progress: estadisticaActual == null
+                                        ? null
+                                        : estadisticaActual.value / 100,
+                                    icon:
+                                        estadisticaActual?.icon ??
+                                        Icons.insights_rounded,
+                                    iconAsset: estadisticaActual?.asset,
+                                    size: statSize,
+                                    onTap:
+                                        estadisticaActual == null ||
+                                            estadisticasRotativas.length < 2
+                                        ? null
+                                        : () {
+                                            final indiceActual =
+                                                estadisticasRotativas
+                                                    .indexWhere(
+                                                      (estadistica) =>
+                                                          estadistica.key ==
+                                                          estadisticaActual.key,
+                                                    );
+                                            setState(() {
+                                              _estadisticaSeleccionada =
+                                                  estadisticasRotativas[(indiceActual +
+                                                              1) %
+                                                          estadisticasRotativas
+                                                              .length]
+                                                      .key;
+                                            });
+                                          },
+                                  ),
+                                  const SizedBox(height: 30),
+                                  StatBubble(
+                                    title: 'Tareas realizadas',
+                                    value: '$tareasRealizadas',
+                                    progress: progresoTareas,
+                                    icon: Icons.fact_check_rounded,
+                                    iconAsset: AppAssets.iconTareasRealizadas,
+                                    size: statSize,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      AppRoutes.historial,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
 
                     // ---- Botón central ----
-                    _AddTaskButton(
+                    AddTaskButton(
                       iconAsset: AppAssets.iconAnadirTarea,
                       onTap: () => Navigator.pushNamed(context, AppRoutes.add),
                     ),
                     const SizedBox(height: 14),
 
                     // ---- Barra inferior ----
-                    // TODO: conectar la navegación entre pestañas.
-                    const HomeBottomBar(currentIndex: 0),
+                    HomeBottomBar(currentIndex: 0, onTap: _onBottomBarTap),
                   ],
                 ),
               ),
@@ -198,9 +394,9 @@ class _GreetingChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFF1B2A6B).withOpacity(0.55),
+      color: const Color(0xFF1B2A6B).withValues(alpha: 0.55),
       shape: StadiumBorder(
-        side: BorderSide(color: Colors.white.withOpacity(0.35)),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -238,51 +434,15 @@ class _GreetingChip extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.chevron_right_rounded, color: Colors.white, size: 20),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
             ],
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Botón central grande "+ Añadir tarea", con halo de luz y etiqueta debajo.
-class _AddTaskButton extends StatelessWidget {
-  /// Ruta de la imagen del ícono. Si es null se usa el "+" de Material.
-  final String? iconAsset;
-  final VoidCallback? onTap;
-  static const double _size = 50;
-
-  const _AddTaskButton({this.iconAsset, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GlassCircle(
-          size: _size,
-          onTap: onTap,
-          glow: true,
-          borderWidth: 3,
-          child: AssetOrIcon(
-            asset: iconAsset,
-            icon: Icons.add_rounded,
-            size: _size * 0.55,
-          ),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'Añadir tarea',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            shadows: [Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 1))],
-          ),
-        ),
-      ],
     );
   }
 }

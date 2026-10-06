@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:my_daily_routine/screens/estadisticas.dart';
+import 'package:my_daily_routine/screens/tareas.dart';
+import 'package:my_daily_routine/screens/general.dart';
 import 'routes.dart';
 import 'screens/add.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
+import 'screens/teams.dart';
 import 'theme.dart';
 import 'screens/historial.dart';
 
@@ -40,6 +44,10 @@ class MyApp extends StatelessWidget {
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.add: (_) => const AddScreen(),
         AppRoutes.historial: (_) => const HistorialScreen(),
+        AppRoutes.teams: (_) => const TeamsScreen(),
+        AppRoutes.tareas: (_) => const TareaScreen(),
+        AppRoutes.general: (_) => const GeneralScreen(),
+        AppRoutes.estadisticas: (_) => const EstadisticaScreen(),
       },
     );
   }

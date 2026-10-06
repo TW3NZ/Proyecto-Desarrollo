@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 /// Botón principal con degradado y sombra.
 class PrimaryButton extends StatelessWidget {
@@ -18,7 +18,7 @@ class PrimaryButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.button),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

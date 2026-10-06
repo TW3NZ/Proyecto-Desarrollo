@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 /// Campo de texto con insignia circular + etiqueta arriba.
 class LabeledTextField extends StatelessWidget {

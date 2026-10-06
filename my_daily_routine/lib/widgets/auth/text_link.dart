@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme.dart';
+import '../../theme.dart';
 
 /// Enlace de texto pequeño, azul y en negrita.
 class TextLink extends StatelessWidget {

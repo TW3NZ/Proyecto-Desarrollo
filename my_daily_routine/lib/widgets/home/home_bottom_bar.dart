@@ -31,10 +31,10 @@ class HomeBottomBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppGradients.bottomBar,
         borderRadius: BorderRadius.circular(37),
-        border: Border.all(color: Colors.white.withOpacity(0.7), width: 2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryDark.withOpacity(0.35),
+            color: AppColors.primaryDark.withValues(alpha: 0.35),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -77,7 +77,7 @@ class _BarItem extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(selected ? 0.35 : 0.15),
+                color: Colors.white.withValues(alpha: selected ? 0.35 : 0.15),
               ),
               child: Center(
                 child: AssetOrIcon(

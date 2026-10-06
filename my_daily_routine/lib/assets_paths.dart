@@ -1,4 +1,4 @@
-class AppAssets {
+class AppAssets { // rutas de iconos y recursos visuales
   AppAssets._();
 
   static const String avatar = 'lib/assets/avatar.png';
