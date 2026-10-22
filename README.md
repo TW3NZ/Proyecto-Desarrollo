@@ -1,15 +1,26 @@
-# Proyecto Desarrollo de Software
+# My Daily Routine
 
-My daily routine es una aplicación desarrollada en Flutter como parte del proyecto de la materia. Actualmente el proyecto se encuentra en fase de maquetación visual, sin lógica funcional implementada todavía.
+Aplicación desarrollada en Flutter como parte de un proyecto académico de desarrollo de software.
 
-## Estado del Proyecto
+**Estado: en desarrollo.** Actualmente se encuentra en fase de maquetación visual. Las pantallas están mayormente diseñadas, pero la lógica funcional todavía no ha sido implementada.
 
-- Pantallas mayormente diseñadas (solo visuales)
-- Funcionalidad aún no implementada
-- Arquitectura de capas definida
+## Estado actual
+
+- Diseño visual de la mayoría de las pantallas.
+- Arquitectura por capas definida.
+- Implementación de las funcionalidades pendiente.
+
+## Tecnologías
+
+- Dart.
+- Flutter.
 
 ## Arquitectura
 
-Se escogió una **arquitectura de capas** para organizar el proyecto de forma escalable y mantenible.
+Se eligió una arquitectura por capas para separar responsabilidades y facilitar el mantenimiento y la evolución del proyecto.
 
-### Estructura de carpetas
+La estructura y esta documentación se ampliarán conforme avance el desarrollo.
+
+## Nota
+
+Este repositorio refleja un proyecto en construcción, no una versión final de la aplicación.
