@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../assets_paths.dart';
 import '../data/estadisticas_store.dart';
+import '../data/avatar_store.dart';
 import '../data/tareas_store.dart';
 import '../routes.dart';
 import '../theme.dart';
@@ -10,6 +11,7 @@ import '../utils/snackbar_utils.dart';
 import '../widgets/home/home_bottom_bar.dart';
 import '../widgets/home/home_scene.dart';
 import '../widgets/home/round_buttons.dart';
+import '../widgets/avatar/avatar_character.dart';
 
 import 'dart:async';
 import 'dart:math';
@@ -114,8 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    final menuSize = (width * 0.19).clamp(60.0, 80.0);
-    final statSize = (width * 0.23).clamp(78.0, 100.0);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
@@ -126,11 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
             // 1. Fondo (intercambiable)
             HomeBackground(paths: AppAssets.homeBackgrounds, index: _bgIndex),
 
-            // 2. Avatar sobre el fondo (espacio reservado, aún sin definir a falta de levis)
-            const Align(
-              alignment: Alignment(0, 0.25),
-              child: AvatarSlot(asset: AppAssets.avatar),
-            ),
+            // 2. Avatar personalizado con movimiento suave sobre el fondo.
+            const Align(alignment: Alignment(0, -0.30), child: AvatarSlot()),
 
             // 3. Botones y datos encima de todo
             SafeArea(
@@ -142,10 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _GreetingChip(
-                          text: _frase,
-                          avatarAsset: AppAssets.avatarThumb,
-                        ),
+                        _GreetingChip(text: _frase),
                         const Spacer(),
                         Column(
                           children: [
@@ -172,193 +166,218 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // ---- Columnas laterales (el centro queda libre para el avatar) ----
                     Expanded(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Izquierda
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Respetar la altura disponible sobre Añadir tarea.
+                          final menuSize = min(
+                            (width * 0.19).clamp(60.0, 80.0),
+                            max(0.0, (constraints.maxHeight - 34) / 4),
+                          );
+                          final statSize = min(
+                            (width * 0.23).clamp(78.0, 100.0),
+                            max(0.0, (constraints.maxHeight - 60) / 3),
+                          );
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Izquierda
                               Column(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      CircleMenuButton(
+                                        label: 'Tareas Diarias',
+                                        icon: Icons.checklist_rounded,
+                                        iconAsset: AppAssets.iconTareasDiarias,
+                                        size: menuSize,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.tareas,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      CircleMenuButton(
+                                        label: 'General',
+                                        icon: Icons.track_changes_rounded,
+                                        iconAsset: AppAssets.iconObjetivos,
+                                        size: menuSize,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.estadisticas,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 14),
+                                      CircleMenuButton(
+                                        icon: Icons.card_giftcard_rounded,
+                                        iconAsset: AppAssets.iconRegalo,
+                                        size: menuSize,
+                                      ),
+                                    ],
+                                  ),
                                   CircleMenuButton(
-                                    label: 'Tareas Diarias',
-                                    icon: Icons.checklist_rounded,
-                                    iconAsset: AppAssets.iconTareasDiarias,
+                                    label: 'Avatar',
+                                    icon: Icons.person_rounded,
+                                    iconAsset: AppAssets.iconPersonalizar,
                                     size: menuSize,
                                     onTap: () => Navigator.pushNamed(
                                       context,
-                                      AppRoutes.tareas,
+                                      AppRoutes.avatar,
                                     ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  CircleMenuButton(
-                                    label: 'General',
-                                    icon: Icons.track_changes_rounded,
-                                    iconAsset: AppAssets.iconObjetivos,
-                                    size: menuSize,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.estadisticas,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  CircleMenuButton(
-                                    icon: Icons.card_giftcard_rounded,
-                                    iconAsset: AppAssets.iconRegalo,
-                                    size: menuSize,
                                   ),
                                 ],
                               ),
-                              CircleMenuButton(
-                                label: 'Avatar',
-                                icon: Icons.person_rounded,
-                                iconAsset: AppAssets.iconPersonalizar,
-                                size: menuSize,
-                                onTap: () => showAppSnackBar(context),
+                              const Spacer(),
+
+                              // Derecha (estadísticas del dominio)
+                              AnimatedBuilder(
+                                animation: Listenable.merge([
+                                  EstadisticasStore.instancia,
+                                  TareasStore.instancia,
+                                ]),
+                                builder: (context, _) {
+                                  final estadisticas =
+                                      EstadisticasStore.instancia;
+                                  final tareas = TareasStore.instancia.tareas;
+                                  final tareasRealizadas = tareas
+                                      .where((tarea) => tarea.completada)
+                                      .length;
+                                  final progresoTareas = tareas.isEmpty
+                                      ? 0.0
+                                      : tareasRealizadas / tareas.length;
+                                  final estadisticasRotativas =
+                                      [
+                                            (
+                                              key: 'Inteligencia',
+                                              title: 'Inteligencia',
+                                              value: estadisticas.inteligencia,
+                                              icon: Icons.psychology_rounded,
+                                              asset: AppAssets.iconInteligencia,
+                                              activa: estadisticas
+                                                  .inteligenciaActiva,
+                                            ),
+                                            (
+                                              key: 'Finanzas',
+                                              title: 'Finanzas',
+                                              value: estadisticas.finanzas,
+                                              icon: Icons
+                                                  .account_balance_wallet_rounded,
+                                              asset: null,
+                                              activa:
+                                                  estadisticas.finanzasActiva,
+                                            ),
+                                            (
+                                              key: 'Salud',
+                                              title: 'Salud',
+                                              value: estadisticas.salud,
+                                              icon: Icons.favorite_rounded,
+                                              asset: null,
+                                              activa: estadisticas.saludActiva,
+                                            ),
+                                            (
+                                              key: 'Disciplina',
+                                              title: 'Disciplina',
+                                              value: estadisticas.disciplina,
+                                              icon: Icons
+                                                  .self_improvement_rounded,
+                                              asset: null,
+                                              activa:
+                                                  estadisticas.disciplinaActiva,
+                                            ),
+                                          ]
+                                          .where(
+                                            (estadistica) => estadistica.activa,
+                                          )
+                                          .toList();
+                                  final indiceSeleccionado =
+                                      estadisticasRotativas.indexWhere(
+                                        (estadistica) =>
+                                            estadistica.key ==
+                                            _estadisticaSeleccionada,
+                                      );
+                                  final estadisticaActual =
+                                      estadisticasRotativas.isEmpty
+                                      ? null
+                                      : estadisticasRotativas[indiceSeleccionado <
+                                                0
+                                            ? 0
+                                            : indiceSeleccionado];
+
+                                  return Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      StatBubble(
+                                        title: 'General',
+                                        value:
+                                            '${estadisticas.general.toStringAsFixed(0)}/100',
+                                        progress: estadisticas.general / 100,
+                                        icon:
+                                            Icons.local_fire_department_rounded,
+                                        iconAsset: AppAssets.iconAura,
+                                        size: statSize,
+                                      ),
+                                      const SizedBox(height: 30),
+                                      StatBubble(
+                                        title:
+                                            estadisticaActual?.title ??
+                                            'Sin activas',
+                                        value: estadisticaActual == null
+                                            ? '--'
+                                            : '${estadisticaActual.value.toStringAsFixed(0)}/100',
+                                        progress: estadisticaActual == null
+                                            ? null
+                                            : estadisticaActual.value / 100,
+                                        icon:
+                                            estadisticaActual?.icon ??
+                                            Icons.insights_rounded,
+                                        iconAsset: estadisticaActual?.asset,
+                                        size: statSize,
+                                        onTap:
+                                            estadisticaActual == null ||
+                                                estadisticasRotativas.length < 2
+                                            ? null
+                                            : () {
+                                                final indiceActual =
+                                                    estadisticasRotativas
+                                                        .indexWhere(
+                                                          (estadistica) =>
+                                                              estadistica.key ==
+                                                              estadisticaActual
+                                                                  .key,
+                                                        );
+                                                setState(() {
+                                                  _estadisticaSeleccionada =
+                                                      estadisticasRotativas[(indiceActual +
+                                                                  1) %
+                                                              estadisticasRotativas
+                                                                  .length]
+                                                          .key;
+                                                });
+                                              },
+                                      ),
+                                      const SizedBox(height: 30),
+                                      StatBubble(
+                                        title: 'Tareas realizadas',
+                                        value: '$tareasRealizadas',
+                                        progress: progresoTareas,
+                                        icon: Icons.fact_check_rounded,
+                                        iconAsset:
+                                            AppAssets.iconTareasRealizadas,
+                                        size: statSize,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.historial,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
-                          ),
-                          const Spacer(),
-
-                          // Derecha (estadísticas del dominio)
-                          AnimatedBuilder(
-                            animation: Listenable.merge([
-                              EstadisticasStore.instancia,
-                              TareasStore.instancia,
-                            ]),
-                            builder: (context, _) {
-                              final estadisticas = EstadisticasStore.instancia;
-                              final tareas = TareasStore.instancia.tareas;
-                              final tareasRealizadas = tareas
-                                  .where((tarea) => tarea.completada)
-                                  .length;
-                              final progresoTareas = tareas.isEmpty
-                                  ? 0.0
-                                  : tareasRealizadas / tareas.length;
-                              final estadisticasRotativas =
-                                  [
-                                        (
-                                          key: 'Inteligencia',
-                                          title: 'Inteligencia',
-                                          value: estadisticas.inteligencia,
-                                          icon: Icons.psychology_rounded,
-                                          asset: AppAssets.iconInteligencia,
-                                          activa:
-                                              estadisticas.inteligenciaActiva,
-                                        ),
-                                        (
-                                          key: 'Finanzas',
-                                          title: 'Finanzas',
-                                          value: estadisticas.finanzas,
-                                          icon: Icons
-                                              .account_balance_wallet_rounded,
-                                          asset: null,
-                                          activa: estadisticas.finanzasActiva,
-                                        ),
-                                        (
-                                          key: 'Salud',
-                                          title: 'Salud',
-                                          value: estadisticas.salud,
-                                          icon: Icons.favorite_rounded,
-                                          asset: null,
-                                          activa: estadisticas.saludActiva,
-                                        ),
-                                        (
-                                          key: 'Disciplina',
-                                          title: 'Disciplina',
-                                          value: estadisticas.disciplina,
-                                          icon: Icons.self_improvement_rounded,
-                                          asset: null,
-                                          activa: estadisticas.disciplinaActiva,
-                                        ),
-                                      ]
-                                      .where(
-                                        (estadistica) => estadistica.activa,
-                                      )
-                                      .toList();
-                              final indiceSeleccionado = estadisticasRotativas
-                                  .indexWhere(
-                                    (estadistica) =>
-                                        estadistica.key ==
-                                        _estadisticaSeleccionada,
-                                  );
-                              final estadisticaActual =
-                                  estadisticasRotativas.isEmpty
-                                  ? null
-                                  : estadisticasRotativas[indiceSeleccionado < 0
-                                        ? 0
-                                        : indiceSeleccionado];
-
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  StatBubble(
-                                    title: 'General',
-                                    value:
-                                        '${estadisticas.general.toStringAsFixed(0)}/100',
-                                    progress: estadisticas.general / 100,
-                                    icon: Icons.local_fire_department_rounded,
-                                    iconAsset: AppAssets.iconAura,
-                                    size: statSize,
-                                  ),
-                                  const SizedBox(height: 30),
-                                  StatBubble(
-                                    title:
-                                        estadisticaActual?.title ??
-                                        'Sin activas',
-                                    value: estadisticaActual == null
-                                        ? '--'
-                                        : '${estadisticaActual.value.toStringAsFixed(0)}/100',
-                                    progress: estadisticaActual == null
-                                        ? null
-                                        : estadisticaActual.value / 100,
-                                    icon:
-                                        estadisticaActual?.icon ??
-                                        Icons.insights_rounded,
-                                    iconAsset: estadisticaActual?.asset,
-                                    size: statSize,
-                                    onTap:
-                                        estadisticaActual == null ||
-                                            estadisticasRotativas.length < 2
-                                        ? null
-                                        : () {
-                                            final indiceActual =
-                                                estadisticasRotativas
-                                                    .indexWhere(
-                                                      (estadistica) =>
-                                                          estadistica.key ==
-                                                          estadisticaActual.key,
-                                                    );
-                                            setState(() {
-                                              _estadisticaSeleccionada =
-                                                  estadisticasRotativas[(indiceActual +
-                                                              1) %
-                                                          estadisticasRotativas
-                                                              .length]
-                                                      .key;
-                                            });
-                                          },
-                                  ),
-                                  const SizedBox(height: 30),
-                                  StatBubble(
-                                    title: 'Tareas realizadas',
-                                    value: '$tareasRealizadas',
-                                    progress: progresoTareas,
-                                    icon: Icons.fact_check_rounded,
-                                    iconAsset: AppAssets.iconTareasRealizadas,
-                                    size: statSize,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.historial,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                          );
+                        },
                       ),
                     ),
 
@@ -386,10 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
 class _GreetingChip extends StatelessWidget {
   final String text;
 
-  /// Ruta de la miniatura del avatar. Si es null se muestra un ícono de persona.
-  final String? avatarAsset;
-
-  const _GreetingChip({required this.text, this.avatarAsset});
+  const _GreetingChip({required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -415,11 +431,13 @@ class _GreetingChip extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: ClipOval(
-                  child: Center(
-                    child: AssetOrIcon(
-                      asset: avatarAsset,
-                      icon: Icons.person_rounded,
-                      size: 34,
+                  child: ExcludeSemantics(
+                    child: ListenableBuilder(
+                      listenable: AvatarStore.instancia,
+                      builder: (context, _) => AvatarCharacter(
+                        config: AvatarStore.instancia.config,
+                        portrait: true,
+                      ),
                     ),
                   ),
                 ),

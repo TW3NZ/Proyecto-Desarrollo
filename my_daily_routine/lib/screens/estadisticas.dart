@@ -285,7 +285,7 @@ class _TarjetaEstadistica extends StatelessWidget {
                 Switch(
                   value: activa,
                   onChanged: onChanged,
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                 ),
               ],
             ),

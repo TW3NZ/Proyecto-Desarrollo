@@ -11,8 +11,14 @@ import 'screens/crear_usuario.dart';
 import 'screens/teams.dart';
 import 'theme.dart';
 import 'screens/historial.dart';
+import 'screens/avatar.dart';
+import 'data/avatar_store.dart';
 
-void main() => runApp(const MyApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AvatarStore.instancia.load();
+  runApp(const MyApp());
+}
 
 /// Scroll sin rebote ni estiramiento al llegar al borde.
 class AppScrollBehavior extends MaterialScrollBehavior {
@@ -44,6 +50,7 @@ class MyApp extends StatelessWidget {
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.crearUsuario: (_) => const CrearUsuario(),
         AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.avatar: (_) => const AvatarScreen(),
         AppRoutes.add: (_) => const AddScreen(),
         AppRoutes.historial: (_) => const HistorialScreen(),
         AppRoutes.teams: (_) => const TeamsScreen(),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../data/avatar_store.dart';
+import '../avatar/avatar_character.dart';
+
 // La "escena" del Home: fondo + espacio del avatar.
 
 /// Fondo a pantalla completa. Muestra la imagen número [index] de [paths] y
@@ -12,15 +15,15 @@ class HomeBackground extends StatelessWidget {
   const HomeBackground({super.key, required this.paths, required this.index});
 
   Widget _placeholder() => const DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF9DB8FF), Color(0xFF3F5FE0)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: SizedBox.expand(),
-      );
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Color(0xFF9DB8FF), Color(0xFF3F5FE0)],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+    child: SizedBox.expand(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -42,35 +45,29 @@ class HomeBackground extends StatelessWidget {
   }
 }
 
-/// Espacio reservado para el avatar (imagen o GIF) que va sobre el fondo.
-///
-/// Todavía no está definido cómo se cargará, así que mientras [asset] sea null
-/// solo reserva el espacio (invisible). Cuando haya ruta, `Image.asset`
-/// reproduce tanto PNG como GIF animados.
-///
-/// TODO: aquí se conectará el avatar definitivo (y su animación).
+/// Avatar con colores configurables y movimiento suave de reposo.
+/// Mantiene el tamaño y la posición aprobados para la pantalla principal.
 class AvatarSlot extends StatelessWidget {
-  final String? asset;
-
-  const AvatarSlot({super.key, this.asset});
+  const AvatarSlot({super.key});
 
   @override
   Widget build(BuildContext context) {
     final screen = MediaQuery.of(context).size;
-    final width = screen.width * 0.62;
-    final height = screen.height * 0.5;
-
-    if (asset == null) {
-      return SizedBox(width: width, height: height);
-    }
+    final width = screen.width * 0.58;
+    final height = screen.height * 0.58;
 
     return SizedBox(
       width: width,
       height: height,
-      child: Image.asset(
-        asset!,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      child: ListenableBuilder(
+        listenable: AvatarStore.instancia,
+        builder: (context, _) {
+          final config = AvatarStore.instancia.config;
+          return AvatarMotion(
+            enabled: config.motion,
+            child: AvatarCharacter(config: config),
+          );
+        },
       ),
     );
   }

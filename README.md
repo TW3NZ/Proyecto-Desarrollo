@@ -1,5 +1,11 @@
 # My Daily Routine
 
+## Guías de trabajo y avatar
+
+- [Reglas para agentes](AGENTS.md).
+- [Decisiones y estado del avatar](docs/decisiones-avatar.md).
+- [Prompts del concepto visual](docs/avatar-prompts.md).
+
 Aplicación desarrollada en Flutter como parte de un proyecto académico de desarrollo de software.
 
 **Estado: en desarrollo.** Actualmente se encuentra en fase de maquetación visual. Las pantallas están mayormente diseñadas, pero la lógica funcional todavía no ha sido implementada.
