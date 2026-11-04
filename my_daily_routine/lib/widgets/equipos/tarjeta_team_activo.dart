@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../models/equipo_modelo.dart';
 import '../../theme.dart';
 
@@ -8,18 +9,15 @@ class TarjetaTeamActivo extends StatelessWidget {
   final Equipo equipo;
   final VoidCallback? alEntrar;
 
-  const TarjetaTeamActivo({
-    super.key,
-    required this.equipo,
-    this.alEntrar,
-  });
+  const TarjetaTeamActivo({super.key, required this.equipo, this.alEntrar});
 
   @override
   Widget build(BuildContext context) {
     final radio = BorderRadius.circular(26);
     final n = equipo.miembrosConectados;
-    final textoMiembros =
-        n == 1 ? '1 miembro conectado' : '$n miembros conectados';
+    final textoMiembros = n == 1
+        ? '1 miembro conectado'
+        : '$n miembros conectados';
 
     return Container(
       decoration: BoxDecoration(
@@ -76,12 +74,38 @@ class TarjetaTeamActivo extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      textoMiembros,
+                      equipo.nombreProyecto.isEmpty
+                          ? textoMiembros
+                          : equipo.nombreProyecto,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: AppColors.textHint,
-                        fontSize: 13,
+                        fontSize: 12,
                       ),
                     ),
+                    if (equipo.meta.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        equipo.meta,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                    if (equipo.nombreProyecto.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        textoMiembros,
+                        style: const TextStyle(
+                          color: AppColors.textHint,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

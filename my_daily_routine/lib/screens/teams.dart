@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../data/equipos_store.dart';
 import '../models/equipo_modelo.dart';
+import 'crear_team.dart';
 import '../theme.dart';
-import '../utils/snackbar_utils.dart';
 import '../widgets/common/cabecera_app.dart';
 import '../widgets/equipos/encabezado_teams_activos.dart';
 import '../widgets/equipos/insignia_seccion.dart';
 import '../widgets/equipos/tarjeta_accion_team.dart';
 import '../widgets/equipos/tarjeta_team_activo.dart';
+import 'dentro_team.dart';
 
 /// Pantalla "Coworking" (sección Teams).
 ///
-/// Por ahora es solo visual: los teams son datos de ejemplo y los botones
-/// muestran "próximamente". Cada botón ya tiene su método (`_crearTeam`,
-/// `_unirseATeam`, `_entrarAlTeam`, `_abrirNotificaciones`), que es donde
-/// se conecta la lógica real más adelante.
+/// Los teams creados se mantienen en memoria durante la sesión.
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});
 
@@ -23,36 +22,25 @@ class TeamsScreen extends StatefulWidget {
 }
 
 class _TeamsScreenState extends State<TeamsScreen> {
-  // creacion de los equipos
-  final List<Equipo> _equipos = const [
-    Equipo(
-      id: 'T000837267Z',
-      nombre: 'Moscos Teams',
-      siglas: 'MT',
-      miembrosConectados: 9,
-    ),
+  List<Equipo> get _equipos => EquiposStore.equipos;
 
-    Equipo(
-      id: "T000837267Z",
-      nombre: "Desarrollo de software", 
-      siglas: "DS",
-      miembrosConectados: 9
-    ),
-  ];
-
-  void _crearTeam() {
-    // TODO: abrir el flujo para crear un team y generar su código.
-    showAppSnackBar(context, message: 'Crear team próximamente');
+  Future<void> _crearTeam() async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const CrearTeamScreen()));
+    if (mounted) setState(() {});
   }
 
   void _unirseATeam() {
-    // TODO: pedir el código secreto y unir al usuario al team.
-    showAppSnackBar(context, message: 'Unirse a team próximamente');
+    showDialog<void>(
+      context: context,
+      builder: (_) => const _UnirseTeamDialog(),
+    );
   }
 
   void _entrarAlTeam(Equipo equipo) {
-    // TODO: navegar a la pantalla del team.
-    showAppSnackBar(context, message: '${equipo.nombre} próximamente');
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => DentroTeamScreen(equipo: equipo)),
+    );
   }
 
   @override
@@ -162,6 +150,107 @@ class _SinTeams extends StatelessWidget {
         textAlign: TextAlign.center,
         style: TextStyle(color: AppColors.textMuted, fontSize: 14),
       ),
+    );
+  }
+}
+
+class _UnirseTeamDialog extends StatefulWidget {
+  const _UnirseTeamDialog();
+
+  @override
+  State<_UnirseTeamDialog> createState() => _UnirseTeamDialogState();
+}
+
+class _UnirseTeamDialogState extends State<_UnirseTeamDialog> {
+  final _idController = TextEditingController();
+  bool _mostrarAviso = false;
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      scrollable: true,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      icon: const Icon(
+        Icons.groups_rounded,
+        color: AppColors.primary,
+        size: 34,
+      ),
+      title: const Text(
+        'Unirse a un equipo',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: AppColors.textDark,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _idController,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: 'Ingresa el ID del equipo',
+              prefixIcon: const Icon(
+                Icons.vpn_key_rounded,
+                color: AppColors.primary,
+              ),
+              filled: true,
+              fillColor: AppColors.fieldFill,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.fieldBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: AppColors.fieldBorder),
+              ),
+            ),
+          ),
+          if (_mostrarAviso) ...[
+            const SizedBox(height: 14),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF1FF),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Text(
+                'La opción para unirse a equipos estará disponible próximamente.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.primaryDark, fontSize: 13),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            FocusScope.of(context).unfocus();
+            setState(() => _mostrarAviso = true);
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: const StadiumBorder(),
+          ),
+          child: const Text('Unirse'),
+        ),
+      ],
     );
   }
 }
