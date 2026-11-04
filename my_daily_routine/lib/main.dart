@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:my_daily_routine/screens/estadisticas.dart';
 import 'package:my_daily_routine/screens/tareas.dart';
 import 'package:my_daily_routine/screens/general.dart';
+
 import 'routes.dart';
 import 'screens/add.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
+import 'screens/crear_usuario.dart';
 import 'screens/teams.dart';
 import 'theme.dart';
 import 'screens/historial.dart';
@@ -25,8 +27,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     BuildContext context,
     Widget child,
     ScrollableDetails details,
-  ) =>
-      child;
+  ) => child;
 }
 
 class MyApp extends StatelessWidget {
@@ -41,6 +42,7 @@ class MyApp extends StatelessWidget {
       initialRoute: AppRoutes.login,
       routes: {
         AppRoutes.login: (_) => const LoginScreen(),
+        AppRoutes.crearUsuario: (_) => const CrearUsuario(),
         AppRoutes.home: (_) => const HomeScreen(),
         AppRoutes.add: (_) => const AddScreen(),
         AppRoutes.historial: (_) => const HistorialScreen(),
