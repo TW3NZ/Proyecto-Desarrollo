@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 
 import '../assets_paths.dart';
 import '../data/estadisticas_store.dart';
-import '../data/avatar_store.dart';
 import '../data/tareas_store.dart';
 import '../routes.dart';
 import '../theme.dart';
@@ -11,7 +10,6 @@ import '../utils/snackbar_utils.dart';
 import '../widgets/home/home_bottom_bar.dart';
 import '../widgets/home/home_scene.dart';
 import '../widgets/home/round_buttons.dart';
-import '../widgets/avatar/avatar_character.dart';
 
 import 'dart:async';
 import 'dart:math';
@@ -431,13 +429,13 @@ class _GreetingChip extends StatelessWidget {
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
                 child: ClipOval(
-                  child: ExcludeSemantics(
-                    child: ListenableBuilder(
-                      listenable: AvatarStore.instancia,
-                      builder: (context, _) => AvatarCharacter(
-                        config: AvatarStore.instancia.config,
-                        portrait: true,
-                      ),
+                  child: Center(
+                    child: Image.asset(
+                      'lib/assets/davo.png',
+                      width: 30,
+                      height: 30,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
                     ),
                   ),
                 ),

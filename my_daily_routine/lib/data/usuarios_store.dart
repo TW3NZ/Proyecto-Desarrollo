@@ -1,10 +1,22 @@
 import '../models/usuario.dart';
 
-/// Repositorio en memoria; sus datos viven mientras el proceso de la app siga abierto.
+/// Repositorio en memoria; incluye una cuenta fija para las prácticas.
 class UsuariosStore {
   UsuariosStore._();
 
-  static final List<Usuario> _usuarios = [];
+  static const nickNamePractica = 'admin';
+  static const passwordPractica = '12345678';
+
+  static final Usuario _usuarioPractica = Usuario(
+    name: 'Admin',
+    lastName: 'Práctica',
+    nickName: nickNamePractica,
+    email: 'admin@mydailyroutine.local',
+    password: passwordPractica,
+    createDate: DateTime(2026, 1, 1),
+  );
+
+  static final List<Usuario> _usuarios = [_usuarioPractica];
 
   static List<Usuario> get usuarios => List.unmodifiable(_usuarios);
 
