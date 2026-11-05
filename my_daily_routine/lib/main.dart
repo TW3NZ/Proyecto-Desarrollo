@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:my_daily_routine/screens/estadisticas.dart';
 import 'package:my_daily_routine/screens/tareas.dart';
 import 'package:my_daily_routine/screens/general.dart';
@@ -13,11 +14,24 @@ import 'theme.dart';
 import 'screens/historial.dart';
 import 'screens/avatar.dart';
 import 'data/avatar_store.dart';
+import 'data/tareas_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AvatarStore.instancia.load();
+  await TareasStore.instancia.inicializarWidget();
+  final uriInicial = await HomeWidget.initiallyLaunchedFromHomeWidget();
+  _aplicarAccionWidget(uriInicial);
+  HomeWidget.widgetClicked.listen(_aplicarAccionWidget);
   runApp(const MyApp());
+}
+
+void _aplicarAccionWidget(Uri? uri) {
+  if (uri?.host != 'toggle-task') return;
+  final indice = int.tryParse(uri?.queryParameters['index'] ?? '');
+  if (indice != null) {
+    TareasStore.instancia.alternarCompletadaPorIndice(indice);
+  }
 }
 
 /// Scroll sin rebote ni estiramiento al llegar al borde.

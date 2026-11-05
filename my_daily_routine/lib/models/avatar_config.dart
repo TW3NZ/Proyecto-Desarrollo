@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 enum AvatarPart { skin, hair, shirt, trousers }
 
+enum AvatarCharacterType { hombre, mujer }
+
 @immutable
 class AvatarColorOption {
   final String id;
@@ -49,6 +51,7 @@ class AvatarConfig {
   final String hair;
   final String shirt;
   final String trousers;
+  final AvatarCharacterType characterType;
   final bool motion;
 
   const AvatarConfig({
@@ -56,6 +59,7 @@ class AvatarConfig {
     this.hair = 'original',
     this.shirt = 'original',
     this.trousers = 'original',
+    this.characterType = AvatarCharacterType.hombre,
     this.motion = true,
   });
 
@@ -78,15 +82,26 @@ class AvatarConfig {
       hair: part == AvatarPart.hair ? id : hair,
       shirt: part == AvatarPart.shirt ? id : shirt,
       trousers: part == AvatarPart.trousers ? id : trousers,
+      characterType: characterType,
       motion: motion,
     );
   }
+
+  AvatarConfig withCharacterType(AvatarCharacterType value) => AvatarConfig(
+    skin: skin,
+    hair: hair,
+    shirt: shirt,
+    trousers: trousers,
+    characterType: value,
+    motion: motion,
+  );
 
   AvatarConfig withMotion(bool enabled) => AvatarConfig(
     skin: skin,
     hair: hair,
     shirt: shirt,
     trousers: trousers,
+    characterType: characterType,
     motion: enabled,
   );
 
@@ -96,6 +111,7 @@ class AvatarConfig {
     'hair': hair,
     'shirt': shirt,
     'trousers': trousers,
+    'characterType': characterType.name,
     'motion': motion,
   };
 
@@ -105,8 +121,12 @@ class AvatarConfig {
       final id = json[part.name];
       if (id is String) result = result.withColor(part, id);
     }
-    return result.withMotion(
-      json['motion'] is bool ? json['motion'] as bool : true,
+    final characterType = AvatarCharacterType.values.firstWhere(
+      (value) => value.name == json['characterType'],
+      orElse: () => AvatarCharacterType.hombre,
     );
+    return result
+        .withCharacterType(characterType)
+        .withMotion(json['motion'] is bool ? json['motion'] as bool : true);
   }
 }

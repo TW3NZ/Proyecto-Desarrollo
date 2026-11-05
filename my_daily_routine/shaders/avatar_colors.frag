@@ -6,6 +6,7 @@ uniform vec4 uSkin;
 uniform vec4 uHair;
 uniform vec4 uShirt;
 uniform vec4 uTrousers;
+uniform float uFemale;
 uniform sampler2D uImage;
 out vec4 fragColor;
 
@@ -31,7 +32,7 @@ void main() {
     result = recolor(c, uShirt, 0.42);
   } else if (uv.y > 0.47 && uv.y < 0.94 && c.b > c.r * 1.12 && c.b > c.g * 1.08) {
     result = recolor(c, uTrousers, 0.30);
-  } else if (uv.y < 0.22 && c.r > c.g * 1.12 && c.g > c.b * 1.05 && c.r < 0.63
+  } else if (uv.y < mix(0.22, 0.42, uFemale) && c.r > c.g * 1.12 && c.g > c.b * 1.05 && c.r < 0.63
       && !(uv.y > 0.123 && uv.y < 0.157 && uv.x > 0.44 && uv.x < 0.65)) {
     result = recolor(c, uHair, 0.47);
   } else if (uv.y > 0.075 && uv.y < 0.64 && c.r > c.g * 1.16 && c.g > c.b * 1.12 && c.r >= 0.63) {

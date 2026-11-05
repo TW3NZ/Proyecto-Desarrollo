@@ -3,6 +3,7 @@ class AppAssets {
   AppAssets._();
 
   static const String avatar = 'lib/assets/avatar_human_v2.png';
+  static const String avatarMujer = 'lib/assets/human_girl.png';
   // La miniatura encuadra la parte superior del mismo personaje.
   static const String avatarThumb = avatar;
 

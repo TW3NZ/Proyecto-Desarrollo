@@ -14,22 +14,29 @@ class AvatarResources {
   final ui.FragmentProgram program;
   const AvatarResources(this.image, this.program);
 
-  static Future<AvatarResources>? _pending;
-  static AvatarResources? cached;
-  static Future<AvatarResources> load() =>
-      cached != null ? SynchronousFuture(cached!) : _pending ??= _load();
+  static final Map<AvatarCharacterType, Future<AvatarResources>> _pending = {};
+  static final Map<AvatarCharacterType, AvatarResources> _cached = {};
+  static AvatarResources? cachedFor(AvatarCharacterType type) => _cached[type];
+  static Future<AvatarResources> load([
+    AvatarCharacterType type = AvatarCharacterType.hombre,
+  ]) => _cached[type] != null
+      ? SynchronousFuture(_cached[type]!)
+      : _pending[type] ??= _load(type);
 
-  static Future<AvatarResources> _load() async {
+  static Future<AvatarResources> _load(AvatarCharacterType type) async {
     try {
       final program = await ui.FragmentProgram.fromAsset(
         'shaders/avatar_colors.frag',
       );
-      final data = await rootBundle.load(AppAssets.avatar);
+      final path = type == AvatarCharacterType.mujer
+          ? AppAssets.avatarMujer
+          : AppAssets.avatar;
+      final data = await rootBundle.load(path);
       final codec = await ui.instantiateImageCodec(
         data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
       );
       try {
-        return cached = AvatarResources(
+        return _cached[type] = AvatarResources(
           (await codec.getNextFrame()).image,
           program,
         );
@@ -37,7 +44,7 @@ class AvatarResources {
         codec.dispose();
       }
     } catch (_) {
-      _pending = null;
+      _pending.remove(type);
       rethrow;
     }
   }
@@ -56,18 +63,20 @@ class AvatarCharacter extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     image: true,
     label: 'Avatar personalizado',
-    child: AvatarResources.cached != null
+    child: AvatarResources.cachedFor(config.characterType) != null
         ? _RenderedAvatar(
-            resources: AvatarResources.cached!,
+            resources: AvatarResources.cachedFor(config.characterType)!,
             config: config,
             portrait: portrait,
           )
         : FutureBuilder<AvatarResources>(
-            future: AvatarResources.load(),
+            future: AvatarResources.load(config.characterType),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Image.asset(
-                  AppAssets.avatar,
+                  config.characterType == AvatarCharacterType.mujer
+                      ? AppAssets.avatarMujer
+                      : AppAssets.avatar,
                   fit: portrait ? BoxFit.cover : BoxFit.contain,
                   alignment: portrait ? Alignment.topCenter : Alignment.center,
                   excludeFromSemantics: true,
@@ -145,6 +154,10 @@ class _AvatarPainter extends CustomPainter {
       shader.setFloat(offset + 2, option.color.b);
       shader.setFloat(offset + 3, option.id == 'original' ? 0 : 1);
     }
+    shader.setFloat(
+      18,
+      config.characterType == AvatarCharacterType.mujer ? 1 : 0,
+    );
     shader.setImageSampler(0, image);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }

@@ -155,6 +155,33 @@ class _AvatarScreenState extends State<AvatarScreen> {
                           ),
                           const SizedBox(height: 12),
                           const Text(
+                            'Personaje',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              for (final type in AvatarCharacterType.values)
+                                ChoiceChip(
+                                  label: Text(
+                                    type == AvatarCharacterType.hombre
+                                        ? 'Hombre'
+                                        : 'Mujer',
+                                  ),
+                                  selected: _draft.characterType == type,
+                                  onSelected: (_) => setState(
+                                    () =>
+                                        _draft = _draft.withCharacterType(type),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
                             'Hazlo tuyo',
                             style: TextStyle(
                               fontSize: 24,

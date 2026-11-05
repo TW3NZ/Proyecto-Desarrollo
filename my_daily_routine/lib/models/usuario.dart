@@ -1,3 +1,5 @@
+enum Genero { hombre, mujer }
+
 class Usuario {
   final String name;
   final String lastName;
@@ -5,6 +7,7 @@ class Usuario {
   final String email;
   final String password;
   final DateTime createDate;
+  final Genero genero;
   final String? photo;
 
   const Usuario({
@@ -14,6 +17,7 @@ class Usuario {
     required this.email,
     required this.password,
     required this.createDate,
+    this.genero = Genero.hombre,
     this.photo,
   });
 }

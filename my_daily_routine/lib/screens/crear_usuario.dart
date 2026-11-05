@@ -22,6 +22,7 @@ class _CrearUsuarioState extends State<CrearUsuario> {
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   bool _showPassword = false;
+  Genero? _genero;
 
   @override
   void dispose() {
@@ -71,6 +72,7 @@ class _CrearUsuarioState extends State<CrearUsuario> {
         email: _email.text.trim(),
         password: _password.text,
         createDate: DateTime.now(),
+        genero: _genero!,
       ),
     );
     Navigator.pop(context, true);
@@ -197,6 +199,66 @@ class _CrearUsuarioState extends State<CrearUsuario> {
                       controller: _lastName,
                       validator: (v) => _required(v, 'tu apellido'),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.wc_outlined,
+                                size: 18,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                'Género',
+                                style: TextStyle(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 7),
+                          DropdownButtonFormField<Genero>(
+                            initialValue: _genero,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.fieldFill,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 15,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.field,
+                                ),
+                                borderSide: const BorderSide(
+                                  color: AppColors.fieldBorder,
+                                ),
+                              ),
+                            ),
+                            hint: const Text('Selecciona una opción'),
+                            items: const [
+                              DropdownMenuItem(
+                                value: Genero.hombre,
+                                child: Text('Hombre'),
+                              ),
+                              DropdownMenuItem(
+                                value: Genero.mujer,
+                                child: Text('Mujer'),
+                              ),
+                            ],
+                            validator: (value) =>
+                                value == null ? 'Selecciona tu género.' : null,
+                            onChanged: (value) =>
+                                setState(() => _genero = value),
+                          ),
+                        ],
+                      ),
+                    ),
                     _field(
                       label: 'Nombre de usuario',
                       icon: Icons.alternate_email,
@@ -223,8 +285,9 @@ class _CrearUsuarioState extends State<CrearUsuario> {
                       controller: _confirmPassword,
                       password: true,
                       validator: (v) {
-                        if (v == null || v.isEmpty)
+                        if (v == null || v.isEmpty) {
                           return 'Confirma tu contraseña.';
+                        }
                         return v == _password.text
                             ? null
                             : 'Las contraseñas no coinciden.';

@@ -1,5 +1,19 @@
 # Decisiones sobre el avatar
 
+## 2026-11-05 — Variante femenina seleccionable
+
+El usuario pidió agregar al apartado de avatar un personaje femenino que siga la estructura del personaje existente y proporcionó `my_daily_routine/lib/assets/human_girl.png`.
+
+- Se conserva el PNG original y se incorpora el personaje femenino como variante completa. Ambos recursos tienen lienzo transparente de 887 × 1774.
+- En **Tu avatar** se puede elegir **Hombre** o **Mujer**. La selección se guarda con los colores y la preferencia de movimiento y aparece también en inicio.
+- Las paletas y la animación existentes se reutilizan. El shader amplía la zona de cabello para recolorear el cabello largo de la nueva ilustración.
+- La opción predeterminada sigue siendo Hombre para instalaciones y configuraciones existentes. Esta selección es independiente del género elegido en el formulario de registro; enlazarla a una cuenta queda pendiente hasta que exista una sesión persistente.
+- No se reemplazan ni se alteran los recursos originales. La nueva imagen se consume desde la carpeta de assets ya declarada.
+
+Archivos: `lib/assets/human_girl.png`, `lib/assets_paths.dart`, `lib/models/avatar_config.dart`, `lib/widgets/avatar/avatar_character.dart`, `lib/screens/avatar.dart` y `shaders/avatar_colors.frag`.
+
+Verificación: formato y análisis de los Dart modificados completados; análisis sin incidencias. La imagen tiene canal alfa y coincide con el tamaño del avatar existente. No se ejecutaron pruebas ni se revisó en un dispositivo.
+
 ## 2026-11-04 — Personalización de colores y movimiento suave
 
 El usuario pidió continuar con personalización y animaciones y eligió priorizar «Ambas: ropa y rasgos físicos».
@@ -19,7 +33,7 @@ El usuario pidió continuar con personalización y animaciones y eligió prioriz
 
 `models/avatar_config.dart` define las opciones; `data/avatar_store.dart` carga y guarda; `widgets/avatar/avatar_character.dart` renderiza y anima; `shaders/avatar_colors.frag` aplica colores; `screens/avatar.dart` presenta el editor.
 
-Todavía no hay capas intercambiables, peinados diferentes, prendas con otra silueta, accesorios, parpadeo, saludo con la mano ni celebraciones conectadas a tareas. Esta implementación permite personalizar el personaje actual mientras esas piezas se preparan.
+Todavía no hay capas intercambiables, selección libre de peinados, prendas con otra silueta, accesorios, parpadeo, saludo con la mano ni celebraciones conectadas a tareas. Esta implementación permite personalizar los dos personajes disponibles mientras esas piezas se preparan.
 
 ### Validación y cómo probar
 
