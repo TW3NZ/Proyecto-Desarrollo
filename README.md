@@ -20,6 +20,7 @@ Aplicación desarrollada en Flutter como parte de un proyecto académico de desa
 
 - Dart.
 - Flutter.
+- Python
 
 ## Arquitectura
 
