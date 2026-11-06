@@ -2,16 +2,18 @@ class AppAssets {
   // rutas de iconos y recursos visuales
   AppAssets._();
 
-  static const String avatar = 'lib/assets/avatar_human_v2.png';
-  static const String avatarMujer = 'lib/assets/human_girl.png';
+  static const String avatar = 'lib/assets/avatar/avatar_human_v2.png';
+  static const String avatarMujer = 'lib/assets/avatar/human_girl.png';
+  static const String davo = 'lib/assets/recursos/davo.png';
+  static const String iconApp = 'lib/assets/recursos/icon_app.png';
   // La miniatura encuadra la parte superior del mismo personaje.
   static const String avatarThumb = avatar;
 
   static const List<String> homeBackgrounds = [
-    'lib/assets/background1.png',
-    'lib/assets/background2.png',
-    'lib/assets/background3.png',
-    'lib/assets/background4.png',
+    'lib/assets/background/background1.png',
+    'lib/assets/background/background2.png',
+    'lib/assets/background/background3.png',
+    'lib/assets/background/background4.png',
   ];
 
   static const String iconNotificaciones =

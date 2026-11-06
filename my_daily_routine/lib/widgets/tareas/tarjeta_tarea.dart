@@ -8,29 +8,21 @@ import 'detalle_tarea.dart';
 class TarjetaTarea extends StatelessWidget {
   final NuevaTarea tarea;
 
-  const TarjetaTarea({
-    super.key,
-    required this.tarea,
-  });
+  const TarjetaTarea({super.key, required this.tarea});
 
   @override
   Widget build(BuildContext context) {
     final colorPrioridad = switch (tarea.prioridad) {
-      PrioridadTarea.alta =>
-        const Color(0xFFE05252),
-      PrioridadTarea.media =>
-        const Color(0xFFE49A28),
-      PrioridadTarea.baja =>
-        const Color(0xFF4C9A72),
+      PrioridadTarea.alta => const Color(0xFFE05252),
+      PrioridadTarea.media => const Color(0xFFE49A28),
+      PrioridadTarea.baja => const Color(0xFF4C9A72),
     };
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.fieldBorder,
-        ),
+        border: Border.all(color: AppColors.fieldBorder),
       ),
       child: Row(
         children: [
@@ -41,8 +33,7 @@ class TarjetaTarea extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             onChanged: (_) {
-              TareasStore.instancia
-                  .alternarCompletada(tarea);
+              TareasStore.instancia.alternarCompletada(tarea);
             },
           ),
 
@@ -50,24 +41,17 @@ class TarjetaTarea extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                mostrarDetalleTarea(
-                  context,
-                  tarea,
-                );
+                mostrarDetalleTarea(context, tarea);
               },
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       tarea.titulo,
                       maxLines: 2,
-                      overflow:
-                          TextOverflow.ellipsis,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: tarea.completada
                             ? AppColors.textMuted
@@ -115,14 +99,10 @@ class TarjetaTarea extends StatelessWidget {
                           Expanded(
                             child: Text(
                               tarea.categorias
-                                  .map(
-                                    (categoria) =>
-                                        categoria.etiqueta,
-                                  )
+                                  .map((categoria) => categoria.etiqueta)
                                   .join(', '),
                               maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 color: AppColors.textMuted,
                                 fontSize: 11,
@@ -133,6 +113,35 @@ class TarjetaTarea extends StatelessWidget {
                         ],
                       ],
                     ),
+                    if (tarea.fechaFinalizacion != null) ...[
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.event_available_rounded,
+                            size: 14,
+                            color:
+                                _fechaVencida(tarea.fechaFinalizacion!) &&
+                                    !tarea.completada
+                                ? const Color(0xFFE05252)
+                                : AppColors.textMuted,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Finaliza ${_formatearFecha(tarea.fechaFinalizacion!)}',
+                            style: TextStyle(
+                              color:
+                                  _fechaVencida(tarea.fechaFinalizacion!) &&
+                                      !tarea.completada
+                                  ? const Color(0xFFE05252)
+                                  : AppColors.textMuted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -147,10 +156,7 @@ class TarjetaTarea extends StatelessWidget {
               size: 27,
             ),
             onPressed: () {
-              mostrarDetalleTarea(
-                context,
-                tarea,
-              );
+              mostrarDetalleTarea(context, tarea);
             },
           ),
         ],
@@ -158,3 +164,11 @@ class TarjetaTarea extends StatelessWidget {
     );
   }
 }
+
+bool _fechaVencida(DateTime fecha) =>
+    DateUtils.dateOnly(fecha).isBefore(DateUtils.dateOnly(DateTime.now()));
+
+String _formatearFecha(DateTime fecha) =>
+    '${fecha.day.toString().padLeft(2, '0')}/'
+    '${fecha.month.toString().padLeft(2, '0')}/'
+    '${fecha.year}';

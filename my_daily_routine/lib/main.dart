@@ -3,7 +3,6 @@ import 'package:home_widget/home_widget.dart';
 import 'package:my_daily_routine/screens/estadisticas.dart';
 import 'package:my_daily_routine/screens/tareas.dart';
 import 'package:my_daily_routine/screens/general.dart';
-
 import 'routes.dart';
 import 'screens/add.dart';
 import 'screens/home.dart';

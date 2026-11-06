@@ -431,7 +431,7 @@ class _GreetingChip extends StatelessWidget {
                 child: ClipOval(
                   child: Center(
                     child: Image.asset(
-                      'lib/assets/davo.png',
+                      AppAssets.davo,
                       width: 30,
                       height: 30,
                       fit: BoxFit.contain,

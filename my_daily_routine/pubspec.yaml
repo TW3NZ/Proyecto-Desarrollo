@@ -22,5 +22,9 @@ flutter:
 
   assets:
     - lib/assets/
+    - lib/assets/avatar/
+    - lib/assets/background/
+    - lib/assets/icons/
+    - lib/assets/recursos/
   shaders:
     - shaders/avatar_colors.frag

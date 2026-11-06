@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
+
 import '../../models/tarea_modelo.dart';
 import '../../theme.dart';
 
-void mostrarDetalleTarea(
-  BuildContext context,
-  NuevaTarea tarea,
-) {
+void mostrarDetalleTarea(BuildContext context, NuevaTarea tarea) {
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
     backgroundColor: AppColors.background,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(28),
-      ),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
     builder: (context) {
       final fecha = tarea.fecha;
@@ -25,16 +21,10 @@ void mostrarDetalleTarea(
 
       return SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            22,
-            4,
-            22,
-            24,
-          ),
+          padding: const EdgeInsets.fromLTRB(22, 4, 22, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 tarea.titulo,
@@ -59,9 +49,18 @@ void mostrarDetalleTarea(
 
               _DetalleFila(
                 icono: Icons.calendar_today_rounded,
-                titulo: 'Fecha',
+                titulo: 'Fecha de creación',
                 valor: fechaTexto,
               ),
+
+              if (tarea.fechaFinalizacion != null) ...[
+                const SizedBox(height: 13),
+                _DetalleFila(
+                  icono: Icons.event_available_rounded,
+                  titulo: 'Fecha de finalización',
+                  valor: _formatearFecha(tarea.fechaFinalizacion!),
+                ),
+              ],
 
               const SizedBox(height: 13),
 
@@ -79,11 +78,8 @@ void mostrarDetalleTarea(
                 valor: tarea.categorias.isEmpty
                     ? 'Sin categoría'
                     : tarea.categorias
-                        .map(
-                          (categoria) =>
-                              categoria.etiqueta,
-                        )
-                        .join(', '),
+                          .map((categoria) => categoria.etiqueta)
+                          .join(', '),
               ),
             ],
           ),
@@ -107,21 +103,15 @@ class _DetalleFila extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icono,
-          color: AppColors.primary,
-          size: 21,
-        ),
+        Icon(icono, color: AppColors.primary, size: 21),
 
         const SizedBox(width: 11),
 
         Expanded(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 titulo,
@@ -149,3 +139,8 @@ class _DetalleFila extends StatelessWidget {
     );
   }
 }
+
+String _formatearFecha(DateTime fecha) =>
+    '${fecha.day.toString().padLeft(2, '0')}/'
+    '${fecha.month.toString().padLeft(2, '0')}/'
+    '${fecha.year}';

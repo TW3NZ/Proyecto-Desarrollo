@@ -22,17 +22,10 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:contentDescription="Daily Routine"
-                android:src="@mipmap/ic_launcher" />
-
             <TextView
                 android:id="@+id/widget_app_name"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="9dp"
                 android:layout_weight="1"
                 android:text="Daily Routine"
                 android:textColor="#FFFFFF"

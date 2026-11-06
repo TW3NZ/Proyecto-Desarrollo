@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../data/tareas_store.dart';
 import '../models/tarea_modelo.dart';
+import '../theme.dart';
 import '../utils/snackbar_utils.dart';
 import '../widgets/anadir_tarea/campo_texto_tarea.dart';
 import '../widgets/anadir_tarea/etiqueta_seccion.dart';
@@ -28,6 +30,7 @@ class _AddScreenState extends State<AddScreen> {
 
   final Set<CategoriaTarea> _categorias = {};
   PrioridadTarea _prioridad = PrioridadTarea.media;
+  DateTime? _fechaFinalizacion;
 
   @override
   void dispose() {
@@ -41,6 +44,28 @@ class _AddScreenState extends State<AddScreen> {
       if (!_categorias.remove(categoria)) _categorias.add(categoria);
     });
   }
+
+  Future<void> _seleccionarFechaFinalizacion() async {
+    final hoy = DateUtils.dateOnly(DateTime.now());
+    final fecha = await showDatePicker(
+      context: context,
+      initialDate: _fechaFinalizacion ?? hoy,
+      firstDate: hoy,
+      lastDate: DateTime(hoy.year + 10),
+      helpText: 'Selecciona la fecha de finalización',
+      cancelText: 'Cancelar',
+      confirmText: 'Elegir',
+    );
+
+    if (fecha != null && mounted) {
+      setState(() => _fechaFinalizacion = DateUtils.dateOnly(fecha));
+    }
+  }
+
+  String _formatearFecha(DateTime fecha) =>
+      '${fecha.day.toString().padLeft(2, '0')}/'
+      '${fecha.month.toString().padLeft(2, '0')}/'
+      '${fecha.year}';
 
   void _crearTarea() {
     final titulo = _tituloController.text.trim();
@@ -59,6 +84,7 @@ class _AddScreenState extends State<AddScreen> {
       categorias: Set.unmodifiable(_categorias),
       prioridad: _prioridad,
       descripcion: _descripcionController.text.trim(),
+      fechaFinalizacion: _fechaFinalizacion,
     );
 
     TareasStore.instancia.agregarTarea(tarea);
@@ -125,6 +151,51 @@ class _AddScreenState extends State<AddScreen> {
                     ),
                     const SizedBox(height: 22),
 
+                    // ---- Fecha de finalización ----
+                    const EtiquetaSeccion(
+                      icono: Icons.event_available_rounded,
+                      texto: 'Fecha de finalización',
+                      nota: '(opcional)',
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _seleccionarFechaFinalizacion,
+                            icon: const Icon(Icons.calendar_month_rounded),
+                            label: Text(
+                              _fechaFinalizacion == null
+                                  ? 'Elegir fecha'
+                                  : _formatearFecha(_fechaFinalizacion!),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              backgroundColor: AppColors.fieldFill,
+                              side: const BorderSide(
+                                color: AppColors.fieldBorder,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (_fechaFinalizacion != null) ...[
+                          const SizedBox(width: 8),
+                          IconButton(
+                            tooltip: 'Quitar fecha',
+                            onPressed: () =>
+                                setState(() => _fechaFinalizacion = null),
+                            icon: const Icon(Icons.close_rounded),
+                            color: AppColors.textMuted,
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+
                     // ---- Descripción ----
                     const EtiquetaSeccion(
                       icono: Icons.notes_rounded,
@@ -161,4 +232,3 @@ class _AddScreenState extends State<AddScreen> {
     );
   }
 }
-

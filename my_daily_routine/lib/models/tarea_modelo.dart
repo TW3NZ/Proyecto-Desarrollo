@@ -29,6 +29,7 @@ class NuevaTarea {
   final PrioridadTarea prioridad;
   final String descripcion;
   final DateTime fecha;
+  final DateTime? fechaFinalizacion;
   bool completada;
 
   NuevaTarea({
@@ -37,6 +38,7 @@ class NuevaTarea {
     required this.prioridad,
     this.descripcion = '',
     DateTime? fecha,
+    this.fechaFinalizacion,
     this.completada = false,
   }) : fecha = fecha ?? DateTime.now();
 }

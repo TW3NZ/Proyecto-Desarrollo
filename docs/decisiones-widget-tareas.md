@@ -1,5 +1,13 @@
 # Widget de tareas para Android
 
+## 2026-11-05 — Color de cabecera alineado con Flutter
+
+El usuario pidió usar en la cabecera del widget el azul de `lib`. Se reemplaza el sólido anterior por el degradado de `AppGradients.primary` (`#4169E1` → `#2F80ED`), replicado en el drawable nativo. No cambia el diseño ni el comportamiento del resto del widget.
+
+## 2026-11-05 — Cabecera sin icono de app
+
+El usuario pidió quitar el icono de la app del widget. Se elimina la imagen de launcher de la cabecera Android; el nombre y los indicadores del widget permanecen. El cambio se limita a la presentación y no altera los datos ni la interacción.
+
 ## 2026-11-04 — Primera versión nativa
 
 ### Acuerdo del usuario

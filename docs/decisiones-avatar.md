@@ -1,5 +1,23 @@
 # Decisiones sobre el avatar
 
+## 2026-11-05 — Inclusión explícita de subcarpetas de assets
+
+Al revisar un bloqueo al entrar a inicio, se detectó que `lib/assets/` por sí sola no incorpora imágenes guardadas en subcarpetas. Se añadieron entradas explícitas para `avatar/`, `background/`, `icons/` y `recursos/` en `pubspec.yaml`. Las rutas del código ya apuntan a esas carpetas. El usuario debe hacer un nuevo build/instalar de nuevo para que los assets se empaqueten con el manifiesto actualizado; hot reload no actualiza un paquete instalado.
+
+## 2026-11-05 — Organización de recursos de avatar
+
+Se agrupan los PNG de personajes en `my_daily_routine/lib/assets/avatar/` para separar las ilustraciones de avatar de fondos, iconos y otros recursos. Se trasladaron los avatares heredados y las variantes v1, v2 y femenina; no se modificaron sus contenidos ni se eliminaron originales. `pubspec.yaml` declara la carpeta de avatar de forma explícita; Flutter no incluye automáticamente subdirectorios al declarar solo la carpeta padre. `AppAssets` ahora apunta a las nuevas rutas de los personajes activos.
+
+Pendiente: ninguno para el cambio de rutas.
+
+## 2026-11-05 — Organización de recursos adicionales
+
+A petición del usuario, `davo.png` e `icon_app.png` se trasladaron a `my_daily_routine/lib/assets/recursos/`. La referencia de Davo en inicio ahora usa `AppAssets.davo`; se añadió también `AppAssets.iconApp` para la ruta del icono. `pubspec.yaml` declara `lib/assets/recursos/` explícitamente. Los PNG no se modificaron.
+
+## 2026-11-05 — Organización de fondos
+
+A petición del usuario, los cuatro fondos de inicio se agrupan en `my_daily_routine/lib/assets/background/` y `AppAssets.homeBackgrounds` apunta a esas rutas. `pubspec.yaml` declara `lib/assets/background/` explícitamente; declarar la carpeta padre no basta para incluir subdirectorios. Los archivos de imagen no se alteraron.
+
 ## 2026-11-05 — Variante femenina seleccionable
 
 El usuario pidió agregar al apartado de avatar un personaje femenino que siga la estructura del personaje existente y proporcionó `my_daily_routine/lib/assets/human_girl.png`.
