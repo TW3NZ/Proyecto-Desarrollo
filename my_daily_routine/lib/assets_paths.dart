@@ -6,6 +6,7 @@ class AppAssets {
   static const String avatarMujer = 'lib/assets/avatar/human_girl.png';
   static const String davo = 'lib/assets/recursos/davo.png';
   static const String iconApp = 'lib/assets/recursos/icon_app.png';
+  static const String cabeceraLogin = 'lib/assets/recursos/cabecera_login.png';
   // La miniatura encuadra la parte superior del mismo personaje.
   static const String avatarThumb = avatar;
 

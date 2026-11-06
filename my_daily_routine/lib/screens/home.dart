@@ -137,7 +137,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _GreetingChip(text: _frase),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _GreetingChip(text: _frase),
+                            const SizedBox(height: 8),
+                            Tooltip(
+                              message: 'Cerrar sesión',
+                              child: CircleMenuButton(
+                                icon: Icons.logout_rounded,
+                                size: 44,
+                                onTap: () => Navigator.pushNamedAndRemoveUntil(
+                                  context,
+                                  AppRoutes.login,
+                                  (_) => false,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         const Spacer(),
                         Column(
                           children: [
@@ -209,21 +227,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                       const SizedBox(height: 14),
                                       CircleMenuButton(
-                                        icon: Icons.card_giftcard_rounded,
-                                        iconAsset: AppAssets.iconRegalo,
+                                        label: 'Avatar',
+                                        icon: Icons.person_rounded,
+                                        iconAsset: AppAssets.iconPersonalizar,
                                         size: menuSize,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.avatar,
+                                        ),
                                       ),
                                     ],
-                                  ),
-                                  CircleMenuButton(
-                                    label: 'Avatar',
-                                    icon: Icons.person_rounded,
-                                    iconAsset: AppAssets.iconPersonalizar,
-                                    size: menuSize,
-                                    onTap: () => Navigator.pushNamed(
-                                      context,
-                                      AppRoutes.avatar,
-                                    ),
                                   ),
                                 ],
                               ),

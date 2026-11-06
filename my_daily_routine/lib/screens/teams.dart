@@ -8,6 +8,7 @@ import '../widgets/common/cabecera_app.dart';
 import '../widgets/equipos/encabezado_teams_activos.dart';
 import '../widgets/equipos/insignia_seccion.dart';
 import '../widgets/equipos/tarjeta_accion_team.dart';
+import '../widgets/equipos/tarjeta_id_usuario.dart';
 import '../widgets/equipos/tarjeta_team_activo.dart';
 import 'dentro_team.dart';
 
@@ -90,6 +91,10 @@ class _TeamsScreenState extends State<TeamsScreen> {
                     ),
                   ),
                   const SizedBox(height: 26),
+
+                  // ---- ID personal (pendiente de definir asignación) ----
+                  const TarjetaIdUsuario(),
+                  const SizedBox(height: 16),
 
                   // ---- Acciones principales ----
                   TarjetaAccionTeam(
