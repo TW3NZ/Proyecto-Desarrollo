@@ -6,6 +6,8 @@ Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consu
 
 **Aplicación:** Flutter / Dart
 
+**Tecnologías del repositorio:** Dart, Flutter y Python
+
 ## Funciones actuales
 
 - **Inicio de sesión y registro:** pantalla con la cabecera ilustrada de referencia y acceso con correo o nombre de usuario y contraseña. Incluye una cuenta local de práctica: `admin` / `12345678`. Las cuentas creadas durante el registro solo existen mientras la aplicación sigue en ejecución.
