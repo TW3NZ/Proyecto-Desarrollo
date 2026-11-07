@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../assets_paths.dart';
 import '../data/usuarios_store.dart';
 import '../models/usuario.dart';
 import '../theme.dart';
-import '../widgets/auth/app_logo.dart';
 import '../widgets/common/primary_button.dart';
 
 class CrearUsuario extends StatefulWidget {
@@ -155,156 +155,181 @@ class _CrearUsuarioState extends State<CrearUsuario> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 4, 24, 28),
-          child: Column(
-            children: [
-              const AppLogo(),
-              const SizedBox(height: 18),
-              Text(
-                'Crear cuenta',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Completa tus datos para comenzar',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 20),
-              const CircleAvatar(
-                radius: 38,
-                backgroundColor: Color(0xFFD6E2FB),
-                child: Icon(
-                  Icons.add_a_photo_outlined,
-                  color: AppColors.primary,
-                  size: 28,
+      backgroundColor: const Color(0xFFEAF2FF),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final ancho = constraints.maxWidth;
+          final altoCabecera = ancho * 444 / 1024;
+          final altoContenido = (constraints.maxHeight - altoCabecera).clamp(
+            0.0,
+            double.infinity,
+          );
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1024 / 444,
+                  child: Image.asset(
+                    AppAssets.cabeceraLogin,
+                    width: ancho,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 22),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    _field(
-                      label: 'Nombre',
-                      icon: Icons.person_outline,
-                      controller: _name,
-                      validator: (v) => _required(v, 'tu nombre'),
-                    ),
-                    _field(
-                      label: 'Apellido',
-                      icon: Icons.person_outline,
-                      controller: _lastName,
-                      validator: (v) => _required(v, 'tu apellido'),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.wc_outlined,
-                                size: 18,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 7),
-                              Text(
-                                'Género',
-                                style: TextStyle(
-                                  color: AppColors.primaryDark,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 7),
-                          DropdownButtonFormField<Genero>(
-                            initialValue: _genero,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: AppColors.fieldFill,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 15,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.field,
-                                ),
-                                borderSide: const BorderSide(
-                                  color: AppColors.fieldBorder,
-                                ),
+                Container(
+                  constraints: BoxConstraints(minHeight: altoContenido),
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.fromLTRB(28, 22, 28, 30),
+                  decoration: const BoxDecoration(color: Colors.white),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Crear cuenta',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w800,
+                            ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Completa tus datos para comenzar',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 20),
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            _field(
+                              label: 'Nombre',
+                              icon: Icons.person_outline,
+                              controller: _name,
+                              validator: (v) => _required(v, 'tu nombre'),
+                            ),
+                            _field(
+                              label: 'Apellido',
+                              icon: Icons.person_outline,
+                              controller: _lastName,
+                              validator: (v) => _required(v, 'tu apellido'),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.wc_outlined,
+                                        size: 18,
+                                        color: AppColors.primary,
+                                      ),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        'Género',
+                                        style: TextStyle(
+                                          color: AppColors.primaryDark,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 7),
+                                  DropdownButtonFormField<Genero>(
+                                    initialValue: _genero,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: AppColors.fieldFill,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 15,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.field,
+                                        ),
+                                        borderSide: const BorderSide(
+                                          color: AppColors.fieldBorder,
+                                        ),
+                                      ),
+                                    ),
+                                    hint: const Text('Selecciona una opción'),
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: Genero.hombre,
+                                        child: Text('Hombre'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: Genero.mujer,
+                                        child: Text('Mujer'),
+                                      ),
+                                    ],
+                                    validator: (value) => value == null
+                                        ? 'Selecciona tu género.'
+                                        : null,
+                                    onChanged: (value) =>
+                                        setState(() => _genero = value),
+                                  ),
+                                ],
                               ),
                             ),
-                            hint: const Text('Selecciona una opción'),
-                            items: const [
-                              DropdownMenuItem(
-                                value: Genero.hombre,
-                                child: Text('Hombre'),
-                              ),
-                              DropdownMenuItem(
-                                value: Genero.mujer,
-                                child: Text('Mujer'),
-                              ),
-                            ],
-                            validator: (value) =>
-                                value == null ? 'Selecciona tu género.' : null,
-                            onChanged: (value) =>
-                                setState(() => _genero = value),
-                          ),
-                        ],
+                            _field(
+                              label: 'Nombre de usuario',
+                              icon: Icons.alternate_email,
+                              controller: _nickName,
+                              validator: (v) =>
+                                  _required(v, 'un nombre de usuario'),
+                            ),
+                            _field(
+                              label: 'Correo electrónico',
+                              icon: Icons.mail_outline,
+                              controller: _email,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: _validateEmail,
+                            ),
+                            _field(
+                              label: 'Contraseña',
+                              icon: Icons.lock_outline,
+                              controller: _password,
+                              password: true,
+                              validator: _validatePassword,
+                            ),
+                            _field(
+                              label: 'Confirmar contraseña',
+                              icon: Icons.lock_outline,
+                              controller: _confirmPassword,
+                              password: true,
+                              validator: (v) {
+                                if (v == null || v.isEmpty) {
+                                  return 'Confirma tu contraseña.';
+                                }
+                                return v == _password.text
+                                    ? null
+                                    : 'Las contraseñas no coinciden.';
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    _field(
-                      label: 'Nombre de usuario',
-                      icon: Icons.alternate_email,
-                      controller: _nickName,
-                      validator: (v) => _required(v, 'un nombre de usuario'),
-                    ),
-                    _field(
-                      label: 'Correo electrónico',
-                      icon: Icons.mail_outline,
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: _validateEmail,
-                    ),
-                    _field(
-                      label: 'Contraseña',
-                      icon: Icons.lock_outline,
-                      controller: _password,
-                      password: true,
-                      validator: _validatePassword,
-                    ),
-                    _field(
-                      label: 'Confirmar contraseña',
-                      icon: Icons.lock_outline,
-                      controller: _confirmPassword,
-                      password: true,
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Confirma tu contraseña.';
-                        }
-                        return v == _password.text
-                            ? null
-                            : 'Las contraseñas no coinciden.';
-                      },
-                    ),
-                  ],
+                      PrimaryButton(
+                        text: 'Crear cuenta',
+                        onPressed: _crearCuenta,
+                      ),
+                      const SizedBox(height: 14),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Volver al inicio de sesión'),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              PrimaryButton(text: 'Crear cuenta', onPressed: _crearCuenta),
-              const SizedBox(height: 14),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Volver al inicio de sesión'),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

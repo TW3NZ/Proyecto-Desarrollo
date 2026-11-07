@@ -8,6 +8,7 @@ import '../routes.dart';
 import '../theme.dart';
 import '../widgets/auth/labeled_text_field.dart';
 import '../widgets/auth/text_link.dart';
+import 'welcome.dart';
 
 /// Pantalla de inicio de sesión.
 class LoginScreen extends StatefulWidget {
@@ -31,7 +32,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _iniciarSesion() {
     if (UsuariosStore.autenticar(_identificador.text, _password.text)) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      final mostrarTutorial = UsuariosStore.consumirTutorialPendiente(
+        _identificador.text,
+      );
+      if (mostrarTutorial) {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.welcome,
+          arguments: const WelcomeArguments(mostrarTutorial: true),
+        );
+      } else {
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      }
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(

@@ -17,6 +17,18 @@ class UsuariosStore {
   );
 
   static final List<Usuario> _usuarios = [_usuarioPractica];
+  static String? _nickConTutorialPendiente;
+
+  static bool consumirTutorialPendiente(String identificador) {
+    final usuario = buscarPorIdentificador(identificador);
+    if (usuario == null ||
+        usuario.nickName.toLowerCase() !=
+            _nickConTutorialPendiente?.toLowerCase()) {
+      return false;
+    }
+    _nickConTutorialPendiente = null;
+    return true;
+  }
 
   static List<Usuario> get usuarios => List.unmodifiable(_usuarios);
 
@@ -43,6 +55,7 @@ class UsuariosStore {
       throw StateError('El correo o nombre de usuario ya está registrado.');
     }
     _usuarios.add(usuario);
+    _nickConTutorialPendiente = usuario.nickName;
   }
 
   static bool autenticar(String identificador, String password) {

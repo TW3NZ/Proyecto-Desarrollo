@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../../assets_paths.dart';
 import '../../theme.dart';
 import 'round_buttons.dart';
@@ -15,8 +16,14 @@ class _NavItem {
 class HomeBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
+  final Widget Function(Widget child)? teamsItemGuide;
 
-  const HomeBottomBar({super.key, this.currentIndex = 0, this.onTap});
+  const HomeBottomBar({
+    super.key,
+    this.currentIndex = 0,
+    this.onTap,
+    this.teamsItemGuide,
+  });
 
   static const _items = [
     _NavItem('Inicio', Icons.home_rounded, AppAssets.iconNavInicio),
@@ -31,7 +38,10 @@ class HomeBottomBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppGradients.bottomBar,
         borderRadius: BorderRadius.circular(37),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.7), width: 2),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.7),
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryDark.withValues(alpha: 0.35),
@@ -42,16 +52,21 @@ class HomeBottomBar extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          for (var i = 0; i < _items.length; i++)
-            _BarItem(
-              item: _items[i],
-              selected: i == currentIndex,
-              onTap: onTap == null ? null : () => onTap!(i),
-            ),
-        ],
+        children: [for (var i = 0; i < _items.length; i++) _buildItem(i)],
       ),
     );
+  }
+
+  Widget _buildItem(int index) {
+    final item = _BarItem(
+      item: _items[index],
+      selected: index == currentIndex,
+      onTap: onTap == null ? null : () => onTap!(index),
+    );
+    if (index == 1 && teamsItemGuide != null) {
+      return teamsItemGuide!(item);
+    }
+    return item;
   }
 }
 

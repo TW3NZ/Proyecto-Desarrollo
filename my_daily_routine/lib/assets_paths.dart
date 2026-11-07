@@ -5,8 +5,16 @@ class AppAssets {
   static const String avatar = 'lib/assets/avatar/avatar_human_v2.png';
   static const String avatarMujer = 'lib/assets/avatar/human_girl.png';
   static const String davo = 'lib/assets/recursos/davo.png';
+  static const String davoGuideTasks = 'lib/assets/davo_recursos/davo_06.png';
+  static const String davoGuideAvatar = 'lib/assets/davo_recursos/davo_02.png';
+  static const String davoGuideProgress =
+      'lib/assets/davo_recursos/davo_05.png';
+  static const String davoGuideStartTask =
+      'lib/assets/davo_recursos/davo_07.png';
+  static const String davoGuideTeams = 'lib/assets/davo_recursos/davo_10.png';
   static const String iconApp = 'lib/assets/recursos/icon_app.png';
   static const String cabeceraLogin = 'lib/assets/recursos/cabecera_login.png';
+  static const String welcome = 'lib/assets/recursos/welcome.png';
   // La miniatura encuadra la parte superior del mismo personaje.
   static const String avatarThumb = avatar;
 

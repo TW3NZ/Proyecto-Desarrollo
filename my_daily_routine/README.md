@@ -1,10 +1,10 @@
 # Daily Routine
 
-Aplicación Flutter para organizar tareas y seguir su cumplimiento.
+Aplicación Flutter para organizar tareas y seguir su cumplimiento. Consulta el [README principal](../README.md) para el estado completo de la aplicación.
 
 ## Widget de tareas para Android
 
-La aplicación incluye un widget nativo para Android. Muestra el nombre e icono de **Daily Routine**, el total de tareas pendientes, el porcentaje completado, una barra de progreso y una lista desplazable con las tareas y su prioridad. Tocar una fila abre la aplicación y marca la tarea usando el `TareasStore` existente; el widget se actualiza con el nuevo progreso.
+La aplicación incluye un widget nativo para Android. Muestra el nombre **Daily Routine**, el total de tareas pendientes, el porcentaje completado, una barra de progreso y una lista desplazable con las tareas y su prioridad. Tocar una fila abre la aplicación y marca la tarea usando el `TareasStore` existente; el widget se actualiza con el nuevo progreso. La cabecera no muestra el icono de la app.
 
 ### Cómo agregarlo a la pantalla de inicio
 

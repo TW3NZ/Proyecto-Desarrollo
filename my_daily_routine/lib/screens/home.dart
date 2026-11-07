@@ -14,16 +14,25 @@ import '../widgets/home/round_buttons.dart';
 import 'dart:async';
 import 'dart:math';
 
+import 'package:showcaseview/showcaseview.dart';
+
 /// Pantalla principal. Es StatefulWidget solo para recordar qué fondo se está
 /// mostrando (el botón de la esquina superior derecha los va alternando).
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.mostrarTutorial = false});
+
+  final bool mostrarTutorial;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _tareasKey = GlobalKey();
+  final _avatarKey = GlobalKey();
+  final _estadisticasKey = GlobalKey();
+  final _anadirTareaKey = GlobalKey();
+  final _teamsKey = GlobalKey();
   int _bgIndex = 0;
   String _estadisticaSeleccionada = 'Inteligencia';
 
@@ -70,6 +79,19 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _frase = _frases[Random().nextInt(_frases.length)];
+    if (widget.mostrarTutorial) {
+      ShowcaseView.register(skipIfTargetNotPresent: true);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ShowcaseView.get().startShowCase([
+          _tareasKey,
+          _avatarKey,
+          _estadisticasKey,
+          _anadirTareaKey,
+          _teamsKey,
+        ], delay: const Duration(milliseconds: 500));
+      });
+    }
     _timerFrase = Timer.periodic(
       const Duration(minutes: 2),
       (_) => _cambiarFrase(),
@@ -79,6 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timerFrase?.cancel();
+    if (widget.mostrarTutorial) ShowcaseView.get().unregister();
     super.dispose();
   }
 
@@ -95,6 +118,44 @@ class _HomeScreenState extends State<HomeScreen> {
     final total = AppAssets.homeBackgrounds.length;
     if (total < 2) return;
     setState(() => _bgIndex = (_bgIndex + 1) % total);
+  }
+
+  Widget _burbujaGuia({
+    required GlobalKey key,
+    required int paso,
+    required String titulo,
+    required String descripcion,
+    required String davoAsset,
+    required TooltipPosition tooltipPosition,
+    required Widget child,
+  }) {
+    final anchoPantalla = MediaQuery.sizeOf(context).width;
+    final anchoBurbuja = switch (tooltipPosition) {
+      TooltipPosition.left ||
+      TooltipPosition.right => min(anchoPantalla * 0.68, 380.0),
+      TooltipPosition.top ||
+      TooltipPosition.bottom => min(anchoPantalla - 32, 380.0),
+    };
+
+    return Showcase.withWidget(
+      key: key,
+      tooltipPosition: tooltipPosition,
+      targetShapeBorder: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+      ),
+      targetPadding: const EdgeInsets.all(4),
+      overlayColor: AppColors.primaryDark,
+      overlayOpacity: 0.76,
+      container: _BurbujaGuia(
+        paso: paso,
+        total: 5,
+        titulo: titulo,
+        descripcion: descripcion,
+        davoAsset: davoAsset,
+        ancho: anchoBurbuja,
+      ),
+      child: child,
+    );
   }
 
   void _onBottomBarTap(int index) {
@@ -140,7 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _GreetingChip(text: _frase),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: width * 0.68,
+                              ),
+                              child: _GreetingChip(text: _frase),
+                            ),
                             const SizedBox(height: 8),
                             Tooltip(
                               message: 'Cerrar sesión',
@@ -204,14 +270,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      CircleMenuButton(
-                                        label: 'Tareas Diarias',
-                                        icon: Icons.checklist_rounded,
-                                        iconAsset: AppAssets.iconTareasDiarias,
-                                        size: menuSize,
-                                        onTap: () => Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.tareas,
+                                      _burbujaGuia(
+                                        key: _tareasKey,
+                                        paso: 1,
+                                        titulo: 'Tus tareas',
+                                        descripcion: 'Aquí consultas las tareas del día y tu progreso.',
+                                        davoAsset: AppAssets.davoGuideTasks,
+                                        tooltipPosition: TooltipPosition.right,
+                                        child: CircleMenuButton(
+                                          label: 'Tareas Diarias',
+                                          icon: Icons.checklist_rounded,
+                                          iconAsset:
+                                              AppAssets.iconTareasDiarias,
+                                          size: menuSize,
+                                          onTap: () => Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.tareas,
+                                          ),
                                         ),
                                       ),
                                       const SizedBox(height: 20),
@@ -226,14 +301,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 14),
-                                      CircleMenuButton(
-                                        label: 'Avatar',
-                                        icon: Icons.person_rounded,
-                                        iconAsset: AppAssets.iconPersonalizar,
-                                        size: menuSize,
-                                        onTap: () => Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.avatar,
+                                      _burbujaGuia(
+                                        key: _avatarKey,
+                                        paso: 2,
+                                        titulo: 'Tu avatar',
+                                        descripcion: 'Personaliza sus colores desde aquí.',
+                                        davoAsset: AppAssets.davoGuideAvatar,
+                                        tooltipPosition: TooltipPosition.right,
+                                        child: CircleMenuButton(
+                                          label: 'Avatar',
+                                          icon: Icons.person_rounded,
+                                          iconAsset: AppAssets.iconPersonalizar,
+                                          size: menuSize,
+                                          onTap: () => Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.avatar,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -319,15 +402,23 @@ class _HomeScreenState extends State<HomeScreen> {
                                   return Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      StatBubble(
-                                        title: 'General',
-                                        value:
-                                            '${estadisticas.general.toStringAsFixed(0)}/100',
-                                        progress: estadisticas.general / 100,
-                                        icon:
-                                            Icons.local_fire_department_rounded,
-                                        iconAsset: AppAssets.iconAura,
-                                        size: statSize,
+                                      _burbujaGuia(
+                                        key: _estadisticasKey,
+                                        paso: 3,
+                                        titulo: 'Tu progreso',
+                                        descripcion: 'Las estadísticas resumen cómo avanzas con tus tareas.',
+                                        davoAsset: AppAssets.davoGuideProgress,
+                                        tooltipPosition: TooltipPosition.left,
+                                        child: StatBubble(
+                                          title: 'General',
+                                          value:
+                                              '${estadisticas.general.toStringAsFixed(0)}/100',
+                                          progress: estadisticas.general / 100,
+                                          icon: Icons
+                                              .local_fire_department_rounded,
+                                          iconAsset: AppAssets.iconAura,
+                                          size: statSize,
+                                        ),
                                       ),
                                       const SizedBox(height: 30),
                                       StatBubble(
@@ -393,20 +484,213 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     // ---- Botón central ----
-                    AddTaskButton(
-                      iconAsset: AppAssets.iconAnadirTarea,
-                      onTap: () => Navigator.pushNamed(context, AppRoutes.add),
+                    _burbujaGuia(
+                      key: _anadirTareaKey,
+                      paso: 4,
+                      titulo: 'Empieza con una tarea',
+                      descripcion:
+                          'Añade una tarea propia para comenzar tu rutina.',
+                      davoAsset: AppAssets.davoGuideStartTask,
+                      tooltipPosition: TooltipPosition.top,
+                      child: AddTaskButton(
+                        iconAsset: AppAssets.iconAnadirTarea,
+                        onTap: () =>
+                            Navigator.pushNamed(context, AppRoutes.add),
+                      ),
                     ),
                     const SizedBox(height: 14),
 
                     // ---- Barra inferior ----
-                    HomeBottomBar(currentIndex: 0, onTap: _onBottomBarTap),
+                    HomeBottomBar(
+                      currentIndex: 0,
+                      onTap: _onBottomBarTap,
+                      teamsItemGuide: (child) => _burbujaGuia(
+                        key: _teamsKey,
+                        paso: 5,
+                        titulo: 'Teams',
+                        descripcion: 'Trabaja en equipo creando un team.',
+                        davoAsset: AppAssets.davoGuideTeams,
+                        tooltipPosition: TooltipPosition.top,
+                        child: child,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BurbujaGuia extends StatelessWidget {
+  const _BurbujaGuia({
+    required this.paso,
+    required this.total,
+    required this.titulo,
+    required this.descripcion,
+    required this.davoAsset,
+    required this.ancho,
+  });
+
+  final int paso;
+  final int total;
+  final String titulo;
+  final String descripcion;
+  final String davoAsset;
+  final double ancho;
+
+  @override
+  Widget build(BuildContext context) {
+    final texto = Theme.of(context).textTheme;
+    final anchoDavo = min(ancho * 0.22, 80.0);
+
+    return Container(
+      width: ancho,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.fieldFill,
+        borderRadius: BorderRadius.circular(AppRadius.logo),
+        border: Border.all(color: AppColors.fieldBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDark.withValues(alpha: 0.14),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    'PASO $paso DE $total',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: texto.labelSmall?.copyWith(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                tooltip: 'Omitir recorrido',
+                visualDensity: VisualDensity.compact,
+                constraints: const BoxConstraints.tightFor(
+                  width: 36,
+                  height: 36,
+                ),
+                onPressed: ShowcaseView.get().dismiss,
+                icon: const Icon(Icons.close_rounded, size: 20),
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: anchoDavo,
+                height: anchoDavo,
+                child: Image.asset(
+                  davoAsset,
+                  fit: BoxFit.contain,
+                  excludeFromSemantics: true,
+                  errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.emoji_emotions_outlined,
+                    color: AppColors.textHint,
+                    size: 32,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      titulo,
+                      style: texto.titleMedium?.copyWith(
+                        color: AppColors.primaryDark,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      descripcion,
+                      style: texto.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            alignment: paso > 1
+                ? WrapAlignment.spaceBetween
+                : WrapAlignment.end,
+            runSpacing: 6,
+            children: [
+              if (paso > 1)
+                TextButton(
+                  onPressed: ShowcaseView.get().previous,
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primaryDark,
+                    minimumSize: Size.zero,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('Atrás'),
+                )
+              else
+                const SizedBox.shrink(),
+              FilledButton(
+                onPressed: paso == total
+                    ? ShowcaseView.get().dismiss
+                    : ShowcaseView.get().next,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size.zero,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 11,
+                  ),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button),
+                  ),
+                ),
+                child: Text(paso == total ? 'Terminar' : 'Siguiente'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -454,12 +738,16 @@ class _GreetingChip extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Text(
-                text,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               const SizedBox(width: 2),

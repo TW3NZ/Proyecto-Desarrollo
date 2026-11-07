@@ -3,11 +3,13 @@ import 'package:home_widget/home_widget.dart';
 import 'package:my_daily_routine/screens/estadisticas.dart';
 import 'package:my_daily_routine/screens/tareas.dart';
 import 'package:my_daily_routine/screens/general.dart';
+
 import 'routes.dart';
 import 'screens/add.dart';
 import 'screens/home.dart';
 import 'screens/login.dart';
 import 'screens/crear_usuario.dart';
+import 'screens/welcome.dart';
 import 'screens/teams.dart';
 import 'theme.dart';
 import 'screens/historial.dart';
@@ -62,7 +64,13 @@ class MyApp extends StatelessWidget {
       routes: {
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.crearUsuario: (_) => const CrearUsuario(),
-        AppRoutes.home: (_) => const HomeScreen(),
+        AppRoutes.welcome: (context) => WelcomeScreen(
+          arguments:
+              ModalRoute.of(context)!.settings.arguments! as WelcomeArguments,
+        ),
+        AppRoutes.home: (context) => HomeScreen(
+          mostrarTutorial: ModalRoute.of(context)?.settings.arguments == true,
+        ),
         AppRoutes.avatar: (_) => const AvatarScreen(),
         AppRoutes.add: (_) => const AddScreen(),
         AppRoutes.historial: (_) => const HistorialScreen(),
