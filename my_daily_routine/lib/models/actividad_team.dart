@@ -1,30 +1,41 @@
+import 'tarea_modelo.dart';
+
 class TareaTeam {
   TareaTeam({
     required this.id,
+    required this.proyectoId,
+    required this.usuarioId,
     required this.titulo,
     required this.responsableId,
     required this.fechaInicio,
     required this.fechaEntrega,
     required this.peso,
+    required this.categorias,
+    required this.prioridad,
     this.descripcion = '',
     this.progreso = 0,
     this.archivada = false,
   });
 
-  final String id;
+  final int id;
+  final int proyectoId;
+  final int usuarioId;
   String titulo;
   String descripcion;
-  String responsableId;
+  int responsableId;
   DateTime fechaInicio;
   DateTime fechaEntrega;
   double peso;
   int progreso;
   bool archivada;
+  Set<CategoriaTarea> categorias;
+  PrioridadTarea prioridad;
 }
 
 class ActividadTeam {
   const ActividadTeam({
     required this.id,
+    required this.proyectoId,
     required this.integranteId,
     required this.tareaId,
     required this.fecha,
@@ -32,9 +43,10 @@ class ActividadTeam {
     required this.descripcion,
   });
 
-  final String id;
-  final String integranteId;
-  final String tareaId;
+  final int id;
+  final int proyectoId;
+  final int integranteId;
+  final int tareaId;
   final DateTime fecha;
   final int porcentaje;
   final String descripcion;

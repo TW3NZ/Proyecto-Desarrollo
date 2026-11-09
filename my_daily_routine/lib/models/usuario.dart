@@ -1,7 +1,7 @@
 enum Genero { hombre, mujer }
 
 class Usuario {
-  final String? id;
+  final int id;
   final String name;
   final String lastName;
   final String nickName;
@@ -12,7 +12,7 @@ class Usuario {
   final String? photo;
 
   const Usuario({
-    this.id,
+    required this.id,
     required this.name,
     required this.lastName,
     required this.nickName,

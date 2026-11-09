@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../assets_paths.dart';
 import '../data/estadisticas_store.dart';
+import '../data/usuarios_store.dart';
 import '../data/tareas_store.dart';
 import '../routes.dart';
 import '../theme.dart';
@@ -79,8 +80,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _frase = _frases[Random().nextInt(_frases.length)];
+    ShowcaseView.register(skipIfTargetNotPresent: true);
     if (widget.mostrarTutorial) {
-      ShowcaseView.register(skipIfTargetNotPresent: true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ShowcaseView.get().startShowCase([
@@ -101,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _timerFrase?.cancel();
-    if (widget.mostrarTutorial) ShowcaseView.get().unregister();
+    ShowcaseView.get().unregister();
     super.dispose();
   }
 
@@ -213,11 +214,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: CircleMenuButton(
                                 icon: Icons.logout_rounded,
                                 size: 44,
-                                onTap: () => Navigator.pushNamedAndRemoveUntil(
-                                  context,
-                                  AppRoutes.login,
-                                  (_) => false,
-                                ),
+                                onTap: () {
+                                  UsuariosStore.cerrarSesion();
+                                  Navigator.pushNamedAndRemoveUntil(
+                                    context,
+                                    AppRoutes.login,
+                                    (_) => false,
+                                  );
+                                },
                               ),
                             ),
                           ],

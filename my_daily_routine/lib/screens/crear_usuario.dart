@@ -66,6 +66,7 @@ class _CrearUsuarioState extends State<CrearUsuario> {
     }
     UsuariosStore.registrar(
       Usuario(
+        id: UsuariosStore.generarIdTemporal(),
         name: _name.text.trim(),
         lastName: _lastName.text.trim(),
         nickName: _nickName.text.trim(),

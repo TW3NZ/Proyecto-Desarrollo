@@ -1,105 +1,107 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/actividad_team.dart';
-import '../models/equipo_modelo.dart';
+import '../models/proyecto_modelo.dart';
+import '../models/tarea_modelo.dart';
+import 'id_temporal_store.dart';
 
-/// Datos de trabajo temporales compartidos por las pantallas de cada Team.
+/// Progreso colaborativo, separado de los datos originales de NuevaTarea.
 class TeamTrabajoStore extends ChangeNotifier {
   TeamTrabajoStore._();
   static final TeamTrabajoStore instancia = TeamTrabajoStore._();
+  final Map<int, List<TareaTeam>> _tareas = {};
+  final Map<int, List<ActividadTeam>> _actividades = {};
 
-  final Map<String, List<TareaTeam>> _tareas = {};
-  final Map<String, List<ActividadTeam>> _actividades = {};
+  List<TareaTeam> tareas(
+    Proyecto proyecto,
+  ) => _tareas.putIfAbsent(proyecto.id, () {
+    final peso = proyecto.tareas.isEmpty ? 0.0 : 100.0 / proyecto.tareas.length;
+    return [
+      for (var i = 0; i < proyecto.tareas.length; i++)
+        TareaTeam(
+          id: proyecto.tareas[i].id,
+          proyectoId: proyecto.id,
+          usuarioId: proyecto.tareas[i].usuarioId,
+          titulo: proyecto.tareas[i].titulo,
+          descripcion: proyecto.tareas[i].descripcion,
+          responsableId:
+              proyecto.tareas[i].responsableId ?? proyecto.tareas[i].usuarioId,
+          fechaInicio: proyecto.tareas[i].fecha,
+          fechaEntrega:
+              proyecto.tareas[i].fechaFinalizacion ?? proyecto.tareas[i].fecha,
+          peso: peso,
+          progreso: proyecto.tareas[i].completada ? 100 : 0,
+          categorias: Set.of(proyecto.tareas[i].categorias),
+          prioridad: proyecto.tareas[i].prioridad,
+        ),
+    ];
+  });
 
-  List<TareaTeam> tareas(Equipo equipo) {
-    return _tareas.putIfAbsent(equipo.id, () {
-      final titulos = equipo.tareas.isEmpty ? <String>[] : equipo.tareas;
-      final peso = titulos.isEmpty ? 0.0 : 100.0 / titulos.length;
-      final responsables = <String, String>{};
-      for (final asignacion in equipo.asignaciones) {
-        final partes = asignacion.split(' — ');
-        if (partes.length < 2) continue;
-        final miembro = partes[1].split(' (').first.trim();
-        responsables[partes.first.trim()] = miembro;
-      }
-      return [
-        for (var i = 0; i < titulos.length; i++)
-          TareaTeam(
-            id: '${equipo.id}-task-$i',
-            titulo: titulos[i],
-            responsableId:
-                responsables[titulos[i]] ??
-                (equipo.creadorId.isEmpty
-                    ? (equipo.integrantes.isEmpty
-                          ? ''
-                          : equipo.integrantes.first)
-                    : equipo.creadorId),
-            fechaInicio: equipo.fechaInicio,
-            fechaEntrega: equipo.fechaFin,
-            peso: peso,
-          ),
-      ];
-    });
-  }
-
-  List<ActividadTeam> actividades(Equipo equipo) =>
-      List.unmodifiable(_actividades.putIfAbsent(equipo.id, () => []));
-
-  double progreso(Equipo equipo) {
-    final activas = tareas(equipo).where((t) => !t.archivada).toList();
-    if (activas.isEmpty) return 0;
-    final sumaPesos = activas.fold<double>(0, (s, t) => s + t.peso);
-    if (sumaPesos <= 0) return 0;
+  List<ActividadTeam> actividades(Proyecto proyecto) =>
+      List.unmodifiable(_actividades.putIfAbsent(proyecto.id, () => []));
+  double progreso(Proyecto proyecto) {
+    final activas = tareas(proyecto).where((t) => !t.archivada).toList();
+    final pesos = activas.fold<double>(0, (s, t) => s + t.peso);
+    if (activas.isEmpty || pesos <= 0) return 0;
     return activas.fold<double>(0, (s, t) => s + t.peso * t.progreso / 100) *
         100 /
-        sumaPesos;
+        pesos;
   }
 
-  void guardarTarea(Equipo equipo, TareaTeam tarea) {
-    final lista = tareas(equipo);
-    final indice = lista.indexWhere((t) => t.id == tarea.id);
-    if (indice < 0) {
-      final existentes = lista.where((t) => !t.archivada).toList();
-      final nuevoPeso = tarea.peso.clamp(0, 100).toDouble();
-      final sumaExistentes = existentes.fold<double>(0, (s, t) => s + t.peso);
-      if (existentes.isNotEmpty) {
-        for (final existente in existentes) {
-          existente.peso = sumaExistentes <= 0
-              ? (100 - nuevoPeso) / existentes.length
-              : existente.peso * (100 - nuevoPeso) / sumaExistentes;
-        }
-      }
-      tarea.peso = nuevoPeso;
+  void guardarTarea(Proyecto proyecto, TareaTeam tarea) {
+    final lista = tareas(proyecto);
+    final index = lista.indexWhere((t) => t.id == tarea.id);
+    if (index < 0) {
+      tarea.peso = tarea.peso.clamp(0, 100).toDouble();
       lista.add(tarea);
     } else {
-      lista[indice] = tarea;
+      lista[index] = tarea;
     }
-    _normalizarPesos(equipo);
+    final original = proyecto.tareas.indexWhere((t) => t.id == tarea.id);
+    final datos = NuevaTarea(
+      id: tarea.id,
+      proyectoId: proyecto.id,
+      usuarioId: tarea.usuarioId,
+      titulo: tarea.titulo,
+      categorias: Set.unmodifiable(tarea.categorias),
+      prioridad: tarea.prioridad,
+      descripcion: tarea.descripcion,
+      fecha: tarea.fechaInicio,
+      fechaFinalizacion: tarea.fechaEntrega,
+      responsableId: tarea.responsableId,
+      completada: original >= 0 && proyecto.tareas[original].completada,
+    );
+    if (original >= 0) {
+      proyecto.tareas[original] = datos;
+    } else {
+      proyecto.tareas.add(datos);
+    }
+    _normalizar(proyecto);
     notifyListeners();
   }
 
-  void eliminarTarea(Equipo equipo, TareaTeam tarea) {
-    // La tarea queda archivada para mantener la referencia de su historial.
+  void eliminarTarea(Proyecto proyecto, TareaTeam tarea) {
     tarea.archivada = true;
-    _normalizarPesos(equipo);
+    _normalizar(proyecto);
     notifyListeners();
   }
 
-  void actualizarProgreso(Equipo equipo, TareaTeam tarea, int progreso) {
-    tarea.progreso = progreso.clamp(0, 100).toInt();
+  void actualizarProgreso(Proyecto proyecto, TareaTeam tarea, int progreso) {
+    tarea.progreso = progreso.clamp(0, 100);
     notifyListeners();
   }
 
   void publicar(
-    Equipo equipo,
+    Proyecto proyecto,
     TareaTeam tarea,
-    String miembroId,
+    int miembroId,
     String descripcion,
   ) {
-    final lista = _actividades.putIfAbsent(equipo.id, () => []);
+    final lista = _actividades.putIfAbsent(proyecto.id, () => []);
     lista.add(
       ActividadTeam(
-        id: '${DateTime.now().microsecondsSinceEpoch}',
+        id: IdTemporalStore.generar(),
+        proyectoId: proyecto.id,
         integranteId: miembroId,
         tareaId: tarea.id,
         fecha: DateTime.now(),
@@ -111,18 +113,12 @@ class TeamTrabajoStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _normalizarPesos(Equipo equipo) {
-    final activas = tareas(equipo).where((t) => !t.archivada).toList();
+  void _normalizar(Proyecto proyecto) {
+    final activas = tareas(proyecto).where((t) => !t.archivada).toList();
     if (activas.isEmpty) return;
     final total = activas.fold<double>(0, (s, t) => s + t.peso);
-    if (total <= 0) {
-      for (final tarea in activas) {
-        tarea.peso = 100 / activas.length;
-      }
-    } else {
-      for (final tarea in activas) {
-        tarea.peso = tarea.peso * 100 / total;
-      }
+    for (final t in activas) {
+      t.peso = total <= 0 ? 100 / activas.length : t.peso * 100 / total;
     }
   }
 }

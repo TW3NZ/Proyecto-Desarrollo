@@ -4,7 +4,7 @@ import '../../theme.dart';
 
 /// Espacio reservado para mostrar el ID del usuario en Teams.
 class TarjetaIdUsuario extends StatelessWidget {
-  final String? id;
+  final int? id;
 
   const TarjetaIdUsuario({super.key, this.id});
 
@@ -46,7 +46,7 @@ class TarjetaIdUsuario extends StatelessWidget {
                     border: Border.all(color: AppColors.fieldBorder),
                   ),
                   child: Text(
-                    id ?? '',
+                    id?.toString() ?? '',
                     style: const TextStyle(
                       color: AppColors.textMuted,
                       fontSize: 14,

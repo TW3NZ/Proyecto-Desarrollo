@@ -14,10 +14,8 @@ class TarjetaTeamActivo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radio = BorderRadius.circular(26);
-    final n = equipo.miembrosConectados;
-    final textoMiembros = n == 1
-        ? '1 miembro conectado'
-        : '$n miembros conectados';
+    final n = equipo.miembros.length;
+    final textoMiembros = n == 1 ? '1 miembro' : '$n miembros';
 
     return Container(
       decoration: BoxDecoration(
@@ -74,9 +72,7 @@ class TarjetaTeamActivo extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      equipo.nombreProyecto.isEmpty
-                          ? textoMiembros
-                          : equipo.nombreProyecto,
+                      textoMiembros,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -84,28 +80,6 @@ class TarjetaTeamActivo extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    if (equipo.meta.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        equipo.meta,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.textMuted,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                    if (equipo.nombreProyecto.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        textoMiembros,
-                        style: const TextStyle(
-                          color: AppColors.textHint,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               ),

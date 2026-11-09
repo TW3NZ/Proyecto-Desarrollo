@@ -36,13 +36,16 @@ class CabeceraApp extends StatelessWidget {
       child: Row(
         children: [
           if (alVolver != null)
-            GlassCircle(
-              size: 46,
-              onTap: alVolver,
-              child: const Icon(
-                Icons.arrow_back_rounded,
-                color: Colors.white,
-                size: 24,
+            Tooltip(
+              message: 'Back',
+              child: GlassCircle(
+                size: 46,
+                onTap: alVolver,
+                child: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
             )
           else

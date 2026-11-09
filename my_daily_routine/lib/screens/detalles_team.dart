@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../data/equipos_store.dart';
+import '../data/proyectos_store.dart';
+import '../data/miembros_proyecto_store.dart';
+import '../data/id_temporal_store.dart';
+import '../data/usuarios_store.dart';
 import '../models/equipo_modelo.dart';
+import '../models/miembro_proyecto.dart';
+import '../models/tarea_modelo.dart';
+import '../models/proyecto_modelo.dart';
 import '../theme.dart';
 import '../widgets/common/cabecera_app.dart';
 import '../widgets/common/primary_button.dart';
@@ -9,14 +15,10 @@ import '../widgets/common/primary_button.dart';
 /// Segunda pantalla del flujo: detalles del proyecto, tareas y asignaciones.
 /// Todos los datos se mantienen en memoria mientras la pantalla está abierta.
 class DetallesTeamScreen extends StatefulWidget {
-  const DetallesTeamScreen({
-    super.key,
-    this.nombreProyecto = 'Proyecto Final de Software',
-    this.integrantes = const ['12345 (Tú)', '98765'],
-  });
+  const DetallesTeamScreen({super.key, required this.equipo, this.usuarioId});
 
-  final String nombreProyecto;
-  final List<String> integrantes;
+  final Equipo equipo;
+  final int? usuarioId;
 
   @override
   State<DetallesTeamScreen> createState() => _DetallesTeamScreenState();
@@ -26,29 +28,40 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
   final _metaController = TextEditingController(
     text: 'Preparación de Examen de Cálculo Integrales',
   );
+  final _nombreController = TextEditingController(text: 'Nuevo proyecto');
   final _tareaController = TextEditingController();
-  String _categoria = 'Académico';
+  CategoriaTarea _categoria = CategoriaTarea.educacion;
   DateTime _inicio = DateTime(2026, 11, 12);
   DateTime _fin = DateTime(2026, 11, 26);
   DateTime _inicioAsignacion = DateTime(2026, 11, 12);
   DateTime _finAsignacion = DateTime(2026, 11, 18);
   String? _tareaSeleccionada = 'Revisar capítulo 4 de Integrales';
-  String? _integranteSeleccionado;
+  int? _integranteSeleccionado;
   String? _imagenSeleccionada;
   int _etapa = 0;
 
-  final List<MiembroEquipo> _miembros = [];
-  late final String _creadorId;
-  final List<String> _tareas = [
-    'Revisar capítulo 4 de Integrales',
-    'Resolver guía de ejercicios #2',
-  ];
-  final List<_Asignacion> _asignaciones = [
-    _Asignacion(
-      tarea: 'Revisar capítulo 4 de Integrales',
-      integrante: '12345 (Tú)',
-      inicio: DateTime(2026, 11, 12),
-      fin: DateTime(2026, 11, 18),
+  late final List<MiembroEquipo> _miembros;
+  late final List<MiembroProyecto> _miembrosProyecto;
+  late final int _creadorId;
+  late final int _proyectoId;
+  final List<NuevaTarea> _tareas = [
+    NuevaTarea(
+      id: IdTemporalStore.generar(),
+      usuarioId:
+          UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica,
+      titulo: 'Revisar capítulo 4 de Integrales',
+      categorias: {CategoriaTarea.educacion},
+      prioridad: PrioridadTarea.media,
+      fecha: DateTime(2026, 11, 12),
+    ),
+    NuevaTarea(
+      id: IdTemporalStore.generar(),
+      usuarioId:
+          UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica,
+      titulo: 'Resolver guía de ejercicios #2',
+      categorias: {CategoriaTarea.educacion},
+      prioridad: PrioridadTarea.media,
+      fecha: DateTime(2026, 11, 12),
     ),
   ];
   bool _equipoGuardado = false;
@@ -56,47 +69,73 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
   @override
   void initState() {
     super.initState();
-    final integrantes = widget.integrantes.isEmpty
-        ? const ['12345 (Tú)']
-        : widget.integrantes;
-    _creadorId = _idDesdeEtiqueta(integrantes.first);
-    for (final etiqueta in integrantes) {
-      final id = _idDesdeEtiqueta(etiqueta);
-      if (_miembros.any((miembro) => miembro.id == id)) continue;
-      _miembros.add(
-        MiembroEquipo(
-          id: id,
-          nombre: etiqueta,
-          rol: id == _creadorId ? RolEquipo.creador : RolEquipo.integrante,
+    _miembros = widget.equipo.miembros;
+    _creadorId =
+        widget.usuarioId ??
+        UsuariosStore.usuarioActual?.id ??
+        widget.equipo.creadorId;
+    _proyectoId = IdTemporalStore.generar();
+    _miembrosProyecto = [
+      for (final miembro in _miembros)
+        MiembroProyecto(
+          id: IdTemporalStore.generar(),
+          miembroId: miembro.id,
+          proyectoId: _proyectoId,
+          rol: miembro.usuarioId == _creadorId
+              ? RolProyecto.creador
+              : RolProyecto.integrante,
         ),
+    ];
+    _integranteSeleccionado = _miembros.first.usuarioId;
+    if (_tareas.isNotEmpty) {
+      final tarea = _tareas.first;
+      _tareas[0] = NuevaTarea(
+        id: tarea.id,
+        proyectoId: null,
+        usuarioId: _creadorId,
+        titulo: tarea.titulo,
+        categorias: tarea.categorias,
+        prioridad: tarea.prioridad,
+        fecha: _inicioAsignacion,
+        fechaFinalizacion: _finAsignacion,
+        responsableId: _creadorId,
       );
     }
-    _integranteSeleccionado = _miembros.first.id;
   }
 
-  String _idDesdeEtiqueta(String etiqueta) =>
-      etiqueta.trim().split(RegExp(r'\s+')).first;
+  String _etiquetaMiembro(int usuarioId) {
+    final cuenta = UsuariosStore.buscarPorId(usuarioId);
+    if (cuenta == null) return usuarioId.toString();
+    final nombre = '${cuenta.name} ${cuenta.lastName}'.trim();
+    return nombre.isEmpty ? cuenta.nickName : nombre;
+  }
 
-  MiembroEquipo get _creador =>
-      _miembros.firstWhere((miembro) => miembro.id == _creadorId);
+  MiembroProyecto get _creadorProyecto => _miembrosProyecto.firstWhere(
+    (relacion) => relacion.rol == RolProyecto.creador,
+  );
 
-  bool get _puedeGestionarRoles => PermisosEquipo.puedeGestionarRoles(_creador);
+  bool get _puedeGestionarRoles =>
+      PermisosProyecto.puedeGestionarRoles(_creadorProyecto.rol);
 
-  void _cambiarRol(MiembroEquipo objetivo) {
-    if (!PermisosEquipo.puedeCambiarRol(actor: _creador, objetivo: objetivo)) {
-      _mensaje('Solo el creador puede administrar los roles del equipo');
+  void _cambiarRol(MiembroProyecto objetivo) {
+    if (!PermisosProyecto.puedeCambiarRol(
+      actor: _creadorProyecto.rol,
+      objetivo: objetivo.rol,
+    )) {
+      _mensaje('Solo el creador del proyecto puede administrar sus roles');
       return;
     }
-    final nuevoRol = objetivo.rol == RolEquipo.administrador
-        ? RolEquipo.integrante
-        : RolEquipo.administrador;
+    final nuevoRol = objetivo.rol == RolProyecto.administrador
+        ? RolProyecto.integrante
+        : RolProyecto.administrador;
     setState(() {
-      final indice = _miembros.indexWhere(
-        (miembro) => miembro.id == objetivo.id,
+      final indice = _miembrosProyecto.indexWhere(
+        (relacion) => relacion.miembroId == objetivo.miembroId,
       );
-      _miembros[indice] = MiembroEquipo(
+      _miembrosProyecto[indice] = MiembroProyecto(
         id: objetivo.id,
-        nombre: objetivo.nombre,
+        miembroId: objetivo.miembroId,
+        proyectoId: objetivo.proyectoId,
         rol: nuevoRol,
       );
     });
@@ -112,6 +151,7 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
   @override
   void dispose() {
     _metaController.dispose();
+    _nombreController.dispose();
     _tareaController.dispose();
     super.dispose();
   }
@@ -158,46 +198,67 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
       _mensaje('Escribe el nombre de la tarea');
       return;
     }
-    if (_tareas.contains(nombre)) {
+    if (_tareas.any((tarea) => tarea.titulo == nombre)) {
       _mensaje('Esa tarea ya está en la lista');
       return;
     }
     setState(() {
-      _tareas.add(nombre);
+      _tareas.add(
+        NuevaTarea(
+          id: IdTemporalStore.generar(),
+          usuarioId: _creadorId,
+          titulo: nombre,
+          categorias: {_categoria},
+          prioridad: PrioridadTarea.media,
+          fecha: _inicio,
+          fechaFinalizacion: _fin,
+        ),
+      );
       _tareaSeleccionada ??= nombre;
       _tareaController.clear();
     });
   }
 
-  void _eliminarTarea(String tarea) {
+  void _eliminarTarea(NuevaTarea tarea) {
     setState(() {
       _tareas.remove(tarea);
-      _asignaciones.removeWhere((asignacion) => asignacion.tarea == tarea);
-      if (_tareaSeleccionada == tarea) {
-        _tareaSeleccionada = _tareas.isEmpty ? null : _tareas.first;
+      if (_tareaSeleccionada == tarea.titulo) {
+        _tareaSeleccionada = _tareas.isEmpty ? null : _tareas.first.titulo;
       }
     });
   }
 
   void _agregarAsignacion() {
-    final tarea = _tareaSeleccionada;
-    if (tarea == null || _tareas.isEmpty) {
+    final titulo = _tareaSeleccionada;
+    if (titulo == null || _tareas.isEmpty) {
       _mensaje('Agrega una tarea antes de asignarla');
       return;
     }
-    setState(
-      () => _asignaciones.add(
-        _Asignacion(
-          tarea: tarea,
-          integrante: _integranteSeleccionado ?? _miembros.first.id,
-          inicio: _inicioAsignacion,
-          fin: _finAsignacion,
-        ),
-      ),
-    );
+    final indice = _tareas.indexWhere((tarea) => tarea.titulo == titulo);
+    if (indice < 0) return;
+    final tarea = _tareas[indice];
+    setState(() {
+      _tareas[indice] = NuevaTarea(
+        id: tarea.id,
+        proyectoId: tarea.proyectoId,
+        usuarioId: tarea.usuarioId,
+        titulo: tarea.titulo,
+        categorias: tarea.categorias,
+        prioridad: tarea.prioridad,
+        descripcion: tarea.descripcion,
+        fecha: _inicioAsignacion,
+        fechaFinalizacion: _finAsignacion,
+        responsableId: _integranteSeleccionado ?? _miembros.first.usuarioId,
+        completada: tarea.completada,
+      );
+    });
   }
 
   void _crearProyecto() {
+    if (_creadorId != widget.equipo.creadorId) {
+      _mensaje('Solo el creador del equipo puede crear proyectos');
+      return;
+    }
     if (_metaController.text.trim().isEmpty) {
       _mensaje('Escribe la meta del proyecto');
       return;
@@ -206,41 +267,42 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
       _mensaje('La fecha de finalización debe ser posterior al inicio');
       return;
     }
+    if (_nombreController.text.trim().isEmpty) {
+      _mensaje('Escribe el nombre del proyecto');
+      return;
+    }
     if (!_equipoGuardado) {
-      final nombre = widget.nombreProyecto.trim();
-      final siglas = nombre
-          .split(RegExp(r'\s+'))
-          .where((parte) => parte.isNotEmpty)
-          .take(2)
-          .map((parte) => parte[0].toUpperCase())
-          .join();
-      EquiposStore.agregar(
-        Equipo(
-          id: 'T${DateTime.now().microsecondsSinceEpoch}',
-          proyectoId: EquiposStore.generarProyectoId(),
-          nombre: 'Team de $nombre',
-          siglas: siglas.isEmpty ? 'TM' : siglas,
-          miembrosConectados: _miembros.length,
-          nombreProyecto: nombre,
+      final proyectoId = _proyectoId;
+      ProyectosStore.agregar(
+        Proyecto(
+          id: proyectoId,
+          equipoId: widget.equipo.id,
+          nombre: _nombreController.text.trim(),
           meta: _metaController.text.trim(),
           categoria: _categoria,
           fechaInicio: _inicio,
           fechaFin: _fin,
-          tareas: List.unmodifiable(_tareas),
-          integrantes: List.unmodifiable(
-            _miembros.map((miembro) => miembro.id),
-          ),
-          creadorId: _creadorId,
-          miembros: List.unmodifiable(_miembros),
-          asignaciones: List.unmodifiable(
-            _asignaciones.map(
-              (a) =>
-                  '${a.tarea} — ${a.integrante} (${a.inicio.day}/${a.inicio.month}–${a.fin.day}/${a.fin.month})',
-            ),
-          ),
+          tareas: _tareas
+              .map(
+                (tarea) => NuevaTarea(
+                  id: tarea.id,
+                  proyectoId: proyectoId,
+                  usuarioId: tarea.usuarioId,
+                  titulo: tarea.titulo,
+                  categorias: tarea.categorias,
+                  prioridad: tarea.prioridad,
+                  descripcion: tarea.descripcion,
+                  fecha: tarea.fecha,
+                  fechaFinalizacion: tarea.fechaFinalizacion,
+                  responsableId: tarea.responsableId,
+                  completada: tarea.completada,
+                ),
+              )
+              .toList(),
           imagen: _imagenSeleccionada,
         ),
       );
+      MiembrosProyectoStore.guardarProyecto(proyectoId, _miembrosProyecto);
       _equipoGuardado = true;
     }
     showDialog<void>(
@@ -253,9 +315,9 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
         ),
         title: const Text('¡Proyecto creado!'),
         content: Text(
-          '${_metaController.text.trim()}\n\n'
-          'Categoría: $_categoria\n'
-          'Tareas: ${_tareas.length} · Asignaciones: ${_asignaciones.length}',
+          '${_nombreController.text.trim()}\n${_metaController.text.trim()}\n\n'
+          'Categoría: ${_categoria.etiqueta}\n'
+          'Tareas: ${_tareas.length} · Asignadas: ${_tareas.where((tarea) => tarea.responsableId != null).length}',
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -295,6 +357,17 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
               children: [
                 _Seccion(
+                  icono: Icons.folder_rounded,
+                  titulo: 'Nombre del proyecto',
+                  subtitulo: 'Identifica este proyecto dentro del equipo',
+                  contenido: TextField(
+                    controller: _nombreController,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: _decoracion('Nombre del proyecto'),
+                  ),
+                ),
+                _separador,
+                _Seccion(
                   icono: Icons.emoji_events_rounded,
                   titulo: 'Crear meta',
                   subtitulo: '¿Cuál es tu objetivo?',
@@ -311,27 +384,17 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                   icono: Icons.grid_view_rounded,
                   titulo: 'Categoría',
                   subtitulo: 'Selecciona una categoría',
-                  contenido: DropdownButtonFormField<String>(
+                  contenido: DropdownButtonFormField<CategoriaTarea>(
                     initialValue: _categoria,
                     decoration: _decoracion('Categoría'),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'Académico',
-                        child: Text('🎓  Académico'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Trabajo',
-                        child: Text('💼  Trabajo'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Personal',
-                        child: Text('👤  Personal'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Investigación',
-                        child: Text('🔬  Investigación'),
-                      ),
-                    ],
+                    items: CategoriaTarea.values
+                        .map(
+                          (categoria) => DropdownMenuItem(
+                            value: categoria,
+                            child: Text(categoria.etiqueta),
+                          ),
+                        )
+                        .toList(),
                     onChanged: (valor) {
                       if (valor != null) setState(() => _categoria = valor);
                     },
@@ -413,14 +476,24 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                 _Seccion(
                   icono: Icons.groups_rounded,
                   titulo: 'Integrantes del equipo',
-                  subtitulo: 'El creador administra los roles del equipo',
+                  subtitulo: 'El creador administra los roles del proyecto',
                   contenido: Column(
                     children: [
-                      for (final miembro in _miembros)
+                      for (final relacion in _miembrosProyecto)
                         _MiembroTile(
-                          miembro: miembro,
+                          miembro: _miembros.firstWhere(
+                            (miembro) => miembro.id == relacion.miembroId,
+                          ),
+                          rol: relacion.rol,
+                          nombre: _etiquetaMiembro(
+                            _miembros
+                                .firstWhere(
+                                  (miembro) => miembro.id == relacion.miembroId,
+                                )
+                                .usuarioId,
+                          ),
                           puedeGestionarRoles: _puedeGestionarRoles,
-                          alCambiarRol: () => _cambiarRol(miembro),
+                          alCambiarRol: () => _cambiarRol(relacion),
                         ),
                     ],
                   ),
@@ -435,7 +508,10 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                     children: [
                       _etiqueta('Seleccionar tarea'),
                       DropdownButtonFormField<String>(
-                        initialValue: _tareas.contains(_tareaSeleccionada)
+                        initialValue:
+                            _tareas.any(
+                              (tarea) => tarea.titulo == _tareaSeleccionada,
+                            )
                             ? _tareaSeleccionada
                             : null,
                         isExpanded: true,
@@ -443,9 +519,9 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                         items: [
                           for (final tarea in _tareas)
                             DropdownMenuItem(
-                              value: tarea,
+                              value: tarea.titulo,
                               child: Text(
-                                tarea,
+                                tarea.titulo,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
@@ -460,14 +536,14 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                       ),
                       const SizedBox(height: 12),
                       _etiqueta('Integrante asignado'),
-                      DropdownButtonFormField<String>(
+                      DropdownButtonFormField<int>(
                         initialValue: _integranteSeleccionado,
                         decoration: _decoracion('Elige un integrante'),
                         items: [
                           for (final integrante in _miembros)
                             DropdownMenuItem(
-                              value: integrante.id,
-                              child: Text('ID: ${integrante.id}'),
+                              value: integrante.usuarioId,
+                              child: Text('ID: ${integrante.usuarioId}'),
                             ),
                         ],
                         onChanged: (valor) {
@@ -504,14 +580,33 @@ class _DetallesTeamScreenState extends State<DetallesTeamScreen> {
                         icon: const Icon(Icons.person_add_alt_1_rounded),
                         label: const Text('Asignar tarea'),
                       ),
-                      if (_asignaciones.isNotEmpty) ...[
+                      if (_tareas.any(
+                        (tarea) => tarea.responsableId != null,
+                      )) ...[
                         const SizedBox(height: 8),
-                        for (var i = 0; i < _asignaciones.length; i++)
-                          _AsignacionTile(
-                            asignacion: _asignaciones[i],
-                            onDelete: () =>
-                                setState(() => _asignaciones.removeAt(i)),
-                          ),
+                        for (var i = 0; i < _tareas.length; i++)
+                          if (_tareas[i].responsableId != null)
+                            _AsignacionTile(
+                              tarea: _tareas[i],
+                              nombreMiembro: _etiquetaMiembro(
+                                _tareas[i].responsableId!,
+                              ),
+                              onDelete: () => setState(() {
+                                final tarea = _tareas[i];
+                                _tareas[i] = NuevaTarea(
+                                  id: tarea.id,
+                                  proyectoId: tarea.proyectoId,
+                                  usuarioId: tarea.usuarioId,
+                                  titulo: tarea.titulo,
+                                  categorias: tarea.categorias,
+                                  prioridad: tarea.prioridad,
+                                  descripcion: tarea.descripcion,
+                                  fecha: tarea.fecha,
+                                  fechaFinalizacion: tarea.fechaFinalizacion,
+                                  completada: tarea.completada,
+                                );
+                              }),
+                            ),
                       ],
                     ],
                   ),
@@ -807,7 +902,7 @@ class _FechaTile extends StatelessWidget {
 
 class _TareaTile extends StatelessWidget {
   const _TareaTile({required this.tarea, required this.onDelete});
-  final String tarea;
+  final NuevaTarea tarea;
   final VoidCallback onDelete;
   @override
   Widget build(BuildContext context) => Container(
@@ -827,7 +922,7 @@ class _TareaTile extends StatelessWidget {
         const SizedBox(width: 9),
         Expanded(
           child: Text(
-            tarea,
+            tarea.titulo,
             style: const TextStyle(
               color: AppColors.textDark,
               fontSize: 12,
@@ -850,45 +945,36 @@ class _TareaTile extends StatelessWidget {
   );
 }
 
-class _Asignacion {
-  const _Asignacion({
-    required this.tarea,
-    required this.integrante,
-    required this.inicio,
-    required this.fin,
-  });
-  final String tarea;
-  final String integrante;
-  final DateTime inicio;
-  final DateTime fin;
-}
-
 class _MiembroTile extends StatelessWidget {
   const _MiembroTile({
     required this.miembro,
+    required this.rol,
+    required this.nombre,
     required this.puedeGestionarRoles,
     required this.alCambiarRol,
   });
 
   final MiembroEquipo miembro;
+  final RolProyecto rol;
+  final String nombre;
   final bool puedeGestionarRoles;
   final VoidCallback alCambiarRol;
 
-  String get _nombreRol => switch (miembro.rol) {
-    RolEquipo.creador => 'Creador',
-    RolEquipo.administrador => 'Administrador',
-    RolEquipo.integrante => 'Integrante',
+  String get _nombreRol => switch (rol) {
+    RolProyecto.creador => 'Creador',
+    RolProyecto.administrador => 'Administrador',
+    RolProyecto.integrante => 'Integrante',
   };
 
-  Color get _colorRol => switch (miembro.rol) {
-    RolEquipo.creador => const Color(0xFF8B5CF6),
-    RolEquipo.administrador => AppColors.primary,
-    RolEquipo.integrante => AppColors.textMuted,
+  Color get _colorRol => switch (rol) {
+    RolProyecto.creador => const Color(0xFF8B5CF6),
+    RolProyecto.administrador => AppColors.primary,
+    RolProyecto.integrante => AppColors.textMuted,
   };
 
   @override
   Widget build(BuildContext context) {
-    final esCreador = miembro.rol == RolEquipo.creador;
+    final esCreador = rol == RolProyecto.creador;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -916,7 +1002,7 @@ class _MiembroTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  miembro.nombre,
+                  nombre,
                   style: const TextStyle(
                     color: AppColors.textDark,
                     fontSize: 13,
@@ -924,7 +1010,7 @@ class _MiembroTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'ID: ${miembro.id}',
+                  'ID: ${miembro.usuarioId}',
                   style: const TextStyle(
                     color: AppColors.textMuted,
                     fontSize: 10,
@@ -949,16 +1035,16 @@ class _MiembroTile extends StatelessWidget {
             ),
           ),
           if (puedeGestionarRoles && !esCreador)
-            PopupMenuButton<RolEquipo>(
+            PopupMenuButton<RolProyecto>(
               tooltip: 'Administrar rol',
               onSelected: (_) => alCambiarRol(),
               itemBuilder: (_) => [
-                PopupMenuItem<RolEquipo>(
-                  value: miembro.rol == RolEquipo.administrador
-                      ? RolEquipo.integrante
-                      : RolEquipo.administrador,
+                PopupMenuItem<RolProyecto>(
+                  value: rol == RolProyecto.administrador
+                      ? RolProyecto.integrante
+                      : RolProyecto.administrador,
                   child: Text(
-                    miembro.rol == RolEquipo.administrador
+                    rol == RolProyecto.administrador
                         ? 'Quitar administrador'
                         : 'Hacer administrador',
                   ),
@@ -976,8 +1062,13 @@ class _MiembroTile extends StatelessWidget {
 }
 
 class _AsignacionTile extends StatelessWidget {
-  const _AsignacionTile({required this.asignacion, required this.onDelete});
-  final _Asignacion asignacion;
+  const _AsignacionTile({
+    required this.tarea,
+    required this.nombreMiembro,
+    required this.onDelete,
+  });
+  final NuevaTarea tarea;
+  final String nombreMiembro;
   final VoidCallback onDelete;
   @override
   Widget build(BuildContext context) => Container(
@@ -1001,7 +1092,7 @@ class _AsignacionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                asignacion.tarea,
+                tarea.titulo,
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -1009,7 +1100,7 @@ class _AsignacionTile extends StatelessWidget {
                 ),
               ),
               Text(
-                '${asignacion.integrante} · ${asignacion.inicio.day}/${asignacion.inicio.month} – ${asignacion.fin.day}/${asignacion.fin.month}',
+                '$nombreMiembro · ${tarea.fecha.day}/${tarea.fecha.month} – ${tarea.fechaFinalizacion?.day ?? tarea.fecha.day}/${tarea.fechaFinalizacion?.month ?? tarea.fecha.month}',
                 style: const TextStyle(
                   fontSize: 10,
                   color: AppColors.textMuted,

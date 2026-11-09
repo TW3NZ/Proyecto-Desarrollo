@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/tareas_store.dart';
+import '../data/id_temporal_store.dart';
+import '../data/usuarios_store.dart';
 import '../models/tarea_modelo.dart';
 import '../theme.dart';
 import '../utils/snackbar_utils.dart';
@@ -80,6 +82,9 @@ class _AddScreenState extends State<AddScreen> {
     }
 
     final tarea = NuevaTarea(
+      id: IdTemporalStore.generar(),
+      usuarioId:
+          UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica,
       titulo: titulo,
       categorias: Set.unmodifiable(_categorias),
       prioridad: _prioridad,

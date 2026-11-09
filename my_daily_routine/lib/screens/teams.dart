@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/equipos_store.dart';
+import '../data/usuarios_store.dart';
 import '../models/equipo_modelo.dart';
 import 'crear_team.dart';
 import '../theme.dart';
@@ -23,7 +24,11 @@ class TeamsScreen extends StatefulWidget {
 }
 
 class _TeamsScreenState extends State<TeamsScreen> {
-  List<Equipo> get _equipos => EquiposStore.equipos;
+  int get _usuarioId =>
+      UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica;
+  List<Equipo> get _equipos => EquiposStore.equipos
+      .where((equipo) => equipo.miembros.any((m) => m.usuarioId == _usuarioId))
+      .toList(growable: false);
 
   Future<void> _crearTeam() async {
     await Navigator.of(context)
@@ -40,7 +45,10 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
   void _entrarAlTeam(Equipo equipo) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(builder: (_) => DentroTeamScreen(equipo: equipo)),
+      MaterialPageRoute<void>(
+        builder: (_) =>
+            DentroTeamScreen(equipo: equipo, usuarioId: _usuarioId),
+      ),
     );
   }
 
@@ -201,6 +209,7 @@ class _UnirseTeamDialogState extends State<_UnirseTeamDialog> {
             controller: _idController,
             autofocus: true,
             textInputAction: TextInputAction.done,
+            keyboardType: TextInputType.number,
             decoration: InputDecoration(
               hintText: 'Ingresa el ID del equipo',
               prefixIcon: const Icon(

@@ -1,97 +1,70 @@
 import 'package:flutter/foundation.dart';
 
+import '../models/estadisticas.dart';
 import '../models/tarea_modelo.dart';
+import 'usuarios_store.dart';
 
 class EstadisticasStore extends ChangeNotifier {
   EstadisticasStore._();
 
   static final EstadisticasStore instancia = EstadisticasStore._();
 
-  // Estadísticas del personaje
-  double _inteligencia = 0;
-  double _finanzas = 0;
-  double _salud = 0;
-  double _disciplina = 0;
+  final Map<int, Estadisticas> _porUsuario = {};
 
-  // Estadísticas activadas para calcular el aura
-  bool _inteligenciaActiva = true;
-  bool _finanzasActiva = true;
-  bool _saludActiva = true;
-  bool _disciplinaActiva = true;
+  int get _usuarioIdActual =>
+      UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica;
 
-  // General / Aura
-  double get general {
-    final estadisticasActivas = <double>[];
+  /// Estadísticas de la sesión actual (la cuenta de práctica si no hay sesión).
+  Estadisticas get actual => paraUsuario(_usuarioIdActual);
 
-    if (_inteligenciaActiva) {
-      estadisticasActivas.add(_inteligencia);
-    }
+  /// Obtiene o inicializa las estadísticas de una cuenta concreta.
+  Estadisticas paraUsuario(int usuarioId) => _porUsuario.putIfAbsent(
+    usuarioId,
+    () => Estadisticas(usuarioId: usuarioId),
+  );
 
-    if (_finanzasActiva) {
-      estadisticasActivas.add(_finanzas);
-    }
+  double get general => actual.general;
 
-    if (_saludActiva) {
-      estadisticasActivas.add(_salud);
-    }
+  double get inteligencia => actual.inteligencia;
+  double get finanzas => actual.finanzas;
+  double get salud => actual.salud;
+  double get disciplina => actual.disciplina;
 
-    if (_disciplinaActiva) {
-      estadisticasActivas.add(_disciplina);
-    }
-
-    if (estadisticasActivas.isEmpty) {
-      return 0;
-    }
-
-    final suma = estadisticasActivas.reduce((a, b) => a + b);
-
-    return suma / estadisticasActivas.length;
-  }
-
-  double get inteligencia => _inteligencia;
-  double get finanzas => _finanzas;
-  double get salud => _salud;
-  double get disciplina => _disciplina;
-
-  bool get inteligenciaActiva => _inteligenciaActiva;
-  bool get finanzasActiva => _finanzasActiva;
-  bool get saludActiva => _saludActiva;
-  bool get disciplinaActiva => _disciplinaActiva;
+  bool get inteligenciaActiva => actual.inteligenciaActiva;
+  bool get finanzasActiva => actual.finanzasActiva;
+  bool get saludActiva => actual.saludActiva;
+  bool get disciplinaActiva => actual.disciplinaActiva;
 
   void procesarTareaCompletada(NuevaTarea tarea) {
     if (tarea.categorias.isEmpty) return;
 
     final puntosTotales = _puntosPorPrioridad(tarea.prioridad);
-
-    final puntosPorCategoria =
-        puntosTotales / tarea.categorias.length;
+    final puntosPorCategoria = puntosTotales / tarea.categorias.length;
+    final estadisticas = actual;
 
     for (final categoria in tarea.categorias) {
       switch (categoria) {
         case CategoriaTarea.educacion:
-          _inteligencia = _sumarPuntos(
-            _inteligencia,
+          estadisticas.inteligencia = _sumarPuntos(
+            estadisticas.inteligencia,
             puntosPorCategoria,
           );
           break;
-
         case CategoriaTarea.finanzas:
-          _finanzas = _sumarPuntos(
-            _finanzas,
+          estadisticas.finanzas = _sumarPuntos(
+            estadisticas.finanzas,
             puntosPorCategoria,
           );
           break;
-
         case CategoriaTarea.salud:
-          _salud = _sumarPuntos(
-            _salud,
+          estadisticas.salud = _sumarPuntos(
+            estadisticas.salud,
             puntosPorCategoria,
           );
           break;
-
         case CategoriaTarea.disciplina:
-          _disciplina = _sumarPuntos(
-            _disciplina,
+          estadisticas.disciplina = _sumarPuntos(
+            estadisticas.disciplina,
             puntosPorCategoria,
           );
           break;
@@ -105,10 +78,8 @@ class EstadisticasStore extends ChangeNotifier {
     switch (prioridad) {
       case PrioridadTarea.baja:
         return 5;
-
       case PrioridadTarea.media:
         return 10;
-
       case PrioridadTarea.alta:
         return 15;
     }
@@ -116,31 +87,26 @@ class EstadisticasStore extends ChangeNotifier {
 
   double _sumarPuntos(double actual, double puntos) {
     final nuevoValor = actual + puntos;
-
-    if (nuevoValor >= 100) {
-      return 100;
-    }
-
-    return nuevoValor;
+    return nuevoValor >= 100 ? 100 : nuevoValor;
   }
 
   void cambiarInteligenciaActiva() {
-    _inteligenciaActiva = !_inteligenciaActiva;
+    actual.inteligenciaActiva = !actual.inteligenciaActiva;
     notifyListeners();
   }
 
   void cambiarFinanzasActiva() {
-    _finanzasActiva = !_finanzasActiva;
+    actual.finanzasActiva = !actual.finanzasActiva;
     notifyListeners();
   }
 
   void cambiarSaludActiva() {
-    _saludActiva = !_saludActiva;
+    actual.saludActiva = !actual.saludActiva;
     notifyListeners();
   }
 
   void cambiarDisciplinaActiva() {
-    _disciplinaActiva = !_disciplinaActiva;
+    actual.disciplinaActiva = !actual.disciplinaActiva;
     notifyListeners();
   }
 }

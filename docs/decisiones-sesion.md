@@ -6,9 +6,9 @@ El usuario pidió un control de cierre de sesión debajo de la cápsula motivaci
 
 Alcance: navegación dentro de la autenticación local actual. No hay sesión remota ni credenciales persistentes que invalidar o limpiar.
 
-## 2026-11-05 — Campo reservado para ID de usuario
+## 2026-11-05 — Campo reservado para ID de usuario (revisado el 2026-11-09)
 
-A petición del usuario, `Usuario` incorpora el campo opcional `id`. Se deja nullable y sin generación automática para conservar compatibilidad con cuentas existentes y no presentar como persistente un identificador que todavía no se almacena en una base de datos.
+A petición del usuario, `Usuario` incorpora un `id` obligatorio de tipo `int`. Hasta integrar FastAPI, la app asigna IDs negativos temporales en memoria; FastAPI generará los IDs estables definitivos. La decisión anterior de mantenerlo nullable quedó reemplazada el 2026-11-09 al preparar los modelos para una futura base de datos.
 
 ## 2026-11-05 — Retirar accesos sociales del login
 
