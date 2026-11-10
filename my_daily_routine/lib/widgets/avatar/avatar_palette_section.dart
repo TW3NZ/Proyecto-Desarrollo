@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/avatar_config.dart';
+import 'avatar_color_picker.dart';
 
 class AvatarPaletteSection extends StatelessWidget {
   final AvatarPart part;
@@ -49,6 +50,15 @@ class AvatarPaletteSection extends StatelessWidget {
                 ),
             ],
           ),
+          if (part == AvatarPart.shirt || part == AvatarPart.trousers)
+            AvatarCustomColors(
+              selected: selectedId,
+              initial: const AvatarConfig()
+                  .withColor(part, selectedId)
+                  .option(part)
+                  .color,
+              onSelected: onSelected,
+            ),
         ],
       ),
     );

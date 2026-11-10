@@ -50,12 +50,16 @@ void main() {
       const current = AvatarConfig(
         characterType: AvatarCharacterType.mujer,
         motion: false,
+        bodyWidth: 1.15,
+        bodyHeight: 0.9,
         shirt: 'cream',
         trousers: 'olive',
       );
       final next = AvatarPhotoService.applySuggestion(suggestion(), current);
       expect(next.characterType, current.characterType);
       expect(next.motion, false);
+      expect(next.bodyWidth, current.bodyWidth);
+      expect(next.bodyHeight, current.bodyHeight);
       expect(next.shirt, 'cream');
       expect(next.trousers, 'olive');
       expect(next.hairstyle, AvatarHairstyle.rizado);
@@ -175,12 +179,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(requests, 0);
       expect(accepted, isNull);
-      await tester.ensureVisible(find.text('Analizar foto'));
+      await tester.scrollUntilVisible(
+        find.text('Analizar foto').hitTestable(),
+        150,
+      );
       await tester.tap(find.text('Analizar foto'));
       await tester.pumpAndSettle();
       expect(requests, 1);
       expect(accepted, isNull);
-      await tester.scrollUntilVisible(find.text('Usar propuesta'), 250);
+      await tester.scrollUntilVisible(
+        find.text('Usar propuesta').hitTestable(),
+        150,
+      );
       await tester.tap(find.text('Usar propuesta'));
       await tester.pumpAndSettle();
       expect(accepted?.hairstyle, AvatarHairstyle.rizado);

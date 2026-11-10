@@ -10,6 +10,8 @@ import '../widgets/avatar/avatar_character.dart';
 import '../widgets/avatar/avatar_preview.dart';
 import '../widgets/avatar/avatar_hairstyle_selector.dart';
 import '../widgets/avatar/avatar_face_selector.dart';
+import '../widgets/avatar/avatar_body_controls.dart';
+import '../widgets/avatar/avatar_expression_preview.dart';
 import '../widgets/common/cabecera_app.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -238,6 +240,11 @@ class _AvatarScreenState extends State<AvatarScreen> {
                                 _changeAppearance(_draft.withHairstyle(style)),
                           ),
                           const SizedBox(height: 16),
+                          AvatarBodyControls(
+                            config: _draft,
+                            onChanged: (next) => setState(() => _draft = next),
+                          ),
+                          const SizedBox(height: 16),
                           AvatarFaceSelector(
                             config: _draft,
                             onChanged: _changeAppearance,
@@ -279,6 +286,8 @@ class _AvatarScreenState extends State<AvatarScreen> {
                             ),
                             onTryReaction: () => setState(() => _reaction++),
                           ),
+                          const Divider(height: 28),
+                          AvatarExpressionPreview(config: _draft),
                         ],
                       ),
                     ),

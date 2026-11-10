@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../models/avatar_config.dart';
+import '../theme.dart';
+import '../widgets/common/cabecera_app.dart';
 import '../services/avatar_photo_service.dart';
 import '../widgets/avatar/avatar_character.dart';
 import '../widgets/avatar/avatar_preview.dart';
@@ -138,97 +140,406 @@ class _AvatarPhotoScreenState extends State<AvatarPhotoScreen> {
           TargetPlatform.iOS,
         ].contains(defaultTargetPlatform);
     return Scaffold(
-      appBar: AppBar(title: const Text('Avatar desde una foto')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+      backgroundColor: AppColors.background,
+      body: Column(
         children: [
-          const Text(
-            'Usa una foto de frente, con buena luz y una sola persona. El parecido depende de los rasgos disponibles; después podrás ajustarlos.',
+          CabeceraApp(
+            titulo: 'Tu foto',
+            alVolver: () => Navigator.of(context).maybePop(),
           ),
-          const SizedBox(height: 16),
-          if (!_service.configured)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: Text(
-                'La función de fotos aún no está configurada en esta versión.',
-              ),
-            ),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              if (camera)
-                OutlinedButton.icon(
-                  onPressed: _busy ? null : () => _pick(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Tomar foto'),
-                ),
-              OutlinedButton.icon(
-                onPressed: _busy ? null : () => _pick(ImageSource.gallery),
-                icon: const Icon(Icons.photo_library_outlined),
-                label: const Text('Elegir foto'),
-              ),
-            ],
-          ),
-          if (_photo != null) ...[
-            const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Image.memory(
-                _photo!,
-                height: 220,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Text(
-                  'No se puede mostrar esta foto. Elige otra en JPEG, PNG o WebP.',
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Al pulsar «Analizar foto», se enviará esta imagen a nuestro servidor y a OpenAI para sugerir los rasgos. Nuestro servidor no guarda la foto. OpenAI la procesa según sus políticas de datos. Usa una foto tuya o con permiso.',
-            ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: _busy || !_service.configured ? null : _analyze,
-              icon: const Icon(Icons.auto_awesome),
-              label: const Text('Analizar foto'),
-            ),
-          ],
-          if (_busy)
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Column(
+          Expanded(
+            child: SafeArea(
+              top: false,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
                 children: [
-                  LinearProgressIndicator(),
-                  SizedBox(height: 8),
-                  Text('Preparando tu avatar…'),
+                  const Text(
+                    'Un avatar más como tú',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Empieza con una foto. Después, dale tu toque personal.',
+                    style: TextStyle(color: AppColors.textMuted, height: 1.5),
+                  ),
+                  const SizedBox(height: 20),
+                  _PhotoPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const _SectionLabel(
+                          number: '1',
+                          title: 'Elige tu foto',
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          clipBehavior: Clip.antiAlias,
+                          decoration: BoxDecoration(
+                            color: AppColors.fieldFill,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.fieldBorder),
+                          ),
+                          child: _photo == null
+                              ? const Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: 20,
+                                    horizontal: 16,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Icon(
+                                        Icons.add_a_photo_outlined,
+                                        size: 42,
+                                        color: AppColors.primary,
+                                      ),
+                                      SizedBox(height: 10),
+                                      Text(
+                                        'Tu próxima versión empieza aquí',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: AppColors.textMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Image.memory(
+                                  _photo!,
+                                  height: 220,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, _, _) => const Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: Text(
+                                      'No se puede mostrar esta foto. Elige otra en JPEG, PNG o WebP.',
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            if (camera)
+                              OutlinedButton.icon(
+                                style: _sourceButtonStyle,
+                                onPressed: _busy
+                                    ? null
+                                    : () => _pick(ImageSource.camera),
+                                icon: const Icon(
+                                  Icons.camera_alt_outlined,
+                                  size: 20,
+                                ),
+                                label: const Text('Tomar foto'),
+                              ),
+                            OutlinedButton.icon(
+                              style: _sourceButtonStyle,
+                              onPressed: _busy
+                                  ? null
+                                  : () => _pick(ImageSource.gallery),
+                              icon: const Icon(
+                                Icons.photo_library_outlined,
+                                size: 20,
+                              ),
+                              label: const Text('Elegir foto'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'De frente · Buena luz · Solo tú',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (!_service.configured) ...[
+                    const _PhotoNotice(
+                      icon: Icons.info_outline_rounded,
+                      text: 'El servicio de fotos no estú configurado en esta instalación. Inicia la app con la configuración de fotos habilitada para analizar tu imagen.',
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_photo != null) ...[
+                    _PhotoPanel(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _SectionLabel(
+                            number: '2',
+                            title: 'Encuentra tus rasgos',
+                          ),
+                          const SizedBox(height: 14),
+                          const Text(
+                            'Te propondremos una combinación de peinado, colores y rasgos. El parecido depende de las opciones disponibles.',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const _PhotoNotice(
+                            icon: Icons.lock_outline_rounded,
+                            text: 'Al pulsar «Analizar foto», enviarás la imagen a nuestro servidor y a OpenAI. Nuestro servidor no guarda la foto; OpenAI la procesa según sus políticas de datos. Usa una foto tuya o con permiso.',
+                          ),
+                          const SizedBox(height: 18),
+                          _PhotoAction(
+                            label: 'Analizar foto',
+                            icon: Icons.auto_awesome_rounded,
+                            onPressed: _busy || !_service.configured
+                                ? null
+                                : _analyze,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_busy) ...[
+                    const _PhotoPanel(
+                      child: Column(
+                        children: [
+                          LinearProgressIndicator(
+                            color: AppColors.primary,
+                            backgroundColor: AppColors.fieldBorder,
+                          ),
+                          SizedBox(height: 14),
+                          Text(
+                            'Preparando tu avatar…',
+                            style: TextStyle(
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_error != null) ...[
+                    Semantics(
+                      liveRegion: true,
+                      child: _PhotoNotice(
+                        icon: Icons.error_outline_rounded,
+                        text: _error!,
+                        isError: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  if (_proposal != null)
+                    _PhotoPanel(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const _SectionLabel(
+                            number: '3',
+                            title: 'Tu propuesta',
+                          ),
+                          const SizedBox(height: 16),
+                          AvatarPreview(
+                            height: 300,
+                            config: _proposal!,
+                            reaction: 0,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            '¡Ahora dale tu toque!',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Conservamos tu personaje y los atributos que no se distinguen. Puedes seguir editando antes de guardar en la pantalla anterior.',
+                            style: TextStyle(
+                              color: AppColors.textMuted,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 18),
+                          _PhotoAction(
+                            label: 'Usar propuesta',
+                            icon: Icons.check_rounded,
+                            onPressed: _busy
+                                ? null
+                                : () => Navigator.pop(context, _proposal),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(_error!, semanticsLabel: _error),
-            ),
-          if (_proposal != null) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Tu propuesta',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            AvatarPreview(height: 300, config: _proposal!, reaction: 0),
-            const SizedBox(height: 12),
-            const Text(
-              'Conservamos tu personaje y los atributos que no se distinguen. Puedes seguir editando; los cambios se guardan en la pantalla anterior.',
-            ),
-            FilledButton(
-              onPressed: _busy ? null : () => Navigator.pop(context, _proposal),
-              child: const Text('Usar propuesta'),
-            ),
-          ],
+          ),
         ],
       ),
     );
   }
+
+  ButtonStyle get _sourceButtonStyle => OutlinedButton.styleFrom(
+    foregroundColor: AppColors.primary,
+    side: const BorderSide(color: AppColors.fieldBorder),
+    backgroundColor: AppColors.fieldFill,
+    minimumSize: const Size(0, 48),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.button),
+    ),
+  );
+}
+
+class _PhotoPanel extends StatelessWidget {
+  final Widget child;
+  const _PhotoPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(color: AppColors.fieldBorder),
+      boxShadow: [
+        BoxShadow(
+          color: AppColors.primary.withValues(alpha: 0.06),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: child,
+  );
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String number;
+  final String title;
+  const _SectionLabel({required this.number, required this.title});
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Container(
+        width: 30,
+        height: 30,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          gradient: AppGradients.logo,
+          shape: BoxShape.circle,
+        ),
+        child: Text(
+          number,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textDark,
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class _PhotoNotice extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool isError;
+  const _PhotoNotice({
+    required this.icon,
+    required this.text,
+    this.isError = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isError
+        ? Theme.of(context).colorScheme.error
+        : AppColors.textMuted;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isError
+            ? Theme.of(context).colorScheme.errorContainer
+            : AppColors.fieldFill,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: color, fontSize: 13, height: 1.5),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoAction extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  const _PhotoAction({required this.label, required this.icon, this.onPressed});
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: onPressed == null ? null : AppGradients.primary,
+      color: onPressed == null ? AppColors.divider : null,
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      boxShadow: onPressed == null
+          ? []
+          : [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+    ),
+    child: FilledButton.icon(
+      style: FilledButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        disabledBackgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        disabledForegroundColor: AppColors.textMuted,
+        shadowColor: Colors.transparent,
+        minimumSize: const Size(double.infinity, 54),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.button),
+        ),
+      ),
+      onPressed: onPressed,
+      icon: Icon(icon, size: 20),
+      label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    ),
+  );
 }

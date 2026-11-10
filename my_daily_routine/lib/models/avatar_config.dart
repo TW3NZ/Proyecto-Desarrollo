@@ -84,6 +84,14 @@ const avatarPalettes = <AvatarPart, List<AvatarColorOption>>{
 
 @immutable
 class AvatarConfig {
+  static bool isCustomColor(String value) =>
+      RegExp(r'^#[0-9a-fA-F]{6}$').hasMatch(value);
+  static Color customColor(String value) =>
+      Color(0xFF000000 | int.parse(value.substring(1), radix: 16));
+  static String validEyeColor(Object? value) =>
+      value is String && isCustomColor(value)
+      ? value.toUpperCase()
+      : 'original';
   final String skin;
   final String hair;
   final String shirt;
@@ -93,7 +101,18 @@ class AvatarConfig {
   final AvatarEyes eyes;
   final AvatarNose nose;
   final AvatarMouth mouth;
+  final String eyeColor;
   final bool motion;
+  final double bodyWidth;
+  final double bodyHeight;
+
+  static const double minBodyWidth = 0.8;
+  static const double maxBodyWidth = 1.5;
+  static double validWidth(Object? value) =>
+      _dimension(value, minBodyWidth, maxBodyWidth);
+  static double validHeight(Object? value) => _dimension(value, 0.8, 1.0);
+  static double _dimension(Object? value, double min, double max) =>
+      value is num && value.isFinite ? value.toDouble().clamp(min, max) : 1.0;
 
   const AvatarConfig({
     this.skin = 'original',
@@ -105,7 +124,10 @@ class AvatarConfig {
     this.eyes = AvatarEyes.original,
     this.nose = AvatarNose.original,
     this.mouth = AvatarMouth.original,
+    this.eyeColor = 'original',
     this.motion = true,
+    this.bodyWidth = 1.0,
+    this.bodyHeight = 1.0,
   });
 
   String selection(AvatarPart part) => switch (part) {
@@ -115,10 +137,18 @@ class AvatarConfig {
     AvatarPart.trousers => trousers,
   };
 
-  AvatarColorOption option(AvatarPart part) => avatarPalettes[part]!.firstWhere(
-    (item) => item.id == selection(part),
-    orElse: () => avatarPalettes[part]!.first,
-  );
+  AvatarColorOption option(AvatarPart part) =>
+      isCustomColor(selection(part)) &&
+          (part == AvatarPart.shirt || part == AvatarPart.trousers)
+      ? AvatarColorOption(
+          selection(part),
+          'Personalizado',
+          customColor(selection(part)),
+        )
+      : avatarPalettes[part]!.firstWhere(
+          (item) => item.id == selection(part),
+          orElse: () => avatarPalettes[part]!.first,
+        );
 
   AvatarConfig copyWith({
     String? skin,
@@ -130,7 +160,10 @@ class AvatarConfig {
     AvatarEyes? eyes,
     AvatarNose? nose,
     AvatarMouth? mouth,
+    String? eyeColor,
     bool? motion,
+    double? bodyWidth,
+    double? bodyHeight,
   }) => AvatarConfig(
     skin: skin ?? this.skin,
     hair: hair ?? this.hair,
@@ -141,11 +174,20 @@ class AvatarConfig {
     eyes: eyes ?? this.eyes,
     nose: nose ?? this.nose,
     mouth: mouth ?? this.mouth,
+    eyeColor: validEyeColor(eyeColor ?? this.eyeColor),
     motion: motion ?? this.motion,
+    bodyWidth: validWidth(bodyWidth ?? this.bodyWidth),
+    bodyHeight: validHeight(bodyHeight ?? this.bodyHeight),
   );
 
   AvatarConfig withColor(AvatarPart part, String id) {
-    if (!avatarPalettes[part]!.any((item) => item.id == id)) return this;
+    final custom =
+        (part == AvatarPart.shirt || part == AvatarPart.trousers) &&
+        isCustomColor(id);
+    if (!custom && !avatarPalettes[part]!.any((item) => item.id == id)) {
+      return this;
+    }
+    if (custom) id = id.toUpperCase();
     return switch (part) {
       AvatarPart.skin => copyWith(skin: id),
       AvatarPart.hair => copyWith(hair: id),
@@ -170,7 +212,10 @@ class AvatarConfig {
     'eyes': eyes.name,
     'nose': nose.name,
     'mouth': mouth.name,
+    'eyeColor': validEyeColor(eyeColor),
     'motion': motion,
+    'bodyWidth': validWidth(bodyWidth),
+    'bodyHeight': validHeight(bodyHeight),
   };
 
   factory AvatarConfig.fromJson(Map<String, dynamic> json) {
@@ -193,6 +238,9 @@ class AvatarConfig {
         )
         .withMotion(json['motion'] is bool ? json['motion'] as bool : true)
         .copyWith(
+          eyeColor: validEyeColor(json['eyeColor']),
+          bodyWidth: validWidth(json['bodyWidth']),
+          bodyHeight: validHeight(json['bodyHeight']),
           eyes: AvatarEyes.values.firstWhere(
             (e) => e.name == json['eyes'],
             orElse: () => AvatarEyes.original,

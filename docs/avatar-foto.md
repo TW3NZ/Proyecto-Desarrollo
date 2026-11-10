@@ -1,5 +1,7 @@
 # Avatar desde una foto
 
+Guía paso a paso para iniciar el servidor y probar en el emulador Android: [backend/README.md](../backend/README.md).
+
 Flujo: **Tu avatar → Crear desde una foto → Tomar foto / Elegir foto → Analizar foto → Usar propuesta → Guardar cambios**. Elegir la foto no la envía. Volver sin usar la propuesta conserva el borrador anterior; usarla permite seguir editando antes de guardar.
 
 ## Ejecutar el servicio (PowerShell, desde la raíz)
@@ -9,13 +11,19 @@ Requiere Python 3.12 o superior con pip. Crear un entorno e instalar:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
-$env:OPENAI_API_KEY = 'TU_CLAVE_DE_OPENAI'
-$env:OPENAI_AVATAR_MODEL = 'gpt-4.1-mini'
-$env:AVATAR_SERVICE_TOKEN = 'UN_TOKEN_LOCAL_ALEATORIO_DE_AL_MENOS_24_CARACTERES'
 .\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-Los valores mostrados son marcadores que debes reemplazar. `backend/.env.example` enumera las variables; el servicio lee el entorno y no carga `.env` automáticamente. No guardar claves reales en el repositorio. Si la clave ya está configurada en el entorno, no reemplazarla. Se usa Responses API con salida estructurada y `store=false`.
+Antes de iniciar, crea `backend/.env` siguiendo `backend/.env.example`, con `OPENAI_API_KEY`, `OPENAI_AVATAR_MODEL=gpt-4.1-mini` y `AVATAR_SERVICE_TOKEN` (al menos 24 caracteres). **El servidor carga automáticamente ese archivo**, independientemente del directorio actual. Sus valores tienen prioridad sobre variables del sistema; si no está presente, usa el entorno y, como respaldo, `.env` en la raíz. Esto evita usar accidentalmente otra clave configurada en el equipo. Reinicia el servidor después de editarlo. No guardar claves reales en el repositorio. Se usa Responses API con salida estructurada y `store=false`.
+
+En este equipo quedó preparado `.tools/avatar-flutter.json`, ignorado por Git, con la URL del emulador Android y el token local de `backend/.env`, sin la clave de OpenAI. Para usarlo:
+
+```powershell
+cd my_daily_routine
+flutter run --dart-define-from-file=../.tools/avatar-flutter.json
+```
+
+Si cambia `AVATAR_SERVICE_TOKEN`, actualiza `AVATAR_API_TOKEN` en ese JSON y reinicia Flutter. Nunca pases `backend/.env` como archivo de configuración de Flutter: contiene la clave privada de OpenAI.
 
 En otra terminal, usa el mismo token local (no la clave de OpenAI):
 
@@ -40,8 +48,16 @@ El token compartido es una barrera para pruebas locales, **no autenticación de 
 
 ## Verificación
 
+Prueba real opcional desde la raíz (consume una petición de API):
+
 ```powershell
-.\.venv\Scripts\python.exe -m pytest backend -q
+.\.venv\Scripts\python.exe -m backend.utils.check_connection
+```
+
+Este comando utiliza expresamente las credenciales de `backend/.env`, pasa por el endpoint FastAPI en proceso y envía únicamente la ilustración de avatar incluida en el proyecto. No inicia un servidor persistente ni valida la cámara o la red del teléfono. El 2026-11-10 devolvió HTTP 200 y `status=ok` con atributos válidos. Las pruebas automáticas siguientes siguen usando respuestas simuladas.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest backend/test -q
 cd my_daily_routine
 flutter test test/avatar_photo_test.dart test/avatar_test.dart test/avatar_face_test.dart test/avatar_hairstyles_test.dart
 ```

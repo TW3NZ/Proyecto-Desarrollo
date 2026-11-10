@@ -1,5 +1,7 @@
 # Daily Routine
 
+Para generar e instalar el APK de prueba consulta [la guía de compilación](../scripts/README.md).
+
 Aplicación Flutter para organizar tareas y seguir su cumplimiento. Consulta el [README principal](../README.md) para el estado completo de la aplicación.
 
 ## Acceso de prueba sin registro

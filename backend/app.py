@@ -12,6 +12,9 @@ from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, ConfigDict, ValidationError
 from starlette.concurrency import run_in_threadpool
+from backend.utils.settings import load_settings
+
+load_settings()
 
 MAX_IMAGE = 4 * 1024 * 1024
 MAX_BODY = 6 * 1024 * 1024

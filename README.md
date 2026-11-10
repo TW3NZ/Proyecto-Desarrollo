@@ -1,4 +1,8 @@
+[Descargar APK de prueba para Android ARM64](artifacts/my-daily-rutine-android-arm64.apk) · [Cómo compilar el APK](scripts/README.md)
+
 # My Daily Routine
+
+El APK incluye la personalización manual y no lleva credenciales del servicio de fotos. Es una compilación de prueba con firma de desarrollo; consulta la guía para generar una versión conectada a tu backend HTTPS.
 
 Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Todavía no hay persistencia general de cuentas y tareas.
 
@@ -7,6 +11,8 @@ Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consu
 **Aplicación:** Flutter / Dart
 
 **Tecnologías del repositorio:** Dart, Flutter y Python
+
+Para iniciar el backend y probar la personalización con fotos en el emulador Android, consulta [backend/README.md](backend/README.md).
 
 ## Credenciales de prueba: ingresar sin registrarse
 

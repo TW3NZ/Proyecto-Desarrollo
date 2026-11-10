@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/avatar_config.dart';
 import 'avatar_character.dart';
+import 'avatar_color_picker.dart';
 
 class AvatarFaceSelector extends StatelessWidget {
   final AvatarConfig config;
@@ -35,7 +36,7 @@ class AvatarFaceSelector extends StatelessWidget {
           maxWidth: 480,
           minHeight: 960,
           maxHeight: 960,
-          child: AvatarCharacter(config: config),
+          child: AvatarCharacter(config: config, portrait: true),
         ),
       ),
       _options('Ojos', [
@@ -47,6 +48,22 @@ class AvatarFaceSelector extends StatelessWidget {
             onSelected: (_) => onChanged(config.copyWith(eyes: value)),
           ),
       ]),
+      const SizedBox(height: 16),
+      const Text(
+        'Color de ojos',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      AvatarCustomColors(
+        selected: config.eyeColor,
+        initial: AvatarConfig.isCustomColor(config.eyeColor)
+            ? AvatarConfig.customColor(config.eyeColor)
+            : const Color(0xFF62402A),
+        onSelected: (value) => onChanged(config.copyWith(eyeColor: value)),
+      ),
+      TextButton(
+        onPressed: () => onChanged(config.copyWith(eyeColor: 'original')),
+        child: const Text('Color de ojos original'),
+      ),
       _options('Nariz', [
         for (final value in AvatarNose.values)
           ChoiceChip(

@@ -1,5 +1,59 @@
 # Decisiones sobre el avatar
 
+## 2026-11-10 — Colores libres, ojos y cejas
+
+El usuario pidió ampliar los colores de la ropa, añadir color de ojos, confirmar el vínculo de cejas/cabello y preparar un APK descargable con instrucciones. Se conservan los IDs anteriores y se admiten colores `#RRGGBB` para camiseta y pantalón. El editor ofrece veinte muestras adicionales y un diálogo de tono/saturación/brillo con entrada hexadecimal; aplica solo al confirmar. No añade tipos de prendas ni un suéter nuevo.
+
+`eyeColor` se guarda independientemente de la forma de ojos, con `original` como valor compatible. El shader tiñe los píxeles marrones del iris en las regiones de ojos, protegiendo blancos y reflejos; el color final conserva sombreado y no es necesariamente el RGB plano elegido. Se explicita una máscara de cejas para corregir zonas excluidas por la protección del rostro y vincularlas al cabello. Las máscaras se calibran para las ilustraciones actuales, no son segmentación anatómica general.
+
+La propuesta desde una foto mantiene el color de ojos manual y sigue usando el catálogo previo para los colores sugeridos de ropa; el selector libre es una función de edición manual. Se añadieron pruebas de persistencia RGB, validación hexadecimal y cambios de píxeles de ojos/cejas en ambos personajes. Se adapta la prueba de guardar al desplazamiento del editor ampliado.
+
+Compilación reproducible: `scripts/build-apk.ps1` y [guía del APK](../scripts/README.md). El APK compartible no lleva credenciales ni activa por sí solo el servicio de fotos. Los builds con token local tienen un nombre privado ignorado por Git. La firma release del proyecto sigue siendo de desarrollo, pendiente de firma propia para publicación formal.
+
+Verificación: veinte pruebas de avatar pasan (incluido el editor tras ajustar su desplazamiento), análisis Dart sin incidencias y compilación release ARM64 completada. Artefacto de aproximadamente 49.4 MB en `artifacts/my-daily-rutine-android-arm64.apk`. El script PowerShell pasa validación sintáctica; la compilación en esta máquina se ejecutó directamente con Flutter. Falta instalar y revisar este APK en un teléfono físico.
+
+## 2026-11-10 — Encuadre de rostro y mayor anchura máxima
+
+El usuario detectó que al reducir la altura desaparecía la cara en el editor de rostro. Ese recorte usaba el renderizado de cuerpo completo, que desplazaba la cabeza al reducir la altura. Se activa `portrait: true` en `AvatarFaceSelector`, de forma que el encuadre facial ignore las proporciones corporales y conserve los rasgos elegidos sin modificar el avatar guardado.
+
+También pidió ampliar el extremo ancho un 20–30 % y mantener el delgado. El límite del parámetro pasa de 1.2 a 1.5 (25 % de aumento del parámetro), conservando mínimo 0.8, original 1.0 y todos los valores guardados. El cambio visual no equivale a un porcentaje exacto en píxeles, porque el shader deforma de forma acotada. Se actualizan rango, divisiones y etiquetas del deslizador. Las pruebas comparan el renderizado del editor de rostro antes y después de reducir altura para ambos personajes y comprueban que el nuevo extremo es visualmente más ancho que el anterior.
+
+## 2026-11-10 — Deslizantes de complexión y altura
+
+El usuario pidió controlar el ancho y alto del personaje. Se añaden dos deslizantes en **Tu avatar → Proporciones**, con vista previa mediante el renderizador existente, guardado local y restablecimiento independiente de los demás atributos. Los campos `bodyWidth` y `bodyHeight` se conservan al cambiar personaje, colores, peinado, rostro, movimiento y al aplicar una propuesta de foto. Las preferencias antiguas reciben valores originales (1.0); entradas inválidas o no finitas se normalizan.
+
+Elección provisional: complexión de 0.8 a 1.2 mediante deformación horizontal acotada del cuerpo, con transición suave bajo la cabeza y extremos del lienzo fijos. Altura de 0.8 a 1.0, donde 1.0 conserva el tamaño aprobado del inicio. La altura reduce verticalmente el dibujo anclado a la base, incluida la cabeza; no es un modelo anatómico ni una medida en centímetros. Las vistas de retrato permanecen sin deformar para no alterar sus recortes. El shader aplica primero la transformación de coordenadas y después los rasgos/colores, manteniendo su alineación. No se añaden dependencias, imágenes ni inferencia de proporciones por OpenAI.
+
+Se prueban persistencia, compatibilidad, conservación al aplicar foto y diferencias reales de ancho y alto al renderizar ambos personajes. La revisión estética de todas las combinaciones y dispositivos queda pendiente; los límites se pueden ajustar tras esa revisión.
+
+## 2026-11-10 — Estilo visual de la pantalla de foto
+
+El usuario pidió adaptar esta pantalla al lenguaje de la app. Se reutilizan `CabeceraApp`, los colores y degradados de `theme.dart`, con tarjetas blancas redondeadas, sombras discretas y tres pasos: elegir foto, analizar y revisar propuesta. El estado inicial incluye un espacio ilustrado con icono; la foto seleccionada conserva sus proporciones. Los botones muestran estados habilitado/deshabilitado diferenciados, y privacidad, configuración y errores tienen bloques propios. Las acciones pueden ajustarse en varias filas y el contenido respeta el área segura inferior.
+
+Se conserva la lógica de cámara, envío explícito, propuesta y guardado. No se añadieron dependencias ni llamadas nuevas al backend. Las cuatro pruebas del flujo pasan tras adaptar el desplazamiento a los botones del nuevo diseño; formato y análisis Dart sin incidencias. Pendiente la revisión visual interactiva en el emulador del usuario.
+
+## 2026-11-10 — Configuración también al depurar directamente `main.dart`
+
+El usuario confirmó que iniciar Debug desde `main.dart` seguía omitiendo la configuración. Los perfiles de lanzamiento no cubrían ese inicio implícito. Se configuró `dart.flutterRunAdditionalArgs` en ambos workspaces (raíz y carpeta Flutter), con el archivo local relativo al directorio del proyecto Flutter. Se retiró el argumento duplicado de los perfiles explícitos. Se verificó en la extensión Dart instalada que este ajuste se añade a los lanzamientos Flutter; no se cambió código Dart ni credenciales. La comprobación interactiva del editor y el emulador sigue pendiente.
+
+## 2026-11-10 — Inicio desde VS Code con configuración de fotos
+
+Ante el botón de análisis deshabilitado, se revisó que depende de la configuración compilada de Flutter o de una operación pendiente, no del estado del servidor. No había perfiles de inicio del editor que cargaran el JSON local. Se añadieron perfiles `My Daily Rutine - Avatar con fotos` para abrir el repositorio completo o solo la carpeta Flutter. No incluyen credenciales: referencian `.tools/avatar-flutter.json`. Se añadió un aviso junto al botón cuando falta configuración para hacer visible el motivo después de seleccionar una foto. La sesión instalada debe detenerse y volver a iniciarse con el perfil; este cambio no reconfigura automáticamente una app que ya esté abierta.
+
+## 2026-11-10 — Organización del backend y guía del emulador
+
+Por solicitud del usuario, `app.py`, `requirements.txt`, `.env` y `.env.example` permanecen en la raíz de `backend/`; las pruebas se agrupan en `backend/test/` y la configuración y diagnóstico en `backend/utils/`. Se ajustaron importaciones y rutas relativas para conservar la carga del mismo `.env` y del recurso de prueba. El comando actual de diagnóstico es `python -m backend.utils.check_connection`; la referencia anterior en esta bitácora corresponde al comando usado antes de reorganizar.
+
+Se añadió [backend/README.md](../backend/README.md) con instalación, ejecución del servidor, configuración de Flutter, prueba en emulador Android y diagnóstico. La regla de organización se incorporó a `AGENTS.md`. Las ocho pruebas del backend pasan tras el cambio; no se repitió la llamada pagada a OpenAI ni se probó la cámara en esta reorganización.
+
+## 2026-11-10 — Carga de `.env` y conexión real comprobada
+
+El usuario creó `backend/.env` y pidió comprobar el envío y respuesta de OpenAI. Se detectó que el backend no cargaba archivos de entorno y que el proceso heredaba una clave distinta a la del proyecto. Se añadió `python-dotenv`: el archivo `backend/.env` tiene prioridad sobre el entorno del proceso; `.env` de raíz sirve como respaldo. No se modificaron ni mostraron las claves del usuario.
+
+Se ejecutó `python -m backend.check_connection` con la clave del archivo: petición real a OpenAI, pasando por `/avatar/suggest` en FastAPI en proceso, usando la ilustración existente `avatar_human_v2.png`. Resultado HTTP 200, `status=ok`, atributos válidos del catálogo (todos `original` para esa ilustración). Esto verifica credenciales y contrato de respuesta; no demuestra parecido con una foto real ni conectividad desde un dispositivo.
+
+Se preparó `.tools/avatar-flutter.json` local e ignorado por Git con la URL del emulador Android y el token del servicio, sin clave de OpenAI. La app debe reiniciarse con ese archivo y el servidor debe estar ejecutándose. Se añadieron pruebas de carga desde otro directorio, prioridad de archivo y respaldo del entorno; los ocho tests del backend pasan. No se modificó Dart ni fue necesario repetir sus pruebas. Sigue pendiente cámara/red y revisión del parecido en dispositivo.
+
 ## 2026-11-09 — Foto para sugerir atributos del catálogo
 
 **Acuerdo del usuario:** retomar ahora la conexión a OpenAI para que una foto determine los valores más parecidos entre los atributos disponibles. Esto sustituye el aplazamiento registrado en las entradas históricas. No se solicitó generar una nueva ilustración.

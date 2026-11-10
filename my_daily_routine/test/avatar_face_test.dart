@@ -103,6 +103,27 @@ void main() {
         motion: false,
       );
       final original = await render(config);
+      final coloredEyes = await render(config.copyWith(eyeColor: '#00BCD4'));
+      expect(
+        differences(
+          original,
+          coloredEyes,
+          const Rect.fromLTRB(390, 208, 561, 282),
+        ),
+        greaterThan(10),
+      );
+      expect(pixel(coloredEyes, 490, 320), pixel(original, 490, 320));
+      final coloredBrows = await render(
+        config.withColor(AvatarPart.hair, 'silver'),
+      );
+      expect(
+        differences(
+          original,
+          coloredBrows,
+          const Rect.fromLTRB(393, 187, 480, 220),
+        ),
+        greaterThan(10),
+      );
       for (final eyes in AvatarEyes.values.skip(1)) {
         final result = await render(config.copyWith(eyes: eyes));
         expect(

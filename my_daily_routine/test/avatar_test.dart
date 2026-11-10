@@ -214,8 +214,7 @@ void main() {
     Future<void> chooseBlue() async {
       await tester.tap(find.text('Abrir avatar'));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('Azul'), 160);
-      await tester.drag(find.byType(ListView), const Offset(0, -220));
+      await tester.scrollUntilVisible(find.text('Azul').hitTestable(), 120);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Azul'));
       await tester.pumpAndSettle();

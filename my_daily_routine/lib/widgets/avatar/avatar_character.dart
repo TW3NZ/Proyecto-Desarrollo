@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../../assets_paths.dart';
 import '../../models/avatar_config.dart';
+import '../../models/avatar_expression.dart';
 
 /// Imagen/programa compartidos; cada vista usa su propia instancia del shader.
 class AvatarResources {
@@ -102,16 +103,18 @@ class AvatarResources {
 class AvatarCharacter extends StatelessWidget {
   final AvatarConfig config;
   final bool portrait;
+  final AvatarExpression expression;
   const AvatarCharacter({
     super.key,
     required this.config,
     this.portrait = false,
+    this.expression = AvatarExpression.neutral,
   });
 
   @override
   Widget build(BuildContext context) => Semantics(
     image: true,
-    label: 'Avatar personalizado',
+    label: 'Avatar personalizado: ${expression.label}',
     child:
         AvatarResources.cachedFor(config.characterType, config.hairstyle) !=
             null
@@ -123,6 +126,7 @@ class AvatarCharacter extends StatelessWidget {
             )!,
             config: config,
             portrait: portrait,
+            expression: expression,
           )
         : FutureBuilder<AvatarResources>(
             key: ValueKey((config.characterType, config.hairstyle)),
@@ -146,6 +150,7 @@ class AvatarCharacter extends StatelessWidget {
                 resources: snapshot.data!,
                 config: config,
                 portrait: portrait,
+                expression: expression,
               );
             },
           ),
@@ -156,11 +161,13 @@ class _RenderedAvatar extends StatefulWidget {
   final AvatarResources resources;
   final AvatarConfig config;
   final bool portrait;
+  final AvatarExpression expression;
   const _RenderedAvatar({
     super.key,
     required this.resources,
     required this.config,
     required this.portrait,
+    required this.expression,
   });
 
   @override
@@ -187,8 +194,24 @@ class _RenderedAvatarState extends State<_RenderedAvatar> {
         child: SizedBox(
           width: image.width.toDouble(),
           height: image.height.toDouble(),
-          child: CustomPaint(
-            painter: _AvatarPainter(_shader, widget.resources, widget.config),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(
+              begin: widget.expression.intensity,
+              end: widget.expression.intensity,
+            ),
+            duration:
+                widget.config.motion && !MediaQuery.disableAnimationsOf(context)
+                ? const Duration(milliseconds: 450)
+                : Duration.zero,
+            builder: (context, intensity, _) => CustomPaint(
+              painter: _AvatarPainter(
+                _shader,
+                widget.resources,
+                widget.config,
+                widget.portrait,
+                intensity,
+              ),
+            ),
           ),
         ),
       ),
@@ -200,7 +223,15 @@ class _AvatarPainter extends CustomPainter {
   final ui.FragmentShader shader;
   final AvatarResources resources;
   final AvatarConfig config;
-  _AvatarPainter(this.shader, this.resources, this.config);
+  final bool portrait;
+  final double expression;
+  _AvatarPainter(
+    this.shader,
+    this.resources,
+    this.config,
+    this.portrait,
+    this.expression,
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -222,7 +253,23 @@ class _AvatarPainter extends CustomPainter {
     shader.setFloat(19, config.eyes.index.toDouble());
     shader.setFloat(20, config.nose.index.toDouble());
     shader.setFloat(21, config.mouth.index.toDouble());
+    shader.setFloat(
+      22,
+      portrait ? 1 : AvatarConfig.validWidth(config.bodyWidth),
+    );
+    shader.setFloat(
+      23,
+      portrait ? 1 : AvatarConfig.validHeight(config.bodyHeight),
+    );
     shader.setImageSampler(0, resources.image);
+    final eye = AvatarConfig.isCustomColor(config.eyeColor)
+        ? AvatarConfig.customColor(config.eyeColor)
+        : const Color(0xFF62402A);
+    shader.setFloat(24, eye.r);
+    shader.setFloat(25, eye.g);
+    shader.setFloat(26, eye.b);
+    shader.setFloat(27, config.eyeColor == 'original' ? 0 : 1);
+    shader.setFloat(28, expression);
     shader.setImageSampler(1, resources.faceA);
     shader.setImageSampler(2, resources.faceB);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
@@ -230,7 +277,10 @@ class _AvatarPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AvatarPainter oldDelegate) =>
-      oldDelegate.config != config || oldDelegate.resources != resources;
+      oldDelegate.config != config ||
+      oldDelegate.resources != resources ||
+      oldDelegate.portrait != portrait ||
+      oldDelegate.expression != expression;
 }
 
 /// Movimiento global sutil, anclado en los pies. No es una animación por huesos.

@@ -40,7 +40,7 @@ class EstadisticasStore extends ChangeNotifier {
 
     final puntosTotales = _puntosPorPrioridad(tarea.prioridad);
     final puntosPorCategoria = puntosTotales / tarea.categorias.length;
-    final estadisticas = actual;
+    final estadisticas = paraUsuario(tarea.usuarioId);
 
     for (final categoria in tarea.categorias) {
       switch (categoria) {

@@ -1,3 +1,4 @@
+"""Tests for the avatar endpoint, without real OpenAI requests."""
 import base64
 import io
 from types import SimpleNamespace

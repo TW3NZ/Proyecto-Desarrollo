@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "My Daily Rutine - Avatar con fotos",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/my_daily_routine",
+      "program": "${workspaceFolder}/my_daily_routine/lib/main.dart",
+      "flutterMode": "debug"
+    }
+  ]
+}

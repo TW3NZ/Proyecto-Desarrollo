@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../data/avatar_store.dart';
+import '../../data/estadisticas_store.dart';
+import '../../models/avatar_expression.dart';
 import '../avatar/avatar_character.dart';
 
 // La "escena" del Home: fondo + espacio del avatar.
@@ -60,12 +62,28 @@ class AvatarSlot extends StatelessWidget {
       width: width,
       height: height,
       child: ListenableBuilder(
-        listenable: AvatarStore.instancia,
+        listenable: Listenable.merge([
+          AvatarStore.instancia,
+          EstadisticasStore.instancia,
+        ]),
         builder: (context, _) {
           final config = AvatarStore.instancia.config;
-          return AvatarMotion(
-            enabled: config.motion,
-            child: AvatarCharacter(config: config),
+          final stats = EstadisticasStore.instancia.actual;
+          final expression = AvatarExpression.fromProgress(
+            stats.general,
+            hasActiveStats:
+                stats.inteligenciaActiva ||
+                stats.finanzasActiva ||
+                stats.saludActiva ||
+                stats.disciplinaActiva,
+          );
+          return Tooltip(
+            message:
+                '${expression.label} · Progreso general ${stats.general.round()}/100',
+            child: AvatarMotion(
+              enabled: config.motion,
+              child: AvatarCharacter(config: config, expression: expression),
+            ),
           );
         },
       ),

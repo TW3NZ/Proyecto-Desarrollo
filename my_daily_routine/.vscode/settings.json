@@ -1,3 +1,6 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "dart.flutterRunAdditionalArgs": [
+        "--dart-define-from-file=../.tools/avatar-flutter.json"
+    ]
 }
