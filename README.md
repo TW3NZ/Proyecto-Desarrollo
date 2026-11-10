@@ -4,6 +4,8 @@
 
 El APK incluye la personalización manual y no lleva credenciales del servicio de fotos. Es una compilación de prueba con firma de desarrollo; consulta la guía para generar una versión conectada a tu backend HTTPS.
 
+El avatar del inicio refleja el progreso general con expresiones de cansancio, aburrimiento, tranquilidad o alegría. Puedes probarlas en **Tu avatar → Expresiones**. Los umbrales iniciales y sus límites están documentados en [las decisiones del avatar](docs/decisiones-avatar.md).
+
 Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Todavía no hay persistencia general de cuentas y tareas.
 
 **Versión del paquete:** `0.1.0+1`
@@ -43,7 +45,7 @@ El acceso fijo no guarda las tareas o estadísticas entre reinicios: esos datos 
 
 - Las cuentas, tareas, estadísticas y equipos se guardan en memoria. Se pierden cuando el proceso de la app se reinicia. La configuración del avatar sí se conserva localmente mediante `shared_preferences`.
 - No hay autenticación remota, recuperación de contraseña funcional ni acceso con Google o Apple.
-- La selección actual del avatar cambia colores sobre ilustraciones completas. Todavía no hay prendas intercambiables por capas, cambios de silueta de ropa ni evolución visual conectada a las estadísticas.
+- El avatar usa ilustraciones completas con personalización de colores, rasgos y proporciones. Las expresiones ya reaccionan al progreso; todavía no hay prendas intercambiables por capas ni recompensas de evolución permanente.
 - La fecha de finalización de una tarea puede asignarse al crearla; aún no se puede editar después.
 - La opción **Unirse a team** y la asignación de ID de usuario están pendientes.
 - El análisis de fotos requiere configurar y ejecutar el servicio de OpenAI; no se activa solo por instalar la app. Consulta [la guía de configuración](docs/avatar-foto.md).

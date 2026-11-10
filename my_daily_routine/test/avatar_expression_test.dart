@@ -163,7 +163,13 @@ void main() {
                           height: 250,
                           child: Column(
                             children: [
-                                Text(expression.label, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                              Text(
+                                expression.label,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
                               SizedBox(
                                 height: 210,
                                 child: ClipRect(
