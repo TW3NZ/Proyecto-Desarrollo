@@ -4,7 +4,7 @@
 
 El APK incluye la personalización manual y no lleva credenciales del servicio de fotos. Es una compilación de prueba con firma de desarrollo; consulta la guía para generar una versión conectada a tu backend HTTPS.
 
-Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Todavía no hay persistencia general de cuentas y tareas.
+Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Las tareas personales se conservan localmente; las cuentas, estadísticas y equipos siguen en memoria.
 
 **Versión del paquete:** `0.1.0+1`
 
@@ -27,13 +27,13 @@ También puedes usar `admin@mydailyroutine.local` como identificador, con la mis
 
 Esta cuenta local de práctica ya viene incluida y está disponible cada vez que se inicia la aplicación, incluso después de cerrarla o reiniciarla. No requiere registro previo ni conexión a un servidor. Es una cuenta de desarrollo, no una cuenta de producción.
 
-El acceso fijo no guarda las tareas o estadísticas entre reinicios: esos datos siguen en memoria. Las cuentas creadas manualmente durante el registro también se pierden cuando se reinicia el proceso.
+Las tareas personales del acceso fijo se conservan entre reinicios. Las estadísticas, los equipos y las cuentas creadas manualmente durante el registro siguen en memoria y se pierden cuando se reinicia el proceso.
 
 ## Funciones actuales
 
 - **Inicio de sesión y registro:** pantalla con la cabecera ilustrada de referencia y acceso con correo o nombre de usuario y contraseña. Incluye una cuenta local de práctica: `admin` / `12345678`. Las cuentas creadas durante el registro solo existen mientras la aplicación sigue en ejecución.
 - **Inicio:** muestra el avatar, alterna cuatro fondos, presenta estadísticas y permite acceder a tareas, personalización del avatar y Teams. Incluye cierre de sesión hacia el login.
-- **Tareas:** permite crear tareas con categoría, prioridad, descripción y fecha de finalización opcional. Las tarjetas muestran la fecha cuando se asigna y la resaltan si ya pasó y la tarea sigue pendiente.
+- **Tareas:** permite crear tareas con categoría, prioridad, descripción y fecha de finalización opcional. Las tarjetas muestran la fecha cuando se asigna y la resaltan si ya pasó y la tarea sigue pendiente. Las tareas se guardan localmente y sobreviven al reinicio de la app.
 - **Estadísticas e historial:** completar tareas suma puntos a las categorías asociadas según su prioridad; el resumen muestra progreso y conteos por fecha de creación (hoy, semana y mes).
 - **Avatar:** permite elegir entre los personajes Hombre y Mujer, cambiar los colores de piel, cabello, camiseta y pantalón, y ajustar el movimiento suave. La configuración se guarda localmente en el dispositivo.
 - **Teams:** permite crear equipos y revisar los equipos de la sesión actual. La sección incluye un espacio vacío para el ID del usuario; todavía no se genera ni se asigna uno.
@@ -41,7 +41,7 @@ El acceso fijo no guarda las tareas o estadísticas entre reinicios: esos datos 
 
 ## Límites actuales
 
-- Las cuentas, tareas, estadísticas y equipos se guardan en memoria. Se pierden cuando el proceso de la app se reinicia. La configuración del avatar sí se conserva localmente mediante `shared_preferences`.
+- Las cuentas, estadísticas y equipos se guardan en memoria. Se pierden cuando el proceso de la app se reinicia. Las tareas personales y la configuración del avatar sí se conservan localmente mediante `shared_preferences`.
 - No hay autenticación remota, recuperación de contraseña funcional ni acceso con Google o Apple.
 - La selección actual del avatar cambia colores sobre ilustraciones completas. Todavía no hay prendas intercambiables por capas, cambios de silueta de ropa ni evolución visual conectada a las estadísticas.
 - La fecha de finalización de una tarea puede asignarse al crearla; aún no se puede editar después.
