@@ -12,39 +12,88 @@ import '../../models/avatar_config.dart';
 class AvatarResources {
   final ui.Image image;
   final ui.FragmentProgram program;
-  const AvatarResources(this.image, this.program);
+  final ui.Image faceA;
+  final ui.Image faceB;
+  const AvatarResources(this.image, this.program, this.faceA, this.faceB);
 
-  static final Map<AvatarCharacterType, Future<AvatarResources>> _pending = {};
-  static final Map<AvatarCharacterType, AvatarResources> _cached = {};
-  static AvatarResources? cachedFor(AvatarCharacterType type) => _cached[type];
+  static final Map<AvatarCharacterType, Future<(ui.Image, ui.Image)>> _faces =
+      {};
+
+  static Future<ui.Image> _readImage(String path) async {
+    final data = await rootBundle.load(path);
+    final codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+    );
+    try {
+      return (await codec.getNextFrame()).image;
+    } finally {
+      codec.dispose();
+    }
+  }
+
+  static Future<(ui.Image, ui.Image)> _loadFaces(
+    AvatarCharacterType type,
+  ) async {
+    ui.Image? first;
+    try {
+      first = await _readImage('lib/assets/avatar/faces/${type.name}_a.png');
+      final second = await _readImage(
+        'lib/assets/avatar/faces/${type.name}_b.png',
+      );
+      return (first, second);
+    } catch (_) {
+      first?.dispose();
+      _faces.remove(type);
+      rethrow;
+    }
+  }
+
+  static final Map<
+    (AvatarCharacterType, AvatarHairstyle),
+    Future<AvatarResources>
+  >
+  _pending = {};
+  static final Map<(AvatarCharacterType, AvatarHairstyle), AvatarResources>
+  _cached = {};
+  static AvatarResources? cachedFor(
+    AvatarCharacterType type, [
+    AvatarHairstyle hairstyle = AvatarHairstyle.original,
+  ]) => _cached[(type, hairstyle)];
+
+  static String assetFor(AvatarCharacterType type, AvatarHairstyle hairstyle) {
+    if (hairstyle == AvatarHairstyle.original) {
+      return type == AvatarCharacterType.mujer
+          ? AppAssets.avatarMujer
+          : AppAssets.avatar;
+    }
+    return 'lib/assets/avatar/hairstyles/${type.name}_${hairstyle.name}.png';
+  }
+
   static Future<AvatarResources> load([
     AvatarCharacterType type = AvatarCharacterType.hombre,
-  ]) => _cached[type] != null
-      ? SynchronousFuture(_cached[type]!)
-      : _pending[type] ??= _load(type);
+    AvatarHairstyle hairstyle = AvatarHairstyle.original,
+  ]) => _cached[(type, hairstyle)] != null
+      ? SynchronousFuture(_cached[(type, hairstyle)]!)
+      : _pending[(type, hairstyle)] ??= _load(type, hairstyle);
 
-  static Future<AvatarResources> _load(AvatarCharacterType type) async {
+  static Future<AvatarResources> _load(
+    AvatarCharacterType type,
+    AvatarHairstyle hairstyle,
+  ) async {
     try {
       final program = await ui.FragmentProgram.fromAsset(
         'shaders/avatar_colors.frag',
       );
-      final path = type == AvatarCharacterType.mujer
-          ? AppAssets.avatarMujer
-          : AppAssets.avatar;
-      final data = await rootBundle.load(path);
-      final codec = await ui.instantiateImageCodec(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      final path = assetFor(type, hairstyle);
+      final faces = await (_faces[type] ??= _loadFaces(type));
+      return _cached[(type, hairstyle)] = AvatarResources(
+        await _readImage(path),
+        program,
+        faces.$1,
+        faces.$2,
       );
-      try {
-        return _cached[type] = AvatarResources(
-          (await codec.getNextFrame()).image,
-          program,
-        );
-      } finally {
-        codec.dispose();
-      }
     } catch (_) {
-      _pending.remove(type);
+      _pending.remove((type, hairstyle));
       rethrow;
     }
   }
@@ -63,20 +112,31 @@ class AvatarCharacter extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     image: true,
     label: 'Avatar personalizado',
-    child: AvatarResources.cachedFor(config.characterType) != null
+    child:
+        AvatarResources.cachedFor(config.characterType, config.hairstyle) !=
+            null
         ? _RenderedAvatar(
-            resources: AvatarResources.cachedFor(config.characterType)!,
+            key: ValueKey((config.characterType, config.hairstyle)),
+            resources: AvatarResources.cachedFor(
+              config.characterType,
+              config.hairstyle,
+            )!,
             config: config,
             portrait: portrait,
           )
         : FutureBuilder<AvatarResources>(
-            future: AvatarResources.load(config.characterType),
+            key: ValueKey((config.characterType, config.hairstyle)),
+            future: AvatarResources.load(
+              config.characterType,
+              config.hairstyle,
+            ),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return Image.asset(
-                  config.characterType == AvatarCharacterType.mujer
-                      ? AppAssets.avatarMujer
-                      : AppAssets.avatar,
+                  AvatarResources.assetFor(
+                    config.characterType,
+                    config.hairstyle,
+                  ),
                   fit: portrait ? BoxFit.cover : BoxFit.contain,
                   alignment: portrait ? Alignment.topCenter : Alignment.center,
                   excludeFromSemantics: true,
@@ -97,6 +157,7 @@ class _RenderedAvatar extends StatefulWidget {
   final AvatarConfig config;
   final bool portrait;
   const _RenderedAvatar({
+    super.key,
     required this.resources,
     required this.config,
     required this.portrait,
@@ -127,7 +188,7 @@ class _RenderedAvatarState extends State<_RenderedAvatar> {
           width: image.width.toDouble(),
           height: image.height.toDouble(),
           child: CustomPaint(
-            painter: _AvatarPainter(_shader, image, widget.config),
+            painter: _AvatarPainter(_shader, widget.resources, widget.config),
           ),
         ),
       ),
@@ -137,9 +198,9 @@ class _RenderedAvatarState extends State<_RenderedAvatar> {
 
 class _AvatarPainter extends CustomPainter {
   final ui.FragmentShader shader;
-  final ui.Image image;
+  final AvatarResources resources;
   final AvatarConfig config;
-  _AvatarPainter(this.shader, this.image, this.config);
+  _AvatarPainter(this.shader, this.resources, this.config);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -158,13 +219,18 @@ class _AvatarPainter extends CustomPainter {
       18,
       config.characterType == AvatarCharacterType.mujer ? 1 : 0,
     );
-    shader.setImageSampler(0, image);
+    shader.setFloat(19, config.eyes.index.toDouble());
+    shader.setFloat(20, config.nose.index.toDouble());
+    shader.setFloat(21, config.mouth.index.toDouble());
+    shader.setImageSampler(0, resources.image);
+    shader.setImageSampler(1, resources.faceA);
+    shader.setImageSampler(2, resources.faceB);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
   }
 
   @override
   bool shouldRepaint(_AvatarPainter oldDelegate) =>
-      oldDelegate.config != config;
+      oldDelegate.config != config || oldDelegate.resources != resources;
 }
 
 /// Movimiento global sutil, anclado en los pies. No es una animación por huesos.

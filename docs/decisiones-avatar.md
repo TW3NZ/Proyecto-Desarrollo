@@ -1,5 +1,77 @@
 # Decisiones sobre el avatar
 
+## 2026-11-09 — Foto para sugerir atributos del catálogo
+
+**Acuerdo del usuario:** retomar ahora la conexión a OpenAI para que una foto determine los valores más parecidos entre los atributos disponibles. Esto sustituye el aplazamiento registrado en las entradas históricas. No se solicitó generar una nueva ilustración.
+
+**Implementación elegida:** Flutter permite cámara/galería, revisión de foto y envío explícito. Un servicio FastAPI nuevo valida y recodifica la imagen en memoria; Responses API devuelve una estructura restringida al catálogo. `gpt-4.1-mini` es una elección inicial configurable, no un requisito de producto. La clave queda en el entorno del servidor. Se añadieron `image_picker` y `http` porque Flutter no proporciona captura nativa ni un cliente HTTP multiplataforma de alto nivel equivalente.
+
+La propuesta se previsualiza y se aplica al borrador con aceptación expresa; el botón de guardar existente confirma la persistencia. Se conservan personaje, movimiento y valores no visibles. No se infiere género ni identidad. Se gestionan errores de conexión, permisos, tamaño/formato, rechazo y fotos con varios rostros o sin rostro. No se alteran posición, escala ni animaciones del avatar principal.
+
+**Límites y pendientes:** el catálogo limitado no garantiza parecido exacto; los descriptores de cada rasgo son aproximaciones del diseño actual. El servicio es un prototipo local separado del futuro backend de cuentas. Antes de desplegarlo necesita autenticación real por usuario y controles de consumo. No hay persistencia de fotos en servidor; la caché de cámara pertenece al plugin/sistema. Falta validación manual de cámara y resultados reales en dispositivo. Configuración y pruebas: [avatar-foto.md](avatar-foto.md).
+
+**Verificación:** cinco pruebas del backend y cuatro nuevas pruebas Flutter pasan con OpenAI/cámara simulados; las doce pruebas existentes del avatar también pasan. Cubren autorización, imágenes inválidas y grandes, recodificación, contrato Responses, ausencia de clave/rechazo, catálogo válido, conservación de ajustes, envío explícito y aceptación de propuesta. Formato y análisis de los archivos Dart de esta entrega sin incidencias. No se realizó una llamada real a OpenAI ni captura en dispositivo. El entorno de pruebas Python muestra un aviso de deprecación de Starlette sobre su adaptador de pruebas HTTPX; no afecta a las cinco pruebas.
+
+## 2026-11-09 — Ojos, nariz y boca independientes
+
+El usuario pidió ampliar los tipos de ojos, nariz y boca para hombre y mujer. Se añade **Rostro** al editor, con vista ampliada y tres selectores independientes:
+
+- Ojos: Originales, Almendrados, Redondos.
+- Nariz: Original, Recta, Redondeada.
+- Boca: Original, Sonrisa amplia, Neutral.
+
+Esta selección inicial de estilos es una decisión de implementación. Se puede combinar cada rasgo con los demás, con cualquiera de los peinados y con las paletas existentes. Son 27 combinaciones de rasgos por personaje antes de contar peinados y colores. No son expresiones animadas ni reacciones automáticas a estadísticas.
+
+### Recursos y composición
+
+Se generaron cuatro PNG de referencia con `image_gen` integrado: `my_daily_routine/lib/assets/avatar/faces/{hombre,mujer}_{a,b}.png`. Cada uno conserva lienzo transparente de 887 × 1774. El conjunto A contiene ojos almendrados, nariz recta y sonrisa amplia; B contiene ojos redondos, nariz redondeada y boca neutral. Los prompts exactos están en `avatar-rostro-prompts.md`.
+
+El renderizador toma únicamente la zona de cada rasgo del recurso elegido y la combina sobre la imagen del peinado actual. **No sustituye la cara completa al seleccionar una boca o una nariz.** Las máscaras normalizadas del shader incluyen bordes suavizados y están ajustadas a los personajes actuales. Después se aplica el tono de piel; ojos y boca están protegidos del tinte del cabello. La pose, ropa y cabello vienen del recurso de peinado; el tamaño y posición del avatar se mantienen.
+
+Se conservan los originales. Las referencias de rostro se comparten en caché por personaje, sin duplicarlas por cada combinación. La carpeta de recursos se declara explícitamente en `pubspec.yaml`. No se añadieron dependencias ni una conexión API desde la app.
+
+Límite: las máscaras están calibradas para estas ilustraciones y no equivalen a un modelo vectorial o un sistema de huesos. Una futura ilustración con posiciones faciales diferentes requiere revisar sus coordenadas. Los rasgos de las referencias se mezclan con el sombreado de la base; no se promete identidad de píxeles entre las imágenes generadas.
+
+### Estado y compatibilidad
+
+`AvatarConfig` incorpora `eyes`, `nose` y `mouth`, serializados por nombre. `copyWith` centraliza las copias para que ningún cambio de color, peinado, personaje o movimiento borre los rasgos. Campos ausentes o desconocidos vuelven a Original. El editor conserva su flujo de borrador, guardar, descartar y restablecer; la preferencia local existente incluye los tres campos nuevos. La persistencia no se migra a cuentas en esta entrega.
+
+### Verificación
+
+Las doce pruebas de `avatar_test.dart`, `avatar_hairstyles_test.dart` y `avatar_face_test.dart` pasan. Las nuevas pruebas verifican recuperación de preferencias, valores antiguos/desconocidos, independencia de las zonas al cambiar cada rasgo en ambos personajes, selectores en 320 píxeles de ancho y renderizado de combinaciones. Se revisó `build/avatar-faces-preview.png`: Original, conjunto A, conjunto B y mezcla con piel oscura/cabello plateado, para ambos personajes con peinado recogido. Las pruebas de zonas usan el peinado rizado; no representan una inspección visual exhaustiva de todas las combinaciones posibles.
+
+Formato y análisis de los archivos modificados sin incidencias. No se ejecutó la aplicación en el emulador del usuario. Para cargar los recursos y el shader actualizado, detener y volver a ejecutar `flutter run`; abrir **Avatar → Rostro** y guardar los cambios.
+
+## 2026-11-09 — Peinados seleccionables
+
+El usuario solicitó crear variedad de peinados y poder seleccionarlos. Se implementan **Original, Corto, Rizado y Recogido** para los dos personajes existentes. Los tres estilos nuevos son una selección inicial de implementación; el catálogo puede ampliarse.
+
+### Recursos y alcance
+
+- Se generaron seis PNG nuevos con la herramienta integrada de imágenes, usando cada personaje original como referencia de edición. Todos conservan lienzo de 887 × 1774 y transparencia. Los originales no se sobrescribieron.
+- Archivos: `my_daily_routine/lib/assets/avatar/hairstyles/{hombre,mujer}_{corto,rizado,recogido}.png`. Esta carpeta se declara explícitamente en `pubspec.yaml`.
+- Se usan variantes completas para evitar superponer cabello nuevo sobre cabello que ya está dibujado en el PNG. No hay aún una base sin cabello ni capas de cabello independientes. Puede haber pequeñas diferencias de dibujo entre variantes generadas; la pose, vestuario y encuadre se mantienen visualmente consistentes.
+- Las paletas y el movimiento suave existentes se reutilizan. Se conserva el tamaño y la ubicación aprobados en inicio. La generación se hizo durante el desarrollo; no se conectó la aplicación a una API.
+- Los prompts exactos y la correspondencia con cada archivo están en `avatar-peinados-prompts.md`.
+
+### Selección, carga y persistencia
+
+- **Tu avatar → Peinado** presenta tarjetas con miniaturas, nombre y marca de selección. Las tarjetas se reorganizan con `Wrap` en pantallas estrechas.
+- `AvatarConfig.hairstyle` es un enum serializado por nombre, independiente del color de cabello. Los métodos de cambio de color, personaje y movimiento preservan el peinado.
+- Configuraciones antiguas sin `hairstyle` y valores desconocidos usan `original`. Se mantiene la clave de preferencias existente y se añade el campo de forma compatible.
+- La caché de imágenes se identifica por personaje y peinado para evitar reutilizar la ilustración incorrecta. Cada vista conserva su instancia del shader; se repinta también si cambia la imagen.
+- El editor precarga el recurso seleccionado antes de aplicar el borrador; muestra progreso y evita guardar durante la carga. Ante un fallo conserva el borrador previo y permite intentarlo de nuevo.
+- Guardar aplica y persiste la selección; volver la descarta. Restablecer prepara el personaje y peinado originales en el borrador. El mecanismo local de persistencia existente no cambia en esta entrega.
+
+### Validación
+
+- Ocho pruebas pasan al ejecutar `flutter test --no-pub test/avatar_test.dart test/avatar_hairstyles_test.dart`.
+- Cobertura: migración de preferencias anteriores/desconocidas, guardado y recuperación del peinado con los colores, conservarlo al cambiar personaje, selección/descartar/guardar en el editor, carga de las ocho combinaciones de personaje y peinado, transparencia y recoloración del cabello sin afectar muestras de ojos y camiseta, y disposición del selector en 320 píxeles de ancho.
+- Se revisaron visualmente los seis recursos generados y la captura de pruebas `build/hairstyles-selector.png`. La captura usa la tipografía de pruebas de Flutter; sirve para comprobar las miniaturas y la distribución, no la tipografía final.
+- Formato y análisis de los archivos Dart modificados sin incidencias. No se ejecutó la aplicación en el emulador del usuario.
+
+Para probar: detener y volver a ejecutar `flutter run` para incluir la nueva carpeta de recursos; abrir **Avatar**, elegir personaje y peinado y pulsar **Guardar cambios**.
+
 ## 2026-11-05 — Inclusión explícita de subcarpetas de assets
 
 Al revisar un bloqueo al entrar a inicio, se detectó que `lib/assets/` por sí sola no incorpora imágenes guardadas en subcarpetas. Se añadieron entradas explícitas para `avatar/`, `background/`, `icons/` y `recursos/` en `pubspec.yaml`. Las rutas del código ya apuntan a esas carpetas. El usuario debe hacer un nuevo build/instalar de nuevo para que los assets se empaqueten con el manifiesto actualizado; hot reload no actualiza un paquete instalado.

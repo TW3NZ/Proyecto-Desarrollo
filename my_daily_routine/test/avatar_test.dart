@@ -19,6 +19,8 @@ void main() {
       write: (value) async => disk = value,
     );
     final selected = const AvatarConfig()
+        .withHairstyle(AvatarHairstyle.rizado)
+        .withCharacterType(AvatarCharacterType.mujer)
         .withColor(AvatarPart.skin, 'deep')
         .withColor(AvatarPart.hair, 'silver')
         .withColor(AvatarPart.shirt, 'blue')
@@ -51,6 +53,11 @@ void main() {
       );
       expect(decoded.skin, 'original');
       expect(decoded.motion, isTrue);
+      expect(decoded.hairstyle, AvatarHairstyle.original);
+      expect(
+        AvatarConfig.fromJson({'hairstyle': 'desconocido'}).hairstyle,
+        AvatarHairstyle.original,
+      );
       store.dispose();
     },
   );

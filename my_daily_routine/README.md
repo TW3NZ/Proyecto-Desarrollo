@@ -2,6 +2,17 @@
 
 Aplicación Flutter para organizar tareas y seguir su cumplimiento. Consulta el [README principal](../README.md) para el estado completo de la aplicación.
 
+## Acceso de prueba sin registro
+
+- **Usuario:** `admin` (o `admin@mydailyroutine.local`).
+- **Contraseña:** `12345678`.
+
+Escribe estas credenciales en el login y pulsa **Iniciar sesión**. La cuenta local de práctica viene incluida y sigue disponible al reiniciar la app. Consulta [los detalles del acceso de prueba](../README.md#credenciales-de-prueba-ingresar-sin-registrarse).
+
+## Avatar desde una foto
+
+En **Tu avatar → Crear desde una foto** puedes tomar o elegir una imagen, enviarla para análisis y revisar la propuesta antes de guardarla. Requiere ejecutar el backend y configurar la URL/token de desarrollo: [instrucciones completas](../docs/avatar-foto.md). La clave de OpenAI se configura únicamente en el servidor.
+
 ## Widget de tareas para Android
 
 La aplicación incluye un widget nativo para Android. Muestra el nombre **Daily Routine**, el total de tareas pendientes, el porcentaje completado, una barra de progreso y una lista desplazable con las tareas y su prioridad. Tocar una fila abre la aplicación y marca la tarea usando el `TareasStore` existente; el widget se actualiza con el nuevo progreso. La cabecera no muestra el icono de la app.

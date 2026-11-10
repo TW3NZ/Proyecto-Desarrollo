@@ -4,6 +4,43 @@ enum AvatarPart { skin, hair, shirt, trousers }
 
 enum AvatarCharacterType { hombre, mujer }
 
+enum AvatarEyes {
+  original('Originales'),
+  almond('Almendrados'),
+  round('Redondos');
+
+  final String label;
+  const AvatarEyes(this.label);
+}
+
+enum AvatarNose {
+  original('Original'),
+  straight('Recta'),
+  round('Redondeada');
+
+  final String label;
+  const AvatarNose(this.label);
+}
+
+enum AvatarMouth {
+  original('Original'),
+  smile('Sonrisa amplia'),
+  neutral('Neutral');
+
+  final String label;
+  const AvatarMouth(this.label);
+}
+
+enum AvatarHairstyle {
+  original('Original'),
+  corto('Corto'),
+  rizado('Rizado'),
+  recogido('Recogido');
+
+  final String label;
+  const AvatarHairstyle(this.label);
+}
+
 @immutable
 class AvatarColorOption {
   final String id;
@@ -52,6 +89,10 @@ class AvatarConfig {
   final String shirt;
   final String trousers;
   final AvatarCharacterType characterType;
+  final AvatarHairstyle hairstyle;
+  final AvatarEyes eyes;
+  final AvatarNose nose;
+  final AvatarMouth mouth;
   final bool motion;
 
   const AvatarConfig({
@@ -60,6 +101,10 @@ class AvatarConfig {
     this.shirt = 'original',
     this.trousers = 'original',
     this.characterType = AvatarCharacterType.hombre,
+    this.hairstyle = AvatarHairstyle.original,
+    this.eyes = AvatarEyes.original,
+    this.nose = AvatarNose.original,
+    this.mouth = AvatarMouth.original,
     this.motion = true,
   });
 
@@ -75,36 +120,45 @@ class AvatarConfig {
     orElse: () => avatarPalettes[part]!.first,
   );
 
+  AvatarConfig copyWith({
+    String? skin,
+    String? hair,
+    String? shirt,
+    String? trousers,
+    AvatarCharacterType? characterType,
+    AvatarHairstyle? hairstyle,
+    AvatarEyes? eyes,
+    AvatarNose? nose,
+    AvatarMouth? mouth,
+    bool? motion,
+  }) => AvatarConfig(
+    skin: skin ?? this.skin,
+    hair: hair ?? this.hair,
+    shirt: shirt ?? this.shirt,
+    trousers: trousers ?? this.trousers,
+    characterType: characterType ?? this.characterType,
+    hairstyle: hairstyle ?? this.hairstyle,
+    eyes: eyes ?? this.eyes,
+    nose: nose ?? this.nose,
+    mouth: mouth ?? this.mouth,
+    motion: motion ?? this.motion,
+  );
+
   AvatarConfig withColor(AvatarPart part, String id) {
     if (!avatarPalettes[part]!.any((item) => item.id == id)) return this;
-    return AvatarConfig(
-      skin: part == AvatarPart.skin ? id : skin,
-      hair: part == AvatarPart.hair ? id : hair,
-      shirt: part == AvatarPart.shirt ? id : shirt,
-      trousers: part == AvatarPart.trousers ? id : trousers,
-      characterType: characterType,
-      motion: motion,
-    );
+    return switch (part) {
+      AvatarPart.skin => copyWith(skin: id),
+      AvatarPart.hair => copyWith(hair: id),
+      AvatarPart.shirt => copyWith(shirt: id),
+      AvatarPart.trousers => copyWith(trousers: id),
+    };
   }
 
-  AvatarConfig withCharacterType(AvatarCharacterType value) => AvatarConfig(
-    skin: skin,
-    hair: hair,
-    shirt: shirt,
-    trousers: trousers,
-    characterType: value,
-    motion: motion,
-  );
-
-  AvatarConfig withMotion(bool enabled) => AvatarConfig(
-    skin: skin,
-    hair: hair,
-    shirt: shirt,
-    trousers: trousers,
-    characterType: characterType,
-    motion: enabled,
-  );
-
+  AvatarConfig withCharacterType(AvatarCharacterType value) =>
+      copyWith(characterType: value);
+  AvatarConfig withMotion(bool value) => copyWith(motion: value);
+  AvatarConfig withHairstyle(AvatarHairstyle value) =>
+      copyWith(hairstyle: value);
   Map<String, Object> toJson() => {
     'version': 1,
     'skin': skin,
@@ -112,6 +166,10 @@ class AvatarConfig {
     'shirt': shirt,
     'trousers': trousers,
     'characterType': characterType.name,
+    'hairstyle': hairstyle.name,
+    'eyes': eyes.name,
+    'nose': nose.name,
+    'mouth': mouth.name,
     'motion': motion,
   };
 
@@ -127,6 +185,26 @@ class AvatarConfig {
     );
     return result
         .withCharacterType(characterType)
-        .withMotion(json['motion'] is bool ? json['motion'] as bool : true);
+        .withHairstyle(
+          AvatarHairstyle.values.firstWhere(
+            (value) => value.name == json['hairstyle'],
+            orElse: () => AvatarHairstyle.original,
+          ),
+        )
+        .withMotion(json['motion'] is bool ? json['motion'] as bool : true)
+        .copyWith(
+          eyes: AvatarEyes.values.firstWhere(
+            (e) => e.name == json['eyes'],
+            orElse: () => AvatarEyes.original,
+          ),
+          nose: AvatarNose.values.firstWhere(
+            (e) => e.name == json['nose'],
+            orElse: () => AvatarNose.original,
+          ),
+          mouth: AvatarMouth.values.firstWhere(
+            (e) => e.name == json['mouth'],
+            orElse: () => AvatarMouth.original,
+          ),
+        );
   }
 }

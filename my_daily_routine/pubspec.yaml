@@ -12,6 +12,8 @@ dependencies:
   shared_preferences: ^2.5.5
   home_widget: ^0.10.0
   showcaseview: ^5.1.0
+  image_picker: ^1.2.4
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +26,8 @@ flutter:
   assets:
     - lib/assets/
     - lib/assets/avatar/
+    - lib/assets/avatar/hairstyles/
+    - lib/assets/avatar/faces/
     - lib/assets/background/
     - lib/assets/icons/
     - lib/assets/recursos/

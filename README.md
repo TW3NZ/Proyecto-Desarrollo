@@ -1,12 +1,27 @@
 # My Daily Routine
 
-Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. El proyecto está en desarrollo y ya incluye flujos funcionales locales; todavía no cuenta con backend ni persistencia general de cuentas y tareas.
+Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Todavía no hay persistencia general de cuentas y tareas.
 
 **Versión del paquete:** `0.1.0+1`
 
 **Aplicación:** Flutter / Dart
 
 **Tecnologías del repositorio:** Dart, Flutter y Python
+
+## Credenciales de prueba: ingresar sin registrarse
+
+En la pantalla de inicio de sesión escribe:
+
+| Campo | Valor |
+| --- | --- |
+| Correo o nombre de usuario | `admin` |
+| Contraseña | `12345678` |
+
+También puedes usar `admin@mydailyroutine.local` como identificador, con la misma contraseña. Pulsa **Iniciar sesión** para entrar directamente a la pantalla principal.
+
+Esta cuenta local de práctica ya viene incluida y está disponible cada vez que se inicia la aplicación, incluso después de cerrarla o reiniciarla. No requiere registro previo ni conexión a un servidor. Es una cuenta de desarrollo, no una cuenta de producción.
+
+El acceso fijo no guarda las tareas o estadísticas entre reinicios: esos datos siguen en memoria. Las cuentas creadas manualmente durante el registro también se pierden cuando se reinicia el proceso.
 
 ## Funciones actuales
 
@@ -25,7 +40,7 @@ Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consu
 - La selección actual del avatar cambia colores sobre ilustraciones completas. Todavía no hay prendas intercambiables por capas, cambios de silueta de ropa ni evolución visual conectada a las estadísticas.
 - La fecha de finalización de una tarea puede asignarse al crearla; aún no se puede editar después.
 - La opción **Unirse a team** y la asignación de ID de usuario están pendientes.
-- No se envían fotos ni se conecta la aplicación a OpenAI.
+- El análisis de fotos requiere configurar y ejecutar el servicio de OpenAI; no se activa solo por instalar la app. Consulta [la guía de configuración](docs/avatar-foto.md).
 
 ### Propuesta para futuras prendas
 
