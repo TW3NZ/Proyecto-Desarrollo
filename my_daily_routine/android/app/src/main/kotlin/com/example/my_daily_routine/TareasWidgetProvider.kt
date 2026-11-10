@@ -46,8 +46,8 @@ class TareasWidgetProvider : HomeWidgetProvider() {
                 )
                 setPendingIntentTemplate(R.id.widget_task_list, clickTemplate)
             }
-            appWidgetManager.updateAppWidget(widgetId, views)
             appWidgetManager.notifyAppWidgetViewDataChanged(widgetId, R.id.widget_task_list)
+            appWidgetManager.updateAppWidget(widgetId, views)
         }
     }
 

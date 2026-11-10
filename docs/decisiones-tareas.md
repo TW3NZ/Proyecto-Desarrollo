@@ -1,5 +1,11 @@
 # Decisiones sobre tareas
 
+## 2026-11-10 — Persistencia local de las tareas personales
+
+A raíz del fallo de progreso del widget, las tareas personales se guardan en `shared_preferences` (`tareas.v1`) y se recuperan al iniciar antes de publicar la instantánea del widget. Se serializan título, categorías, prioridad, descripción, fechas, propietario, responsable y estado completado.
+
+Esta decisión sustituye la elección anterior de conservar todas las tareas solo en memoria. Las cuentas, estadísticas, equipos y proyectos siguen en memoria. Pendiente: aislar las tareas persistidas por usuario y migrarlas a la base de datos cuando exista el backend de cuentas.
+
 ## 2026-11-05 — Fecha de finalización opcional
 
 El usuario pidió que una tarea pueda tener fecha de finalización y que sea opcional. Se conserva la fecha de creación existente y se añade una fecha independiente, elegible al crear la tarea y removible antes de guardarla. Sin fecha, la tarea conserva su flujo actual.

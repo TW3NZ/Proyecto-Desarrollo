@@ -1,5 +1,13 @@
 # Widget de tareas para Android
 
+## 2026-11-10 — Persistencia local para conservar el progreso
+
+Se investigó el reporte de que la barra no reflejaba una tarea completada. En el emulador Android se comprobó que la actualización en caliente sí funcionaba; el fallo reproducible era al reiniciar el proceso: `TareasStore` arrancaba vacío y `inicializarWidget()` sobrescribía `tareas_json` con `[]`, por lo que el widget volvía a 0 %.
+
+Para corregirlo se persisten las tareas personales en `shared_preferences` bajo `tareas.v1` y se cargan antes de publicar la instantánea del widget. También se encadena el guardado y la actualización, se comprueba su resultado y se recupera la cola si una actualización falla. El JSON del widget incluye ahora el `id` de cada tarea.
+
+Esta decisión reemplaza la elección anterior de mantener las tareas solo en memoria. Alcance: tareas personales; cuentas, estadísticas, equipos y proyectos continúan en memoria. No se resuelve todavía el aislamiento de tareas por usuario ni su migración al backend. Verificación: emulador Pixel API 34; la barra pasó de 0 % a 100 % al completar y siguió en 100 % tras forzar el cierre y reabrir la app.
+
 ## 2026-11-05 — Color de cabecera alineado con Flutter
 
 El usuario pidió usar en la cabecera del widget el azul de `lib`. Se reemplaza el sólido anterior por el degradado de `AppGradients.primary` (`#4169E1` → `#2F80ED`), replicado en el drawable nativo. No cambia el diseño ni el comportamiento del resto del widget.

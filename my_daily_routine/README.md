@@ -28,6 +28,6 @@ La aplicación incluye un widget nativo para Android. Muestra el nombre **Daily 
 
 La lista se desplaza verticalmente dentro del espacio que le asigne el launcher; la cabecera permanece fija. La prioridad usa los valores ya guardados en cada tarea: alta, media o baja. El tamaño visible puede variar según el launcher.
 
-Las tareas se mantienen en memoria, como en el resto de la aplicación; no se añade persistencia permanente. Si Android termina el proceso de la app, el `TareasStore` volátil se reinicia y las tareas desaparecen. Por esa razón, marcar desde el widget abre la app para aplicar la acción al almacén compartido con las pantallas y las estadísticas. Esta primera versión solo está disponible en Android.
+Las tareas personales se guardan localmente, por lo que el progreso del widget se conserva al reiniciar la app. Las cuentas y las estadísticas siguen en memoria. Marcar desde el widget abre la app para aplicar la acción al `TareasStore` compartido con las pantallas y las estadísticas. Esta primera versión solo está disponible en Android.
 
 Consulta [las decisiones y límites del widget](../docs/decisiones-widget-tareas.md) para más detalles de implementación.
