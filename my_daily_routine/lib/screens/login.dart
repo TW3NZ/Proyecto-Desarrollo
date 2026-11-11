@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../assets_paths.dart';
 import '../data/usuarios_store.dart';
 import '../routes.dart';
+import '../services/auth_api_service.dart';
 import '../theme.dart';
 import '../widgets/auth/labeled_text_field.dart';
 import '../widgets/auth/text_link.dart';
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _identificador = TextEditingController();
   final _password = TextEditingController();
   bool _mostrarPassword = false;
+  bool _cargando = false;
 
   @override
   void dispose() {
@@ -30,8 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _iniciarSesion() {
-    if (UsuariosStore.autenticar(_identificador.text, _password.text)) {
+  Future<void> _iniciarSesion() async {
+    if (_cargando) return;
+    setState(() => _cargando = true);
+    try {
+      await UsuariosStore.iniciarSesion(_identificador.text, _password.text);
+      if (!mounted) return;
       final mostrarTutorial = UsuariosStore.consumirTutorialPendiente(
         _identificador.text,
       );
@@ -44,16 +50,18 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.home);
       }
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(_mensajeError(e))));
+    } finally {
+      if (mounted) setState(() => _cargando = false);
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'El correo o nombre de usuario y la contraseña son incorrectos.',
-        ),
-      ),
-    );
   }
+
+  String _mensajeError(Object e) => e is AuthApiException
+      ? e.message
+      : 'No se pudo iniciar sesión. Revisa tu conexión e inténtalo de nuevo.';
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +153,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: TextLink(text: '¿Olvidaste tu contraseña?'),
                           ),
                           const SizedBox(height: 17),
-                          _BotonIniciarSesion(onPressed: _iniciarSesion),
+                          _BotonIniciarSesion(
+                            onPressed: _iniciarSesion,
+                            cargando: _cargando,
+                          ),
                           const SizedBox(height: 26),
                           Wrap(
                             alignment: WrapAlignment.center,
@@ -195,8 +206,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
 class _BotonIniciarSesion extends StatelessWidget {
   final VoidCallback onPressed;
+  final bool cargando;
 
-  const _BotonIniciarSesion({required this.onPressed});
+  const _BotonIniciarSesion({required this.onPressed, this.cargando = false});
 
   @override
   Widget build(BuildContext context) {
@@ -221,17 +233,26 @@ class _BotonIniciarSesion extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: cargando ? null : onPressed,
           borderRadius: BorderRadius.circular(22),
-          child: const Center(
-            child: Text(
-              'Iniciar sesión',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+          child: Center(
+            child: cargando
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : const Text(
+                    'Iniciar sesión',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../assets_paths.dart';
 import '../data/usuarios_store.dart';
 import '../models/usuario.dart';
+import '../services/auth_api_service.dart';
 import '../theme.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -22,6 +23,7 @@ class _CrearUsuarioState extends State<CrearUsuario> {
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   bool _showPassword = false;
+  bool _cargando = false;
   Genero? _genero;
 
   @override
@@ -54,7 +56,8 @@ class _CrearUsuarioState extends State<CrearUsuario> {
     return null;
   }
 
-  void _crearCuenta() {
+  Future<void> _crearCuenta() async {
+    if (_cargando) return;
     if (!_formKey.currentState!.validate()) return;
     if (UsuariosStore.existeEmail(_email.text)) {
       _showMessage('Ese correo ya está registrado.');
@@ -64,20 +67,33 @@ class _CrearUsuarioState extends State<CrearUsuario> {
       _showMessage('Ese nombre de usuario ya está registrado.');
       return;
     }
-    UsuariosStore.registrar(
-      Usuario(
-        id: UsuariosStore.generarIdTemporal(),
-        name: _name.text.trim(),
-        lastName: _lastName.text.trim(),
-        nickName: _nickName.text.trim(),
-        email: _email.text.trim(),
-        password: _password.text,
-        createDate: DateTime.now(),
-        genero: _genero!,
-      ),
-    );
-    Navigator.pop(context, true);
+    setState(() => _cargando = true);
+    try {
+      await UsuariosStore.registrar(
+        Usuario(
+          id: UsuariosStore.generarIdTemporal(),
+          name: _name.text.trim(),
+          lastName: _lastName.text.trim(),
+          nickName: _nickName.text.trim(),
+          email: _email.text.trim(),
+          password: _password.text,
+          createDate: DateTime.now(),
+          genero: _genero!,
+        ),
+      );
+      if (!mounted) return;
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+      _showMessage(_mensajeError(e));
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
+
+  String _mensajeError(Object e) => e is AuthApiException
+      ? e.message
+      : 'No se pudo crear la cuenta. Inténtalo de nuevo.';
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
@@ -316,8 +332,8 @@ class _CrearUsuarioState extends State<CrearUsuario> {
                         ),
                       ),
                       PrimaryButton(
-                        text: 'Crear cuenta',
-                        onPressed: _crearCuenta,
+                        text: _cargando ? 'Creando cuenta…' : 'Crear cuenta',
+                        onPressed: _cargando ? null : () => _crearCuenta(),
                       ),
                       const SizedBox(height: 14),
                       TextButton(

@@ -1,13 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:my_daily_routine/data/token_storage.dart';
 import 'package:my_daily_routine/data/usuarios_store.dart';
 import 'package:my_daily_routine/main.dart';
 import 'package:my_daily_routine/models/usuario.dart';
 import 'package:my_daily_routine/screens/home.dart';
 import 'package:my_daily_routine/screens/welcome.dart';
+import 'package:my_daily_routine/services/auth_api_service.dart';
 import 'package:my_daily_routine/widgets/avatar/avatar_character.dart';
 
+class _MemoryTokenStorage implements TokenStorage {
+  String? _token;
+
+  @override
+  Future<String?> read() async => _token;
+
+  @override
+  Future<void> write(String token) async => _token = token;
+
+  @override
+  Future<void> delete() async => _token = null;
+}
+
+class _FakeAuthApi extends AuthApiService {
+  _FakeAuthApi(this._usuario);
+
+  final Usuario _usuario;
+
+  @override
+  Future<LoginResult> login(String identificador, String password) async =>
+      LoginResult('token-de-prueba', _usuario);
+
+  @override
+  Future<void> registrar(Map<String, dynamic> cuerpo) async {}
+}
+
 void main() {
+  setUp(() {
+    UsuariosStore.api = AuthApiService();
+    UsuariosStore.tokenStorage = _MemoryTokenStorage();
+    UsuariosStore.readProfile = () async => null;
+    UsuariosStore.writeProfile = (_) async {};
+    UsuariosStore.removeProfile = () async {};
+    UsuariosStore.cerrarSesion();
+  });
+
   testWidgets('el inicio de sesión directo a Inicio no daña el árbol', (
     tester,
   ) async {
@@ -44,17 +81,17 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.runAsync(AvatarResources.load);
-    UsuariosStore.registrar(
-      Usuario(
-        id: -990001,
-        name: 'Usuario',
-        lastName: 'Prueba',
-        nickName: 'login_lifecycle_test',
-        email: 'login.lifecycle@example.test',
-        password: 'password-segura',
-        createDate: DateTime(2026, 11, 9),
-      ),
+    final usuario = Usuario(
+      id: 990001,
+      name: 'Usuario',
+      lastName: 'Prueba',
+      nickName: 'login_lifecycle_test',
+      email: 'login.lifecycle@example.test',
+      password: 'password-segura',
+      createDate: DateTime(2026, 11, 9),
     );
+    UsuariosStore.api = _FakeAuthApi(usuario);
+    await UsuariosStore.registrar(usuario);
 
     await tester.pumpWidget(const MyApp());
     await tester.pump();

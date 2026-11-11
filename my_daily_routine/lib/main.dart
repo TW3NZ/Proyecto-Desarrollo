@@ -16,9 +16,11 @@ import 'screens/historial.dart';
 import 'screens/avatar.dart';
 import 'data/avatar_store.dart';
 import 'data/tareas_store.dart';
+import 'data/usuarios_store.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await UsuariosStore.load();
   await AvatarStore.instancia.load();
   await TareasStore.instancia.inicializarWidget();
   final uriInicial = await HomeWidget.initiallyLaunchedFromHomeWidget();
@@ -60,7 +62,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       scrollBehavior: const AppScrollBehavior(),
-      initialRoute: AppRoutes.login,
+      initialRoute: UsuariosStore.usuarioActual != null
+          ? AppRoutes.home
+          : AppRoutes.login,
       routes: {
         AppRoutes.login: (_) => const LoginScreen(),
         AppRoutes.crearUsuario: (_) => const CrearUsuario(),

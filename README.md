@@ -77,6 +77,7 @@ El widget nativo está disponible solo en Android. Para incluir imágenes de las
 ## Documentación
 
 - [Reglas del repositorio](AGENTS.md)
+- [Integración de autenticación (Flutter · FastAPI · MySQL)](my_daily_routine/docs/INTEGRACION_API_AUTENTICACION.md)
 - [Decisiones y estado del avatar](docs/decisiones-avatar.md)
 - [Decisiones sobre tareas](docs/decisiones-tareas.md)
 - [Decisiones sobre sesión](docs/decisiones-sesion.md)
