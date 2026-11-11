@@ -63,7 +63,7 @@ Flutter  ──(HTTP JSON)──▶  FastAPI (api/)  ──(PyMySQL)──▶  M
 
 - **Flutter / Dart**: SDK compatible con `pubspec.yaml` (`sdk: ^3.13.1`).
 - **Python**: 3.13 (entorno virtual en `api/.venv`).
-- **MySQL**: base de datos con la tabla `Usuario` y credenciales locales.
+- **MySQL**: base de datos local. El esquema completo se crea con `api/BD_script/BD_My_Daily_Routine.sql`.
 
 ### Dependencias
 
@@ -76,7 +76,7 @@ El servicio `api/` se ejecuta con su propio entorno virtual (`api/.venv`). No es
 
 ### Variables de entorno (`api/.env`)
 
-El servicio `api/` lee su configuración de `api/.env` (archivo ignorado por Git). Variables esperadas, **sin valores reales**:
+El servicio `api/` lee su configuración de `api/.env` (archivo ignorado por Git). **Cada integrante crea su propio `.env` copiando `api/.env.example` y rellenando los valores reales.** Variables esperadas, **sin valores reales**:
 
 ```dotenv
 DB_HOST=
@@ -90,6 +90,16 @@ ACCESS_TOKEN_EXPIRE_MINUTES=120
 ```
 
 > **Nunca** incluyas contraseñas, claves secretas ni credenciales reales en este documento, en el README ni en el control de versiones. `SECRET_KEY` debe ser un valor aleatorio de al menos 32 bytes.
+
+### Base de datos (script SQL)
+
+El esquema completo está en `api/BD_script/BD_My_Daily_Routine.sql`. Para crear la base y las tablas:
+
+```bash
+mysql -u TU_USUARIO -p < api/BD_script/BD_My_Daily_Routine.sql
+```
+
+El script crea la base `BD_my_daily_routine` y las tablas (`Usuario`, `Estadistica`, `Equipo`, `MiembroEquipo`, `Categoria`, `Proyecto`, `MiembroProyecto`, `Tarea`, `Actividad_Tarea` y `TareaCategoria`). El valor de `DB_NAME` en tu `.env` debe coincidir con el nombre de la base creada.
 
 ---
 
