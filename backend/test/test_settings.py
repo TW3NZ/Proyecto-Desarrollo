@@ -13,7 +13,8 @@ def test_loads_backend_env_from_any_working_directory(tmp_path, monkeypatch):
     monkeypatch.chdir(directory)
     load_settings(directory)
     assert os.environ["OPENAI_API_KEY"] == "test-backend"
-    assert os.environ["AVATAR_SERVICE_TOKEN"] == "test-token"
+    # There is one project configuration file: backend/.env, never root/.env.
+    assert "AVATAR_SERVICE_TOKEN" not in os.environ
 
 
 def test_backend_file_overrides_unrelated_machine_key(tmp_path, monkeypatch):
