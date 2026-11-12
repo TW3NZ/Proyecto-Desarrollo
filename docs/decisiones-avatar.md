@@ -1,5 +1,13 @@
 # Decisiones sobre el avatar
 
+## 2026-11-10 — Boca cansada y mechón derecho
+
+El usuario detectó una sonrisa residual en Cansado y un mechón del peinado original que no recibía el color. La boca de la referencia neutra conservaba las comisuras levantadas: para cansancio se refleja verticalmente solo su región interior, con transición gradual y límites por personaje para no muestrear el borde de la mejilla. No se modifica la boca elegida ni los demás estados.
+
+La máscara rectangular que protegía el rostro excluía también el mechón derecho. Se reemplaza esa exclusión general por las regiones concretas de ojos, nariz y boca. Se conserva el filtro de color y altura para proteger ropa y piel.
+
+Se revisó visualmente la lámina de expresiones de ambos personajes y se añadieron regresiones para distinguir la boca cansada de la boca de aburrimiento y teñir el mechón derecho del peinado original con plateado, rubio y negro conservando los ojos. Once pruebas de expresiones, peinados y rostro pasan; formato y análisis de los tests sin incidencias.
+
 ## 2026-11-10 — Expresiones vinculadas al progreso
 
 El usuario pidió que el avatar refleje el desempeño: ánimo positivo con estadísticas altas y cansancio o aburrimiento con valores bajos. Se implementan cuatro reacciones temporales en el inicio, separadas de `AvatarConfig`. Se actualizan al notificarse cambios del almacén de estadísticas y se calculan con el progreso general de la cuenta actual.

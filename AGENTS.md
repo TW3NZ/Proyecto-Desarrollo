@@ -8,6 +8,8 @@ Estas instrucciones aplican a todo el repositorio. Leerlas antes de modificarlo.
 - Cada registro de estadísticas pertenece a un usuario mediante `usuarioId`; sus valores y preferencias son independientes por cuenta.
 - Los IDs de entidades y sus referencias son enteros. Los IDs negativos son temporales de Flutter en memoria; los definitivos los entrega FastAPI.
 - `Equipo` representa el espacio de trabajo y sus miembros; `Proyecto` es una entidad propia y cada proyecto pertenece a un equipo mediante `equipoId`. Las tareas de proyecto se relacionan con `proyectoId`.
+- Los equipos deben poder formarse seleccionando usuarios, y cada proyecto puede incluir un subconjunto de sus miembros. Todo participante de un proyecto debe pertenecer al equipo de ese proyecto; pertenecer únicamente a otro equipo no permite asociarlo. Validar esta regla también en el backend y la base de datos.
+- Las recompensas colaborativas se entregan al completar cada tarea. Cada participante recibe los puntos completos de las categorías correspondientes (inteligencia, salud, finanzas y disciplina), sin dividirlos entre participantes. Queda por precisar si los beneficiarios son todos los participantes del proyecto o una selección por tarea. Consultar `docs/analisis-base-datos-equipos.md` antes de implementar la conexión SQL y las recompensas compartidas.
 - El avatar principal debe ser humano, de cuerpo completo y protagonista en el centro de la pantalla de inicio, con espacio para los controles laterales.
 - Usar como referencia visual principal la imagen compartida por el usuario: avatar humano juvenil, cabeza algo grande, cuerpo más alargado que el primer prototipo, formas suaves, silueta clara y sombras discretas. Esta referencia concreta refina la inspiración inicial en Duolingo; mantener identidad propia.
 - Aplicar ese lenguaje visual a todos los avatares, sin fijar el cabello, tono de piel, ropa, gafas, audífonos, mochila, marcas ni pose del personaje de referencia. El usuario confirmó que solo se toma su estilo de dibujo.
@@ -32,6 +34,7 @@ Estas instrucciones aplican a todo el repositorio. Leerlas antes de modificarlo.
 ## Trabajo en el repositorio
 
 - Mantener `app.py`, `requirements.txt` y los archivos `.env` del servicio en la raíz de `backend/`. Agrupar las pruebas en `backend/test/` y las utilidades en `backend/utils/`. Documentar los comandos de ejecución y prueba en el emulador en `backend/README.md`.
+- Mantener el certificado CA de Aiven completo dentro de `DB_SSL_CA` en `backend/.env`, como PEM multilínea entre comillas, por preferencia del usuario. No exigir una ruta persistente a otro archivo; los clientes que necesiten un archivo pueden usar una copia temporal eliminada al terminar. Mantener las credenciales exclusivamente en el backend y verificar TLS.
 
 - Revisar el estado de Git y conservar cambios existentes ajenos a la tarea.
 - Mantener las responsabilidades de pantallas, widgets y datos separadas; reutilizar la estructura Flutter existente.

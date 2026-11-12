@@ -68,6 +68,10 @@ void main() {
   vec3 c = sampleColor.rgb / sampleColor.a;
   vec4 a = texture(uFaceA, faceUv);
   vec4 b = texture(uFaceB, faceUv);
+  // The "neutral" source mouth still has slightly raised corners. Reflect
+  // that small mouth region for tiredness, without changing the saved mouth.
+  vec2 tiredMouthUv = vec2(uv.x, 0.1685 + 0.196 - uv.y);
+  vec4 tiredMouth = texture(uFaceB, tiredMouthUv);
   float eyes = max(region(uv, vec4(0.443, 0.122, 0.542, 0.158)),
                    region(uv, vec4(0.574, 0.117, 0.632, 0.155)));
   float nose = max(region(uv, vec4(0.542, 0.152, 0.596, 0.169)),
@@ -80,6 +84,10 @@ void main() {
   // Temporary expressions blend over the selected mouth without saving it.
   c = mix(c, feature(c, a, b, 1.0, mouth), max(uExpression, 0.0));
   c = mix(c, feature(c, a, b, 2.0, mouth), min(max(-uExpression, 0.0) * 2.3, 1.0));
+  float tiredMouthMask = region(uv,
+      vec4(mix(0.51, 0.53, uFemale), 0.173, mix(0.595, 0.59, uFemale), 0.193));
+  c = mix(c, feature(c, a, tiredMouth, 2.0, tiredMouthMask),
+          smoothstep(0.45, 1.0, -uExpression));
   vec3 result = c;
   // Camiseta verde-azulada: no afectar piel, cabello ni pantalón.
   if (uv.y > 0.21 && uv.y < 0.53 && c.g > c.r * 1.18 && c.b > c.r * 1.12) {
@@ -87,7 +95,7 @@ void main() {
   } else if (uv.y > 0.47 && uv.y < 0.94 && c.b > c.r * 1.12 && c.b > c.g * 1.08) {
     result = recolor(c, uTrousers, 0.30);
   } else if (uv.y < mix(0.22, 0.42, uFemale) && c.r > c.g * 1.12 && c.g > c.b * 1.05 && c.r < 0.63
-      && !(uv.y > 0.117 && uv.y < 0.197 && uv.x > 0.44 && uv.x < 0.65)) {
+      && eyes == 0.0 && nose == 0.0 && mouth == 0.0) {
     result = recolor(c, uHair, 0.47);
   } else if (uv.y > 0.075 && uv.y < 0.64 && c.r > c.g * 1.16 && c.g > c.b * 1.12 && c.r >= 0.63) {
     result = recolor(c, uSkin, 0.95);

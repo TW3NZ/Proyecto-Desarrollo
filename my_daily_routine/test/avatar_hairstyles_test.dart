@@ -72,6 +72,20 @@ void main() {
           );
           expect(pixel(original, 0, 0)[3], 0);
           expect(pixel(original, 420, 120)[3], greaterThan(200));
+          if (type == AvatarCharacterType.hombre &&
+              style == AvatarHairstyle.original) {
+            for (final hair in ['silver', 'blond', 'black']) {
+              final tinted = await render(
+                config.withColor(AvatarPart.hair, hair),
+              );
+              expect(
+                pixel(tinted, 565, 220),
+                isNot(pixel(original, 565, 220)),
+                reason: 'El mechón derecho también recibe el color $hair',
+              );
+              expect(pixel(tinted, 438, 250), pixel(original, 438, 250));
+            }
+          }
           expect(
             pixel(silver, 420, 120),
             isNot(pixel(original, 420, 120)),

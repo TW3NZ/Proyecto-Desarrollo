@@ -1,4 +1,16 @@
 
+## 2026-11-10 — Recompensa por tarea y pertenencia al equipo confirmadas
+
+El usuario confirmó que los puntos se entregan al completar cada tarea y que cada participante recibe la recompensa completa, sin dividirla entre personas. Por ejemplo, una tarea con 5 puntos de finanzas concede 5 a cada beneficiario. El motivo es reconocer el trabajo conjunto con la misma recompensa individual.
+
+También confirmó que todo participante del proyecto debe ser miembro del equipo propietario. Una pertenencia a otro equipo no habilita el acceso: la relación usada debe corresponder al equipo del proyecto. Esta regla deberá garantizarse en el backend y el esquema, además de los filtros de Flutter.
+
+Alcance de esta entrega: actualizar las reglas y el análisis; no se modificó ni ejecutó SQL ni se implementaron recompensas. Pendientes: precisar si se seleccionan participantes por tarea o se recompensa a todos los del proyecto; definir reapertura y cambios de miembros. Las propuestas de registro transaccional e idempotencia siguen siendo decisiones técnicas por implementar.
+
+## 2026-11-10 — Análisis previo de la base de datos y recompensas compartidas
+
+El usuario aportó `database/BD_My_Daily_Routine.sql` y pidió analizarlo antes de continuar con equipos. Confirmó la selección de usuarios para equipos, participantes por proyecto y puntos por trabajo conjunto. Se revisaron las diez tablas y su correspondencia con Flutter: la estructura principal ya existe, pero faltan garantías de pertenencia coherente, contrato del responsable y un registro transaccional de recompensas sin duplicados. La política exacta de beneficiarios y reparto queda pendiente. El detalle está en [analisis-base-datos-equipos.md](analisis-base-datos-equipos.md). No se modificó ni ejecutó el SQL y no se implementaron nuevas funciones.
+
 ## 2026-11-05 — Espacio para el ID personal
 
 A petición del usuario, la pantalla Teams incorpora una tarjeta «Mi ID de usuario» con el campo de valor vacío. La tarjeta queda preparada para recibir un ID, pero no se genera, carga ni vincula uno hasta definir esa lógica.

@@ -48,6 +48,35 @@ AVATAR_SERVICE_TOKEN=UN_TOKEN_LOCAL_ALEATORIO_DE_AL_MENOS_24_CARACTERES
 
 Reemplaza los marcadores. El backend carga automáticamente ese archivo y sus valores tienen prioridad sobre variables del sistema. Reinicia el servidor si lo cambias. La clave de OpenAI pertenece exclusivamente al servidor.
 
+## Configuración de Aiven MySQL
+
+En `backend/.env` se reservan las siguientes variables, exclusivamente para el servidor:
+
+```dotenv
+DB_HOST=HOST_DE_TU_SERVICIO.aivencloud.com
+DB_PORT=10472
+DB_USER=avnadmin
+DB_PASSWORD='TU_CONTRASEÑA'
+DB_NAME=BD_my_daily_routine
+DB_SSL_CA="-----BEGIN CERTIFICATE-----
+CONTENIDO_COMPLETO_DEL_CERTIFICADO_CA_DE_AIVEN
+-----END CERTIFICATE-----"
+DB_SSL_VERIFY_CERT=true
+DB_CONNECT_TIMEOUT=10
+```
+
+Confirma host, puerto y usuario con tu servicio. Completa la contraseña localmente y pega el certificado CA completo de Aiven en `DB_SSL_CA`, entre comillas dobles y conservando sus saltos de línea. No pongas una ruta: por decisión del usuario, el certificado se mantiene explícito en el `.env`. `DB_NAME` corresponde a la base creada por `database/BD_My_Daily_Routine.sql`, no a `defaultdb`. El timeout está expresado en segundos. No copies estas variables al archivo de configuración de Flutter ni al APK.
+
+**Estado al 2026-11-11:** la prueba real aceptó las credenciales del `.env`, verificó el certificado y el nombre del servidor mediante TLS y encontró 10 tablas. Esta comprobación no integra todavía las consultas de usuarios, equipos o tareas en los endpoints de la API. El script de base de datos no se ejecuta automáticamente.
+
+Para repetir la prueba de solo lectura desde la raíz:
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.utils.check_database
+```
+
+La utilidad usa el cliente `mysql` del PATH o la instalación local de MySQL Server 8.0 en Windows. Ejecuta `SELECT 1`, consulta el cifrado TLS y cuenta las tablas. Usa exclusivamente las credenciales de `backend/.env`, sin imprimirlas, y siempre exige `VERIFY_IDENTITY`, aunque `DB_SSL_VERIFY_CERT` se cambie. El cliente MySQL requiere un archivo de CA: la utilidad crea una copia temporal del certificado y la elimina al terminar; no requiere mantener una ruta ni otro archivo de configuración. El timeout de conexión se toma de `DB_CONNECT_TIMEOUT` (1–120 segundos).
+
 ## 2. Iniciar el backend — terminal 1
 
 Desde la raíz:
