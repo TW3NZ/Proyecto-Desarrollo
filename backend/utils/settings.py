@@ -9,4 +9,3 @@ def load_settings(directory: Path | None = None) -> None:
     # A local backend/.env is authoritative: unrelated machine credentials must
     # not silently replace the project's key. Deployments can omit this file.
     load_dotenv(directory / ".env", override=True, encoding="utf-8-sig")
-    load_dotenv(directory.parent / ".env", override=False, encoding="utf-8-sig")

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#4169e1"><title>My Daily Rutine · Administración</title><link rel="icon" href="./brand.png"><link rel="stylesheet" href="./admin.css"><script defer src="./admin.js"></script></head>
+<body>
+<aside>
+  <div class="brand"><img class="logo" src="./brand.png" alt="" width="48" height="48"><div>My Daily Rutine<small>PANEL DE ADMINISTRACIÓN</small></div></div>
+  <div class="workspace"><span class="workspace-icon" aria-hidden="true">▦</span><div>Tu espacio de datos<small>Todo conectado, en un solo lugar</small></div></div>
+  <div class="nav-label">EXPLORADOR DE DATOS <span id="tableCount">—</span></div>
+  <label class="sr" for="tableSearch">Buscar tabla</label><input id="tableSearch" placeholder="Buscar tabla…" type="search">
+  <nav id="tables" aria-label="Tablas de la base de datos"></nav>
+  <div class="sidebar-foot"><span class="dot"></span> Aiven · MySQL<small>Consulta segura · solo lectura</small></div>
+</aside>
+<main>
+  <div class="topline"><span>My Daily Rutine <span aria-hidden="true">/</span> Administración</span><button id="connectionButton" class="access-pill" hidden>Conectar API</button><span class="access-pill">◈ Acceso privado</span></div>
+  <header><div class="hero-copy"><span class="eyebrow">CADA DATO CUENTA</span><h1>Explora tu base de datos</h1><p>Usuarios, tareas y equipos.<br>Todo lo que da vida a tu rutina, en un mismo lugar.</p><button id="refresh" class="outline">↻ Actualizar datos</button></div><div class="hero-art" aria-hidden="true"><span class="orbit orbit-one">✓</span><img src="./brand.png" alt=""><span class="orbit orbit-two">▦</span><span class="spark">✦</span></div></header>
+  <section class="metrics" aria-label="Resumen"><div><span class="metric-icon" aria-hidden="true">▦</span><div><span>Tablas disponibles</span><strong id="metricTables">—</strong></div></div><div><span class="metric-icon" aria-hidden="true">≡</span><div><span>Registros encontrados</span><strong id="metricRows">—</strong></div></div><div><span class="metric-icon" aria-hidden="true">⌘</span><div><span>Relaciones de esta tabla</span><strong id="metricRelations">—</strong></div></div></section>
+  <section class="panel">
+    <div class="panel-head"><div><span class="eyebrow">TABLA SELECCIONADA</span><h2 id="title">Selecciona una tabla</h2></div><span class="badge">Solo lectura</span></div>
+    <div class="tabs"><button id="dataTab" class="active" aria-pressed="true">Datos</button><button id="structureTab" aria-pressed="false">Estructura y relaciones</button></div>
+    <div id="dataView">
+      <form id="searchForm" class="toolbar"><label class="sr" for="search">Buscar en los datos de la tabla seleccionada</label><input id="search" type="search" maxlength="200" placeholder="Buscar en esta tabla…"><button type="submit">Buscar</button><label for="size">Filas</label><select id="size"><option>25</option><option>50</option><option>100</option></select></form>
+      <div id="filterBar" hidden><span id="filterText"></span><button id="clearFilter" class="outline">Quitar filtros</button></div>
+      <p id="status" role="status" aria-live="polite">Conectando con tu base de datos…</p>
+      <div class="table-wrap" tabindex="0" aria-label="Datos de la tabla"><table id="grid"></table></div>
+      <footer class="pager"><span id="pageInfo">—</span><div><button id="prev" class="outline" disabled>← Anterior</button><button id="next" class="outline" disabled>Siguiente →</button></div></footer>
+    </div>
+    <div id="structureView" hidden><h3>Columnas</h3><div class="table-wrap"><table id="columns"></table></div><h3>Relaciones</h3><div id="relations" class="relations"></div><p class="hint">Abre un registro en Datos para consultar sus registros relacionados.</p></div>
+  </section>
+  <p class="hint">Los campos de contraseñas, secretos y tokens se ocultan. La búsqueda se aplica a la tabla seleccionada.</p>
+</main>
+<dialog id="detail"><div class="dialog-head"><div><span class="eyebrow">VISTA DEL REGISTRO</span><h2 id="detailTitle">Detalle</h2></div><button id="closeDetail" class="outline" aria-label="Cerrar detalle">✕</button></div><dl id="fields"></dl><h3>Registros relacionados</h3><div id="links" class="relations"></div></dialog>
+<dialog id="connectionDialog" aria-labelledby="connectionTitle"><form id="connectionForm">
+  <span class="eyebrow">CONEXIÓN CON EL SERVIDOR</span><h2 id="connectionTitle">Conecta tu panel</h2>
+  <p class="hint">Live Server muestra esta página. Para consultar las tablas, conecta con el backend de My Daily Rutine.</p>
+  <label for="apiOrigin">Dirección del backend</label><input id="apiOrigin" type="url" value="http://127.0.0.1:8000" required>
+  <p class="hint">El acceso desde este equipo no necesita contraseña. El backend utiliza las credenciales de Aiven guardadas en su .env.</p>
+  <p id="connectionError" role="alert"></p><button id="connectSubmit" type="submit">Conectar y ver tablas</button>
+</form></dialog>
+</body></html>

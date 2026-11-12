@@ -1,18 +1,31 @@
-"""Photo-to-catalog prototype. Run from the repository root with uvicorn."""
+"""Unified API: users, authentication and photo-to-avatar suggestions."""
 import base64
 import binascii
 import hmac
 import io
+import ipaddress
+import json
 import os
 import warnings
+from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, ConfigDict, ValidationError
 from starlette.concurrency import run_in_threadpool
 from backend.utils.settings import load_settings
+
+from backend.models.usuario import LoginUser, createUser
+from backend.database.db import get_connection
+from backend.core.seguridad import crear_token, password_hash
+from backend.utils.generadores import generar_id_unico
+from backend.database import admin as explorer
 
 load_settings()
 
@@ -114,7 +127,30 @@ async def suggest(encoded: str, character: str) -> Suggestion:
         raise HTTPException(502, "No se pudo completar el análisis de la foto.") from None
 
 
-app = FastAPI(title="My Daily Rutine — Avatar", docs_url=None, redoc_url=None)
+app = FastAPI(title="My Daily Rutine API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[origin.strip() for origin in os.environ.get(
+        "ADMIN_ALLOWED_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500"
+    ).split(",") if origin.strip() and origin.strip() != "*"],
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["Authorization"],
+)
+
+
+@app.middleware("http")
+async def protect_admin_responses(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/admin" or request.url.path.startswith("/admin/"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["Referrer-Policy"] = "no-referrer"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+        )
+    return response
 
 
 @app.post("/avatar/suggest", response_model=Suggestion)
@@ -137,3 +173,176 @@ async def avatar_suggest(request: Request):
         raise HTTPException(422, "Solicitud de foto inválida.") from None
     encoded = await run_in_threadpool(normalize_image, payload.image_base64)
     return await suggest(encoded, payload.character_type)
+
+
+# FUNCIÓN DE LOGIN
+@app.post("/auth/login/user")
+def login(loginUser: LoginUser):
+    conexion = get_connection()
+
+    try:
+        with conexion.cursor() as cursor:
+            sql = """
+                SELECT idUsu, nameUsu, lastName, nickName, email,
+                       createDate, genero, foto, passwordUsu
+                FROM Usuario
+                WHERE nickName = %s OR email = %s
+            """
+
+            cursor.execute(
+                sql,
+                (loginUser.identificador, loginUser.identificador)
+            )
+
+            resultado = cursor.fetchone()
+
+        if not resultado or not password_hash.verify(
+            loginUser.password, resultado["passwordUsu"]
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="Usuario o contraseña incorrectos."
+            )
+
+        # Se quita el hash antes de devolver los datos
+        usuario_publico = {
+            k: v for k, v in resultado.items()
+            if k != "passwordUsu"
+        }
+
+        return {
+            "access_token": crear_token(usuario_publico),
+            "token_type": "bearer",
+            "usuario": usuario_publico
+        }
+
+    finally:
+        conexion.close()
+
+
+# FUNCIÓN PARA CREAR USUARIO
+@app.post("/usuarios", status_code=201)
+def create_user(usuario: createUser):
+    conexion = get_connection()
+
+    try:
+        with conexion.cursor() as cursor:
+            sql = """
+                INSERT INTO Usuario
+                (idUsu, email, nameUsu, lastName, nickName,
+                 passwordUsu, createDate, genero, foto)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+            valores = (
+                generar_id_unico(),
+                usuario.email,
+                usuario.name,
+                usuario.lastName,
+                usuario.nickName,
+                password_hash.hash(usuario.password),
+                usuario.createDate,
+                usuario.genero,
+                usuario.foto
+            )
+
+            cursor.execute(sql, valores)
+
+        conexion.commit()
+
+        return {
+            "mensaje": "Usuario registrado correctamente"
+        }
+
+    except Exception:
+        conexion.rollback()
+        raise
+
+    finally:
+        conexion.close()
+
+
+# Administrative HTML and JSON API.
+security = HTTPBasic(auto_error=False)
+ADMIN_DIR = Path(__file__).resolve().parent / 'admin'
+
+
+def local_admin_request(request: Request) -> bool:
+    def loopback(host):
+        if host == 'localhost':
+            return True
+        try:
+            return ipaddress.ip_address(host or '').is_loopback
+        except ValueError:
+            return False
+
+    if not request.client or not loopback(request.client.host) or not loopback(request.url.hostname):
+        return False
+    if any(name in request.headers for name in ('forwarded', 'x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto')):
+        return False
+    origin = request.headers.get('origin')
+    if origin:
+        allowed = {item.strip() for item in os.environ.get(
+            'ADMIN_ALLOWED_ORIGINS', 'http://127.0.0.1:5500,http://localhost:5500'
+        ).split(',')}
+        allowed.add(str(request.base_url).rstrip('/'))
+        if origin not in allowed or not loopback(urlsplit(origin).hostname):
+            return False
+    elif request.headers.get('sec-fetch-site') == 'cross-site':
+        return False
+    return True
+
+
+def require_admin(request: Request, credentials: HTTPBasicCredentials | None = Depends(security)):
+    if local_admin_request(request):
+        return
+    if credentials is None:
+        raise HTTPException(401, 'Acceso administrativo no autorizado.', headers={'WWW-Authenticate': 'Basic realm="Administracion"'})
+    user = os.environ.get('ADMIN_USER', '')
+    password = os.environ.get('ADMIN_PASSWORD', '')
+    if not user or len(password) < 24:
+        raise HTTPException(503, 'Configura ADMIN_USER y ADMIN_PASSWORD (mínimo 24 caracteres).')
+    valid_user = hmac.compare_digest(credentials.username.encode(), user.encode())
+    valid_password = hmac.compare_digest(credentials.password.encode(), password.encode())
+    if not (valid_user and valid_password):
+        raise HTTPException(401, 'Acceso administrativo no autorizado.', headers={'WWW-Authenticate': 'Basic realm="Administracion"'})
+
+
+
+
+@app.get('/admin', dependencies=[Depends(require_admin)], include_in_schema=False)
+def admin_redirect():
+    return RedirectResponse('/admin/')
+
+
+@app.get('/admin/', dependencies=[Depends(require_admin)], include_in_schema=False)
+def index():
+    return FileResponse(ADMIN_DIR / 'index.html', media_type='text/html')
+
+
+@app.get('/admin/assets/{name}', dependencies=[Depends(require_admin)], include_in_schema=False)
+@app.get('/admin/{name}', dependencies=[Depends(require_admin)], include_in_schema=False)
+def asset(name: Literal['admin.css', 'admin.js', 'brand.png']):
+    media = {'admin.css': 'text/css', 'admin.js': 'text/javascript', 'brand.png': 'image/png'}
+    return FileResponse(ADMIN_DIR / name, media_type=media[name])
+
+
+@app.get('/admin/api/schema', dependencies=[Depends(require_admin)], include_in_schema=False)
+def schema():
+    with explorer.reader() as cursor:
+        return {'tables': explorer.schema(cursor)}
+
+
+@app.get('/admin/api/tables/{table}', dependencies=[Depends(require_admin)], include_in_schema=False)
+def table_rows(table: str, q: str = Query('', max_length=200),
+               filters: str = Query('{}', max_length=4000), page: int = Query(1, ge=1),
+               size: int = Query(25, ge=1, le=100), sort: str = '', direction: Literal['asc', 'desc'] = 'asc'):
+    try:
+        parsed = json.loads(filters)
+        if not isinstance(parsed, dict) or len(parsed) > 20 or any(
+                not isinstance(value, (str, int, float, bool, type(None))) for value in parsed.values()):
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise HTTPException(422, 'Filtros no válidos.') from None
+    with explorer.reader() as cursor:
+        return explorer.rows(cursor, table, q, parsed, page, size, sort, direction)

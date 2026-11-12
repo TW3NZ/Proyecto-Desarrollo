@@ -1,5 +1,5 @@
 import secrets
-from dataBase.db import get_connection
+from backend.database.db import get_connection
 
 
 # Generador de ID aleatorio de 8 dígitos

@@ -1,17 +1,25 @@
 # Backend de My Daily Rutine
 
-Servicio FastAPI que envía una imagen a OpenAI y devuelve una propuesta de atributos del catálogo del avatar.
+Servicio FastAPI único para registro de usuarios, login con JWT y propuesta de atributos del avatar mediante OpenAI. Todas las rutas se ejecutan desde `backend.app:app` en el mismo puerto; la antigua carpeta `api/` se integró aquí.
 
 ## Organización
 
+El explorador HTML de la base está en `/admin`; instrucciones en [docs/admin.md](docs/admin.md). Usa el mismo servidor y consulta tablas, registros, estructura y relaciones.
+
+Sus archivos separados son `backend/admin/index.html`, `backend/admin/admin.css` y `backend/admin/admin.js`. Toda la API HTTP administrativa está en `backend/app.py`; el JavaScript recibe las tablas y registros mediante sus endpoints JSON.
+
 ```text
 backend/
-├── app.py                    # API y endpoint /avatar/suggest
+├── app.py                    # /usuarios, /auth/login/user y /avatar/suggest
 ├── requirements.txt          # Dependencias
 ├── .env                      # Credenciales locales, ignoradas por Git
 ├── .env.example              # Plantilla sin credenciales reales
 ├── README.md
-├── utils/
+├── core/                     # Hash Argon2 y JWT
+├── models/                   # Modelos Pydantic de usuarios, tareas y categorías
+├── database/                 # Conector MySQL con TLS y consultas Python
+├── docs/usuarios.md          # Contratos de registro y login
+├── utils/                    # Configuración, generadores y diagnósticos
 │   ├── __init__.py
 │   ├── settings.py           # Carga del entorno
 │   └── check_connection.py   # Prueba real opcional con OpenAI
@@ -67,7 +75,23 @@ DB_CONNECT_TIMEOUT=10
 
 Confirma host, puerto y usuario con tu servicio. Completa la contraseña localmente y pega el certificado CA completo de Aiven en `DB_SSL_CA`, entre comillas dobles y conservando sus saltos de línea. No pongas una ruta: por decisión del usuario, el certificado se mantiene explícito en el `.env`. `DB_NAME` corresponde a la base creada por `database/BD_My_Daily_Routine.sql`, no a `defaultdb`. El timeout está expresado en segundos. No copies estas variables al archivo de configuración de Flutter ni al APK.
 
-**Estado al 2026-11-11:** la prueba real aceptó las credenciales del `.env`, verificó el certificado y el nombre del servidor mediante TLS y encontró 10 tablas. Esta comprobación no integra todavía las consultas de usuarios, equipos o tareas en los endpoints de la API. El script de base de datos no se ejecuta automáticamente.
+**Estado al 2026-11-11:** registro y login usan MySQL desde `backend/database/db.py`, con validación del certificado y del host mediante el PEM del `.env`. La comprobación previa encontró 10 tablas. Los endpoints de equipos y tareas siguen pendientes. El script SQL se conserva en `database/` en la raíz y no se ejecuta automáticamente.
+
+La configuración de autenticación comparte el mismo `.env`:
+
+```dotenv
+SECRET_KEY=UN_SECRETO_ALEATORIO_DE_AL_MENOS_32_CARACTERES
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=120
+```
+
+`SECRET_KEY` firma el JWT y es independiente de `AVATAR_SERVICE_TOKEN`. En la consolidación se añadió un secreto aleatorio al `.env` local si no existía; no se sobrescribieron las credenciales de Aiven ni OpenAI. Las rutas y sus cuerpos JSON están en [docs/usuarios.md](docs/usuarios.md).
+
+Para comprobar la conexión con el mismo conector Python de la API, sin modificar datos:
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion
+```
 
 Para repetir la prueba de solo lectura desde la raíz:
 
@@ -86,6 +110,8 @@ Desde la raíz:
 ```
 
 Espera el mensaje `Application startup complete` y deja esta terminal abierta. Para detener el servidor, pulsa `Ctrl+C`.
+
+La documentación interactiva está en `http://127.0.0.1:8000/docs`. Este mismo proceso sirve los tres endpoints; no se necesita un segundo servidor en el puerto 8001. El registro/login SQL está disponible en la API; esta consolidación no cambia el flujo de autenticación de Flutter.
 
 ## 3. Iniciar la app en el emulador Android — terminal 2
 
@@ -108,12 +134,15 @@ En este equipo ya está preparado `.tools/avatar-flutter.json`. Para reproducir 
 
 ```json
 {
+  "API_URL": "http://10.0.2.2:8000",
   "AVATAR_API_URL": "http://10.0.2.2:8000",
   "AVATAR_API_TOKEN": "EL_MISMO_TOKEN_LOCAL_DEL_BACKEND"
 }
 ```
 
-`10.0.2.2` es la dirección del equipo anfitrión desde el emulador Android. Este JSON está ignorado por Git y contiene solo URL y token local: **nunca agregues la clave de OpenAI ni pases `backend/.env` a Flutter**. Si cambias URL o token, detén la app y vuelve a ejecutar `flutter run`; hot reload no actualiza estos valores.
+`10.0.2.2` es la dirección del equipo anfitrión desde el emulador Android. `API_URL` configura registro y login; `AVATAR_API_URL` configura las fotos. Ambas apuntan al mismo backend. Este JSON está ignorado por Git y contiene solo URL y token local: **nunca agregues la clave de OpenAI ni pases `backend/.env` a Flutter**. Si cambias URL o token, detén la app y vuelve a ejecutar `flutter run`; hot reload no actualiza estos valores.
+
+El flujo actual de registro es `CrearUsuario → UsuariosStore.registrar → AuthApiService → POST /usuarios → INSERT Usuario + commit en Aiven`. El ingreso de práctica `admin / 12345678` en modo debug sigue siendo local y no crea un usuario en MySQL. La configuración del emulador no actualiza los APK ya construidos.
 
 ## 4. Probar la personalización
 

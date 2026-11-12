@@ -1,5 +1,5 @@
 
-from dataBase.db import get_connection
+from backend.database.db import get_connection
 
 # FUNCIÓN PARA VERIFICAR SI EXISTE UN ID
 def existe_id(id_usuario: int) -> bool:

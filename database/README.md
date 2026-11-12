@@ -110,4 +110,4 @@ Después cambia `DB_NAME` a `BD_my_daily_routine` y repite la prueba del paso 3.
 | `2003` / `2005` | Estado del servicio, host, puerto, red y restricciones de acceso. |
 | `2026` | Certificado CA y coincidencia del host con el certificado del servicio. |
 
-Esta conexión local comprobada no significa que los endpoints de FastAPI ya persistan usuarios, equipos o tareas: esa integración sigue pendiente. Los comandos para ejecutar la API y probar Flutter están en [backend/README.md](../backend/README.md).
+El backend unificado ya contiene registro y login de usuarios mediante MySQL. Los endpoints de equipos y tareas siguen pendientes. El conector Python está en `backend/database/`; los scripts SQL permanecen en esta carpeta `database/` de la raíz. Para probar ese conector directamente, ejecuta `.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion` desde la raíz. Los comandos para ejecutar la API y probar Flutter están en [backend/README.md](../backend/README.md).
