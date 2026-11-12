@@ -4,6 +4,7 @@ import '../data/tareas_store.dart';
 import '../data/id_temporal_store.dart';
 import '../data/usuarios_store.dart';
 import '../models/tarea_modelo.dart';
+import '../services/tareas_api_service.dart';
 import '../theme.dart';
 import '../utils/snackbar_utils.dart';
 import '../widgets/anadir_tarea/campo_texto_tarea.dart';
@@ -33,6 +34,8 @@ class _AddScreenState extends State<AddScreen> {
   final Set<CategoriaTarea> _categorias = {};
   PrioridadTarea _prioridad = PrioridadTarea.media;
   DateTime? _fechaFinalizacion;
+  final _tareasApi = TareasApiService();
+  bool _enviando = false;
 
   @override
   void dispose() {
@@ -69,7 +72,8 @@ class _AddScreenState extends State<AddScreen> {
       '${fecha.month.toString().padLeft(2, '0')}/'
       '${fecha.year}';
 
-  void _crearTarea() {
+  Future<void> _crearTarea() async {
+    if (_enviando) return;
     final titulo = _tituloController.text.trim();
 
     if (titulo.isEmpty) {
@@ -81,21 +85,96 @@ class _AddScreenState extends State<AddScreen> {
       return;
     }
 
-    final tarea = NuevaTarea(
-      id: IdTemporalStore.generar(),
-      usuarioId:
-          UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica,
+    final usuarioId =
+        UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica;
+
+    // Cuenta de práctica: comportamiento local previo, con ID temporal.
+    if (usuarioId <= 0) {
+      TareasStore.instancia.agregarTarea(
+        _construirTarea(
+          id: IdTemporalStore.generar(),
+          usuarioId: usuarioId,
+          titulo: titulo,
+        ),
+      );
+      showAppSnackBar(context, message: 'Tarea creada');
+      Navigator.pop(context);
+      return;
+    }
+
+    final token = UsuariosStore.token;
+    if (token == null || token.isEmpty) {
+      showAppSnackBar(
+        context,
+        message: 'No hay sesión activa. Inicia sesión de nuevo.',
+      );
+      return;
+    }
+
+    setState(() => _enviando = true);
+    try {
+      final idTarea = await _tareasApi.crearTarea(
+        _cuerpoDeTarea(titulo: titulo),
+        token: token,
+      );
+      if (!mounted) return;
+      TareasStore.instancia.agregarTarea(
+        _construirTarea(id: idTarea, usuarioId: usuarioId, titulo: titulo),
+      );
+      showAppSnackBar(context, message: 'Tarea creada');
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(
+        context,
+        message: e is TareasApiException
+            ? e.message
+            : 'No se pudo crear la tarea. Inténtalo de nuevo.',
+      );
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
+
+  NuevaTarea _construirTarea({
+    required int id,
+    required int usuarioId,
+    required String titulo,
+  }) {
+    return NuevaTarea(
+      id: id,
+      usuarioId: usuarioId,
       titulo: titulo,
       categorias: Set.unmodifiable(_categorias),
       prioridad: _prioridad,
       descripcion: _descripcionController.text.trim(),
       fechaFinalizacion: _fechaFinalizacion,
     );
-
-    TareasStore.instancia.agregarTarea(tarea);
-    showAppSnackBar(context, message: 'Tarea creada');
-    Navigator.pop(context);
   }
+
+  Map<String, dynamic> _cuerpoDeTarea({
+    required String titulo,
+  }) {
+    final descripcion = _descripcionController.text.trim();
+    return {
+      'Titulo': titulo,
+      'idResponsable': null,
+      'idProyecto': null,
+      'Prioridad': _prioridad.etiqueta,
+      'Descripcion': descripcion.isEmpty ? null : descripcion,
+      'Fecha': _formatoFechaApi(DateTime.now()),
+      'Fecha_Fin': _fechaFinalizacion == null
+          ? null
+          : _formatoFechaApi(_fechaFinalizacion!),
+      'Completada': false,
+      'categorias': _categorias.map((c) => c.idCategoria).toList(),
+    };
+  }
+
+  String _formatoFechaApi(DateTime fecha) =>
+      '${fecha.year.toString().padLeft(4, '0')}-'
+      '${fecha.month.toString().padLeft(2, '0')}-'
+      '${fecha.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
@@ -226,8 +305,8 @@ class _AddScreenState extends State<AddScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
                 child: PrimaryButton(
-                  text: 'Crear tarea',
-                  onPressed: _crearTarea,
+                  text: _enviando ? 'Creando tarea…' : 'Crear tarea',
+                  onPressed: _enviando ? null : () => _crearTarea(),
                 ),
               ),
             ),

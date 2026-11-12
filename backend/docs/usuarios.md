@@ -34,6 +34,7 @@ Respuestas:
 | Código | Significado | Cuerpo |
 |---|---|---|
 | `201` | Registro correcto | `{"mensaje": "Usuario registrado correctamente"}` |
+| `409` | `nickName` o `email` ya registrados | `{"detail": "..."}` |
 | `422` | Validación fallida | Lista de errores de Pydantic |
 
 El **`idUsu` lo genera el servidor** y **no se devuelve** en la respuesta.

@@ -6,21 +6,25 @@ import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/tarea_modelo.dart';
+import '../services/tareas_api_service.dart';
 import 'estadisticas_store.dart';
 import 'id_temporal_store.dart';
+import 'usuarios_store.dart';
 
 class TareasStore extends ChangeNotifier {
   TareasStore({
     Future<String?> Function()? read,
     Future<void> Function(String)? write,
     Future<void> Function(String)? publishWidget,
+    TareasApiService? api,
   }) : _read =
            read ?? (() => SharedPreferencesAsync().getString(preferenceKey)),
        _write =
            write ??
            ((value) =>
                SharedPreferencesAsync().setString(preferenceKey, value)),
-       _publishWidgetOverride = publishWidget;
+       _publishWidgetOverride = publishWidget,
+       _api = api ?? TareasApiService();
 
   static final TareasStore instancia = TareasStore();
   static const preferenceKey = 'tareas.v1';
@@ -30,6 +34,8 @@ class TareasStore extends ChangeNotifier {
   final Future<String?> Function() _read;
   final Future<void> Function(String) _write;
   final Future<void> Function(String)? _publishWidgetOverride;
+  final TareasApiService _api;
+  final Set<int> _enProceso = {};
   final List<NuevaTarea> _tareas = [];
   Future<void> _pending = Future<void>.value();
   Future<void>? _loading;
@@ -86,19 +92,41 @@ class TareasStore extends ChangeNotifier {
     return _sincronizar();
   }
 
-  Future<void> alternarCompletada(NuevaTarea tarea) {
-    if (!_tareas.contains(tarea)) return Future<void>.value();
+  Future<void> alternarCompletada(NuevaTarea tarea) async {
+    if (!_tareas.contains(tarea)) return;
+    if (_enProceso.contains(tarea.id)) return;
 
     final estabaCompletada = tarea.completada;
-    tarea.completada = !tarea.completada;
+    final usuarioReal = _esUsuarioReal();
+
+    // Para un usuario real, una tarea completada no se puede desmarcar
+    // (no existe endpoint que sincronice esa operación).
+    if (usuarioReal && estabaCompletada) return;
+
+    // "Completar" de un usuario real: sincronizar primero (pesimista).
+    if (usuarioReal && !estabaCompletada) {
+      final token = UsuariosStore.token;
+      if (token == null || token.isEmpty) return;
+      _enProceso.add(tarea.id);
+      try {
+        await _api.completarTarea(idTarea: tarea.id, token: token);
+      } finally {
+        _enProceso.remove(tarea.id);
+      }
+    }
+
+    tarea.completada = !estabaCompletada;
 
     if (!estabaCompletada && tarea.completada) {
       EstadisticasStore.instancia.procesarTareaCompletada(tarea);
     }
 
     notifyListeners();
-    return _sincronizar();
+    await _sincronizar();
   }
+
+  bool _esUsuarioReal() =>
+      (UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica) > 0;
 
   Future<void> alternarCompletadaPorIndice(int indice) {
     if (indice < 0 || indice >= _tareas.length) return Future<void>.value();

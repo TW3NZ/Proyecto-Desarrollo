@@ -1,4 +1,8 @@
 
+## 2026-11-12 — La tarjeta «Mi ID de usuario» muestra el idUsu real
+
+Con la integración de autenticación, la tarjeta «Mi ID de usuario» de la pantalla Teams dejó de estar vacía: ahora muestra el `idUsu` del usuario que inició sesión (`UsuariosStore.usuarioActual.id`; `-1` para la cuenta de práctica) e incluye un botón para copiarlo al portapapeles. Esto reemplaza la nota del 2026-11-05 en la que el campo se dejaba vacío.
+
 ## 2026-11-10 — Recompensa por tarea y pertenencia al equipo confirmadas
 
 El usuario confirmó que los puntos se entregan al completar cada tarea y que cada participante recibe la recompensa completa, sin dividirla entre personas. Por ejemplo, una tarea con 5 puntos de finanzas concede 5 a cada beneficiario. El motivo es reconocer el trabajo conjunto con la misma recompensa individual.

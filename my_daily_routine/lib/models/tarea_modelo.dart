@@ -10,6 +10,25 @@ enum CategoriaTarea {
   final String etiqueta;
   final IconData icono;
   const CategoriaTarea(this.etiqueta, this.icono);
+
+  static CategoriaTarea? desdeId(int id) => switch (id) {
+    1 => CategoriaTarea.educacion,
+    2 => CategoriaTarea.finanzas,
+    3 => CategoriaTarea.salud,
+    4 => CategoriaTarea.disciplina,
+    _ => null,
+  };
+}
+
+/// Id en la tabla `Categoria` de MySQL. El orden del enum no coincide con los
+/// ids sembrados, así que el mapeo es explícito.
+extension CategoriaTareaApi on CategoriaTarea {
+  int get idCategoria => switch (this) {
+    CategoriaTarea.educacion => 1,
+    CategoriaTarea.finanzas => 2,
+    CategoriaTarea.salud => 3,
+    CategoriaTarea.disciplina => 4,
+  };
 }
 
 /// Prioridad de la tarea.
@@ -49,4 +68,40 @@ class NuevaTarea {
     this.responsableId,
     this.completada = false,
   }) : fecha = fecha ?? DateTime.now();
+
+  factory NuevaTarea.fromApiJson(Map<String, dynamic> json) {
+    final categorias = <CategoriaTarea>{};
+    final rawCategorias = json['categorias'];
+    if (rawCategorias is List) {
+      for (final raw in rawCategorias) {
+        if (raw is int) {
+          final categoria = CategoriaTarea.desdeId(raw);
+          if (categoria != null) categorias.add(categoria);
+        }
+      }
+    }
+
+    return NuevaTarea(
+      id: json['idTarea'] as int,
+      usuarioId: json['idUsu'] as int,
+      proyectoId: json['idProyecto'] as int?,
+      responsableId: json['idResponsable'] as int?,
+      titulo: json['Titulo'] as String,
+      prioridad: _prioridadDesdeApi(json['Prioridad']),
+      descripcion: json['Descripcion'] as String? ?? '',
+      fecha: _fechaDesdeApi(json['Fecha']) ?? DateTime.now(),
+      fechaFinalizacion: _fechaDesdeApi(json['Fecha_Fin']),
+      completada: json['Completada'] == true,
+      categorias: Set.unmodifiable(categorias),
+    );
+  }
 }
+
+PrioridadTarea _prioridadDesdeApi(Object? valor) => switch (valor) {
+  'Alta' => PrioridadTarea.alta,
+  'Baja' => PrioridadTarea.baja,
+  _ => PrioridadTarea.media,
+};
+
+DateTime? _fechaDesdeApi(Object? valor) =>
+    valor is String ? DateTime.tryParse(valor) : null;

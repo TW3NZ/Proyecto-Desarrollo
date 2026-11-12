@@ -2,6 +2,17 @@
 
 Estas instrucciones aplican a todo el repositorio. Leerlas antes de modificarlo.
 
+## Protocolo de inicio de tarea (obligatorio)
+
+Antes de realizar cualquier tarea, análisis, modificación, implementación, depuración o refactorización:
+
+1. Localizar y leer todos los archivos `AGENTS.md` aplicables al proyecto.
+2. Leer nuevamente sus instrucciones al comenzar cada nueva tarea.
+3. Respetar estrictamente las reglas, restricciones, arquitectura y convenciones establecidas.
+4. Si se trabaja dentro de un subdirectorio, comprobar si existen instrucciones `AGENTS.md` adicionales que apliquen a esa ubicación.
+5. Si las instrucciones no están claras o existen contradicciones, detenerse y consultar al usuario antes de continuar.
+6. No ignorar estas instrucciones por considerar que una tarea es sencilla o pequeña.
+
 ## Acuerdos de producto
 
 - La aplicación Flutter relaciona el cumplimiento de tareas con estadísticas y la evolución de un avatar.
@@ -23,6 +34,11 @@ Estas instrucciones aplican a todo el repositorio. Leerlas antes de modificarlo.
 - La ropa admite colores RGB personalizados; el color de ojos es independiente de su forma. Las cejas siguen el color del cabello. Conservar estos colores al cambiar otros atributos. Mantener la descarga del APK de prueba en la primera línea del README principal y documentar su compilación en `scripts/README.md`; nunca incluir claves de OpenAI en un APK.
 - Conservar la posición elevada y el tamaño del avatar aprobados. Mantener sus animaciones sutiles y respetar movimiento reducido y la preferencia de desactivarlas.
 - La personalización incluye deslizantes manuales de complexión y altura. Conservarlos al cambiar otros atributos o aplicar una propuesta de foto. La altura aprobada es el máximo; las proporciones se guardan con la apariencia, sin relacionarlas con salud, peso real ni estadísticas. Los valores originales deben mantener el aspecto anterior.
+- Las categorías de tarea son un conjunto fijo de cuatro: Educación (id 1), Finanzas (id 2), Salud (id 3) y Disciplina (id 4). No se crean categorías nuevas desde la API ni desde la app.
+- Una tarea puede ser personal (sin `idProyecto` ni `idResponsable`) o de proyecto. La regla "todo participante de un proyecto debe pertenecer a su equipo" solo aplica a las tareas de proyecto.
+- Toda tarea tiene al menos una categoría; el endpoint de creación lo exige (`min_length=1`).
+- Para usuarios reales, una tarea completada no se puede desmarcar mientras no exista un endpoint que sincronice esa operación; la cuenta de práctica conserva el desmarcado local.
+- Para usuarios reales, completar una tarea requiere confirmación previa (modal), porque la acción no se puede deshacer; la cuenta de práctica completa sin confirmación.
 
 ## Continuidad y documentación
 
@@ -35,6 +51,7 @@ Estas instrucciones aplican a todo el repositorio. Leerlas antes de modificarlo.
 
 - Todo el código de API y backend debe vivir exclusivamente en `backend/`. No crear servicios paralelos en `api/`, `API/` u otra carpeta. `backend/app.py` es el único punto de entrada FastAPI y reúne las rutas de usuarios, autenticación y avatar; reutilizar sus módulos auxiliares antes de crear otros.
 - Mapa del repositorio: `my_daily_routine/` es el frontend Flutter; `backend/` es el servidor Python; `backend/database/` contiene conexión y consultas Python de MySQL; `database/` en la raíz contiene el esquema SQL y las instrucciones de inicialización/conexión (no otro servidor). `backend/models/` contiene modelos Pydantic; `backend/core/` la seguridad/JWT; `backend/utils/` utilidades y diagnósticos; `backend/test/` pruebas; `backend/docs/` contratos de la API; `docs/` decisiones del proyecto; `scripts/` compilación y `artifacts/` entregables.
+- En las rutas protegidas de datos, `idUsu` se obtiene exclusivamente del JWT (`sub`), nunca de un campo enviado por el cliente.
 - Usar un único `backend/.env`, su plantilla `backend/.env.example` y `backend/requirements.txt` para OpenAI, Aiven y autenticación. Iniciar desde la raíz con `python -m uvicorn backend.app:app`; usar imports absolutos `backend.*`. No duplicar el SQL de `database/` dentro del backend.
 - El panel HTML administrativo vive en `backend/admin/`, con `index.html`, `admin.js` y `admin.css` separados. Toda su API HTTP, autenticación y entrega de archivos se definen directamente en `backend/app.py`; no crear otro `admin.py` para las rutas. Las consultas SQL auxiliares permanecen en `backend/database/admin.py`. El JavaScript consulta la API JSON del mismo servidor para mostrar tablas y registros. Su primera versión es de consulta, protegida por credenciales administrativas independientes; no exponer contraseñas, hashes ni secretos. Las relaciones se obtienen de las claves foráneas de MySQL.
 - Mantener `app.py`, `requirements.txt` y los archivos `.env` del servicio en la raíz de `backend/`. Agrupar las pruebas en `backend/test/` y las utilidades en `backend/utils/`. Documentar los comandos de ejecución y prueba en el emulador en `backend/README.md`.

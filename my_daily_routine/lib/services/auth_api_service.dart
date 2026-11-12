@@ -115,6 +115,9 @@ class AuthApiService {
     if (estado == estadoNoAutorizado) {
       return 'Usuario o contraseña incorrectos.';
     }
+    if (estado == 409) {
+      return 'Este nombre de usuario ya está en uso. Intenta con otro.';
+    }
     if (estado == 422) {
       return 'Datos no válidos. Revisa los campos e inténtalo de nuevo.';
     }

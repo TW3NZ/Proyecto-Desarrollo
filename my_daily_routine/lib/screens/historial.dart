@@ -2,13 +2,81 @@ import 'package:flutter/material.dart';
 
 import '../assets_paths.dart';
 import '../data/tareas_store.dart';
+import '../data/usuarios_store.dart';
+import '../models/tarea_modelo.dart';
 import '../routes.dart';
+import '../services/tareas_api_service.dart';
 import '../theme.dart';
 import '../widgets/common/cabecera_app.dart';
 import '../widgets/home/round_buttons.dart';
 
-class HistorialScreen extends StatelessWidget {
+class HistorialScreen extends StatefulWidget {
   const HistorialScreen({super.key});
+
+  @override
+  State<HistorialScreen> createState() => _HistorialScreenState();
+}
+
+class _HistorialScreenState extends State<HistorialScreen> {
+  final _tareasApi = TareasApiService();
+  List<NuevaTarea>? _completadas;
+  String? _error;
+
+  bool get _esUsuarioReal =>
+      (UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica) > 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    if (!_esUsuarioReal) {
+      // Cuenta de práctica: historial local, sin backend.
+      if (mounted) {
+        setState(() {
+          _completadas = null;
+          _error = null;
+        });
+      }
+      return;
+    }
+
+    final token = UsuariosStore.token;
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _completadas = null;
+          _error = 'No hay sesión activa. Inicia sesión de nuevo.';
+        });
+      }
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _completadas = null;
+        _error = null;
+      });
+    }
+
+    try {
+      final tareas = await _tareasApi.obtenerTareas(token: token);
+      if (!mounted) return;
+      setState(() {
+        _completadas = tareas.where((tarea) => tarea.completada).toList();
+      });
+    } on TareasApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'No se pudo obtener las tareas. Inténtalo de nuevo.';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,100 +87,138 @@ class HistorialScreen extends StatelessWidget {
             titulo: 'Objetivos completados',
             alVolver: () => Navigator.maybePop(context),
           ),
+          Expanded(child: _contenido()),
+        ],
+      ),
+    );
+  }
 
-          Expanded(
-            child: AnimatedBuilder(
-              animation: TareasStore.instancia,
-              builder: (context, _) {
-                final tareasCompletadas = TareasStore
-                    .instancia
-                    .tareas
-                    .where((tarea) => tarea.completada)
-                    .toList();
+  Widget _contenido() {
+    if (!_esUsuarioReal) {
+      return AnimatedBuilder(
+        animation: TareasStore.instancia,
+        builder: (context, _) {
+          final completadas = TareasStore.instancia.tareas
+              .where((tarea) => tarea.completada)
+              .toList();
+          return _listaCompletadas(completadas);
+        },
+      );
+    }
 
-                return Stack(
-                  children: [
-                    if (tareasCompletadas.isEmpty)
-                      const Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.task_alt_rounded,
-                              size: 52,
-                              color: AppColors.textHint,
-                            ),
+    if (_error != null) return _estadoError(_error!);
+    if (_completadas == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return _listaCompletadas(_completadas!);
+  }
 
-                            SizedBox(height: 12),
+  Widget _listaCompletadas(List<NuevaTarea> completadas) {
+    return Stack(
+      children: [
+        if (completadas.isEmpty)
+          const _SinCompletadas()
+        else
+          ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+            children: [
+              Text(
+                '${completadas.length} '
+                '${completadas.length == 1 ? 'tarea completada' : 'tareas completadas'}',
+                style: const TextStyle(
+                  color: AppColors.textDark,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ...completadas.map(
+                (tarea) => _TareaCompletadaCard(
+                  titulo: tarea.titulo,
+                  descripcion: tarea.descripcion,
+                  prioridad: tarea.prioridad.etiqueta,
+                ),
+              ),
+            ],
+          ),
+        Positioned(
+          right: 24,
+          bottom: 28,
+          child: AddTaskButton(
+            iconAsset: AppAssets.iconAnadirTarea,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.add),
+            label: '',
+          ),
+        ),
+      ],
+    );
+  }
 
-                            Text(
-                              'Aún no has completado tareas',
-                              style: TextStyle(
-                                color: AppColors.textDark,
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+  Widget _estadoError(String mensaje) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 52,
+              color: AppColors.textHint,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              mensaje,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.textDark,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _cargar,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-                            SizedBox(height: 5),
+class _SinCompletadas extends StatelessWidget {
+  const _SinCompletadas();
 
-                            Text(
-                              'Las tareas que completes aparecerán aquí.',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.textMuted,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                          20,
-                          20,
-                          20,
-                          100,
-                        ),
-                        children: [
-                          Text(
-                            '${tareasCompletadas.length} '
-                            '${tareasCompletadas.length == 1 ? 'tarea completada' : 'tareas completadas'}',
-                            style: const TextStyle(
-                              color: AppColors.textDark,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-
-                          const SizedBox(height: 14),
-
-                          ...tareasCompletadas.map(
-                            (tarea) => _TareaCompletadaCard(
-                              titulo: tarea.titulo,
-                              descripcion: tarea.descripcion,
-                              prioridad: tarea.prioridad.etiqueta,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                    Positioned(
-                      right: 24,
-                      bottom: 28,
-                      child: AddTaskButton(
-                        iconAsset: AppAssets.iconAnadirTarea,
-                        onTap: () => Navigator.pushNamed(
-                          context,
-                          AppRoutes.add,
-                        ),
-                        label: '',
-                      ),
-                    ),
-                  ],
-                );
-              },
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.task_alt_rounded,
+            size: 52,
+            color: AppColors.textHint,
+          ),
+          SizedBox(height: 12),
+          Text(
+            'Aún no has completado tareas',
+            style: TextStyle(
+              color: AppColors.textDark,
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: 5),
+          Text(
+            'Las tareas que completes aparecerán aquí.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 13,
             ),
           ),
         ],
@@ -161,9 +267,7 @@ class _TareaCompletadaCard extends StatelessWidget {
               size: 20,
             ),
           ),
-
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,7 +281,6 @@ class _TareaCompletadaCard extends StatelessWidget {
                     decoration: TextDecoration.lineThrough,
                   ),
                 ),
-
                 if (descripcion.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
@@ -190,9 +293,7 @@ class _TareaCompletadaCard extends StatelessWidget {
                     ),
                   ),
                 ],
-
                 const SizedBox(height: 6),
-
                 Text(
                   'Prioridad: $prioridad',
                   style: const TextStyle(

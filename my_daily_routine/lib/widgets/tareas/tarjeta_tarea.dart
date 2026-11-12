@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../data/tareas_store.dart';
+import '../../data/usuarios_store.dart';
 import '../../models/tarea_modelo.dart';
 import '../../theme.dart';
+import 'confirmar_completar_tarea.dart';
 import 'detalle_tarea.dart';
 
 class TarjetaTarea extends StatelessWidget {
@@ -17,6 +19,10 @@ class TarjetaTarea extends StatelessWidget {
       PrioridadTarea.media => const Color(0xFFE49A28),
       PrioridadTarea.baja => const Color(0xFF4C9A72),
     };
+    final usuarioReal =
+        (UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica) >
+        0;
+    final bloqueado = usuarioReal && tarea.completada;
 
     return Container(
       decoration: BoxDecoration(
@@ -32,9 +38,7 @@ class TarjetaTarea extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(6),
             ),
-            onChanged: (_) {
-              TareasStore.instancia.alternarCompletada(tarea);
-            },
+            onChanged: bloqueado ? null : (_) => _alTocarCheckbox(context, tarea),
           ),
 
           Expanded(
@@ -162,6 +166,17 @@ class TarjetaTarea extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _alTocarCheckbox(BuildContext context, NuevaTarea tarea) async {
+    final usuarioReal =
+        (UsuariosStore.usuarioActual?.id ?? UsuariosStore.idUsuarioPractica) >
+        0;
+    if (usuarioReal && !tarea.completada) {
+      await mostrarConfirmarCompletar(context, tarea);
+      return;
+    }
+    await TareasStore.instancia.alternarCompletada(tarea);
   }
 }
 

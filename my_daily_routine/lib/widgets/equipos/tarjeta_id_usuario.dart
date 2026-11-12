@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../theme.dart';
+import '../../utils/snackbar_utils.dart';
 
-/// Espacio reservado para mostrar el ID del usuario en Teams.
+/// Tarjeta que muestra el ID del usuario en Teams, con botón para copiarlo.
 class TarjetaIdUsuario extends StatelessWidget {
   final int? id;
 
   const TarjetaIdUsuario({super.key, this.id});
+
+  Future<void> _copiar(BuildContext context) async {
+    final texto = id?.toString() ?? '';
+    if (texto.isEmpty) return;
+    await Clipboard.setData(ClipboardData(text: texto));
+    if (!context.mounted) return;
+    showAppSnackBar(context, message: 'ID copiado');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +65,16 @@ class TarjetaIdUsuario extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Copiar ID',
+            onPressed: () => _copiar(context),
+            icon: const Icon(
+              Icons.copy_rounded,
+              color: AppColors.primary,
+              size: 22,
             ),
           ),
         ],

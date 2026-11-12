@@ -13,18 +13,20 @@ from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, RedirectResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPBasic, HTTPBasicCredentials, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, ConfigDict, ValidationError
+from pymysql.err import IntegrityError
 from starlette.concurrency import run_in_threadpool
 from backend.utils.settings import load_settings
 
 from backend.models.usuario import LoginUser, createUser
+from backend.models.Tarea import tareaCreate , Tarea
 from backend.database.db import get_connection
-from backend.core.seguridad import crear_token, password_hash
-from backend.utils.generadores import generar_id_unico
+from backend.core.seguridad import crear_token, password_hash, verificar_token
+from backend.utils.generadores import generar_id_unico, generar_id_unico_tarea
 from backend.database import admin as explorer
 
 load_settings()
@@ -253,6 +255,186 @@ def create_user(usuario: createUser):
         return {
             "mensaje": "Usuario registrado correctamente"
         }
+
+    except IntegrityError as error:
+        # La restricción UNIQUE que falló aparece por su nombre exacto en el
+        # mensaje (Usuario_Nick_Uk o Usuario_Email_Uk).
+        conexion.rollback()
+        mensaje = str(error).lower()
+        if 'nick_uk' in mensaje:
+            raise HTTPException(409, "El nombre de usuario ya está en uso.") from None
+        if 'email_uk' in mensaje:
+            raise HTTPException(409, "El correo ya está registrado.") from None
+        raise HTTPException(409, "Ya existe una cuenta con esos datos.") from None
+
+    except Exception:
+        conexion.rollback()
+        raise
+
+    finally:
+        conexion.close()
+        
+        
+# Autenticación JWT para las rutas de datos.
+_bearer = HTTPBearer(auto_error=False)
+
+
+def usuario_actual_id(
+    credenciales: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> int:
+    if credenciales is None or credenciales.scheme.lower() != 'bearer':
+        raise HTTPException(401, 'Autenticación requerida.')
+    datos = verificar_token(credenciales.credentials)
+    try:
+        id_usuario = int(datos['sub'])
+    except (KeyError, ValueError):
+        raise HTTPException(401, 'Token no válido.') from None
+    if id_usuario <= 0:
+        raise HTTPException(401, 'Token no válido.')
+    return id_usuario
+
+
+# FUNCIÓN PARA CREAR TAREA
+@app.post("/tareas", status_code=201)
+def nueva_tarea(nuevaTarea: tareaCreate, id_usuario: int = Depends(usuario_actual_id)):
+    conexion = get_connection()
+
+    try:
+        id_tarea = generar_id_unico_tarea()
+
+        with conexion.cursor() as cursor:
+            sql = """
+                INSERT INTO Tarea
+                (idTarea, idUsu, responsable_id, idProyecto,
+                 titulo, prioridad, descripcion, fecha,
+                 fechaFinalizacion, completada)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+
+            valores = (
+                id_tarea,
+                id_usuario,
+                nuevaTarea.idResponsable,
+                nuevaTarea.idProyecto,
+                nuevaTarea.Titulo,
+                nuevaTarea.Prioridad,
+                nuevaTarea.Descripcion,
+                nuevaTarea.Fecha,
+                nuevaTarea.Fecha_Fin,
+                nuevaTarea.Completada,
+            )
+
+            cursor.execute(sql, valores)
+
+            sql_categoria = """
+                INSERT INTO TareaCategoria (idTarea, idCategoria)
+                VALUES (%s, %s)
+            """
+
+            for id_categoria in nuevaTarea.categorias:
+                cursor.execute(sql_categoria, (id_tarea, id_categoria))
+
+        conexion.commit()
+
+        return {
+            "mensaje": "Tarea creada correctamente",
+            "idTarea": id_tarea
+        }
+
+    except Exception:
+        conexion.rollback()
+        raise
+
+    finally:
+        conexion.close()
+        
+# Historial de las Tareas 
+
+@app.get("/tareas")
+def historial_tareas(id_usuario: int = Depends(usuario_actual_id)):
+
+    conexion = get_connection()
+
+    try:
+        with conexion.cursor() as cursor:
+
+            sql = """
+                SELECT
+                    t.idTarea,
+                    t.idUsu,
+                    t.responsable_id,
+                    t.idProyecto,
+                    t.titulo,
+                    t.prioridad,
+                    t.descripcion,
+                    t.fecha,
+                    t.fechaFinalizacion,
+                    t.completada,
+                    c.idCategoria
+                FROM Tarea t
+                INNER JOIN TareaCategoria tc
+                    ON t.idTarea = tc.idTarea
+                INNER JOIN Categoria c
+                    ON tc.idCategoria = c.idCategoria
+                WHERE t.idUsu = %s
+                ORDER BY t.fecha DESC
+            """
+
+            cursor.execute(sql, (id_usuario,))
+            resultados = cursor.fetchall()
+
+            tareas = {}
+
+            for fila in resultados:
+
+                id_tarea = fila["idTarea"]
+
+                if id_tarea not in tareas:
+                    tareas[id_tarea] = {
+                        "idTarea": id_tarea,
+                        "idUsu": fila["idUsu"],
+                        "idResponsable": fila["responsable_id"],
+                        "idProyecto": fila["idProyecto"],
+                        "Titulo": fila["titulo"],
+                        "Prioridad": fila["prioridad"],
+                        "Descripcion": fila["descripcion"],
+                        "Fecha": fila["fecha"],
+                        "Fecha_Fin": fila["fechaFinalizacion"],
+                        "Completada": bool(fila["completada"]),
+                        "categorias": []
+                    }
+
+                tareas[id_tarea]["categorias"].append(
+                    fila["idCategoria"]
+                )
+
+            return list(tareas.values())
+
+    finally:
+        conexion.close()
+
+
+# FUNCIÓN PARA COMPLETAR TAREA
+@app.patch("/tareas/{idTarea}/completar")
+def completar_tarea(idTarea: int, id_usuario: int = Depends(usuario_actual_id)):
+    conexion = get_connection()
+
+    try:
+        with conexion.cursor() as cursor:
+            cursor.execute(
+                "SELECT idTarea FROM Tarea WHERE idTarea = %s AND idUsu = %s",
+                (idTarea, id_usuario),
+            )
+            if cursor.fetchone() is None:
+                raise HTTPException(404, "Tarea no encontrada.")
+            cursor.execute(
+                "UPDATE Tarea SET completada = TRUE WHERE idTarea = %s AND idUsu = %s",
+                (idTarea, id_usuario),
+            )
+
+        conexion.commit()
+
+        return {"mensaje": "Tarea completada correctamente"}
 
     except Exception:
         conexion.rollback()

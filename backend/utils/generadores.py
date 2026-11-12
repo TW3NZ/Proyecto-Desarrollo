@@ -8,6 +8,27 @@ def generar_id():
 
 
 # Comprueba si el ID ya existe en MySQL
+def existe_id_tarea(id_tarea: int) -> bool:
+    conexion = get_connection()
+
+    try:
+        with conexion.cursor() as cursor:
+            sql = """
+                SELECT idTarea
+                FROM Tarea
+                WHERE idTarea = %s
+            """
+
+            cursor.execute(sql, (id_tarea,))
+            resultado = cursor.fetchone()
+
+            return resultado is not None
+
+    finally:
+        conexion.close()
+
+
+# Comprueba si el ID ya existe en MySQL
 def existe_id(id_usuario: int) -> bool:
     conexion = get_connection()
 
@@ -34,5 +55,14 @@ def generar_id_unico():
         id_generado = generar_id()
 
         if not existe_id(id_generado):
+            return id_generado
+
+
+# Genera un idTarea que no esté registrado
+def generar_id_unico_tarea():
+    while True:
+        id_generado = generar_id()
+
+        if not existe_id_tarea(id_generado):
             return id_generado
 

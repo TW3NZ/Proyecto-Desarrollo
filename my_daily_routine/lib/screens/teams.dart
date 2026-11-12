@@ -100,8 +100,8 @@ class _TeamsScreenState extends State<TeamsScreen> {
                   ),
                   const SizedBox(height: 26),
 
-                  // ---- ID personal (pendiente de definir asignación) ----
-                  const TarjetaIdUsuario(),
+                  // ---- ID personal ----
+                  TarjetaIdUsuario(id: _usuarioId),
                   const SizedBox(height: 16),
 
                   // ---- Acciones principales ----

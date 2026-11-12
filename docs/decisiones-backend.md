@@ -49,3 +49,39 @@ Verificación: 26 pruebas del backend y comprobación en Chrome de estilos calcu
 **Decisiones técnicas:** imports absolutos `backend.*`; MySQL utiliza el PEM multilínea directamente en un contexto TLS con verificación del host, sin archivo permanente. Se desactiva autocommit para que commit/rollback del registro sean efectivos. La firma JWT se valida al emitir el token para que una configuración incompleta de autenticación no impida arrancar el servicio del avatar. Un único `/docs` describe las rutas unificadas.
 
 **Pendientes:** conectar Flutter a registro/login; validar JWT en futuras rutas protegidas; implementar equipos, tareas y recompensas. Se conserva el contrato existente de registro y su generador aleatorio de IDs; su consulta previa no elimina una posible colisión concurrente. El registro existente tampoco crea todavía la fila de estadísticas. No se ejecutó el SQL ni se migraron datos con esta consolidación.
+
+## 2026-11-12 — Autenticación JWT en tareas
+
+**Acuerdo del usuario:** proteger las rutas de datos con el JWT ya emitido en el login y obtener `idUsu` exclusivamente del token, para impedir que un usuario cree o consulte tareas a nombre de otro.
+
+**Alcance:** se añadió `verificar_token` en `backend/core/seguridad.py`, la dependencia `usuario_actual_id` en `backend/app.py`, y se protegió `POST /tareas` y `GET /tareas`. `tareaCreate` dejó de recibir `idUsu`. En Flutter, `TareasApiService` envía `Authorization: Bearer <token>` usando `UsuariosStore.token`.
+
+**Decisiones técnicas:** el token contiene `sub` (idUsu como texto) y `exp`; `verificar_token` valida firma, algoritmo, expiración y presencia de `sub`/`exp`. `usuario_actual_id` exige un entero positivo. `GET /tareas` dejó de aceptar `?idUsu=`. Login y registro siguen públicos; `/avatar/suggest` conserva su token estático independiente.
+
+**Verificación:** sin token → `401` en POST y GET; con token → `201`/`200`; el `idUsu` creado coincide con el `sub` del JWT; un `idUsu` ajeno en la consulta se ignora. `flutter analyze` y `flutter test` (31 pruebas) en verde.
+
+**Pendientes:** probar la creación desde la app Flutter; manejar la expiración de sesión (`401`) redirigiendo al login.
+
+## 2026-11-12 — Sincronización del completado de tareas
+
+**Acuerdo del usuario:** sincronizar el ciclo de vida de una tarea (crear, completar y consultar) entre Flutter, FastAPI y MySQL, con la base de datos como fuente de verdad para usuarios autenticados.
+
+**Alcance:** se añadió `PATCH /tareas/{idTarea}/completar` (protegido por JWT, verifica pertenencia, idempotente). En Flutter, `alternarCompletada` sincroniza el completado con el backend de forma pesimista, y `HistorialScreen` consulta `GET /tareas` con estado local de la pantalla.
+
+**Decisiones técnicas:** el `UPDATE` incluye `idTarea` e `idUsu` en el `WHERE`. Para usuario real, una tarea completada no se puede desmarcar (no hay endpoint de "desmarcar"); la cuenta de práctica conserva el comportamiento local. Las estadísticas solo se procesan en la transición `false→true`, tras confirmar el servidor.
+
+**Verificación:** 33 pruebas del backend (incluidas 5 del PATCH con mocks) y `flutter analyze`/`flutter test` en verde.
+
+**Pendientes:** probar el flujo completo desde la app Flutter; decidir si se añade un endpoint para desmarcar tareas.
+
+## 2026-11-12 — Nickname y email únicos en registro
+
+**Acuerdo del usuario:** impedir que dos usuarios compartan `nickName` o `email`.
+
+**Alcance:** el registro de `backend/app.py` captura `IntegrityError` de MySQL y responde `409`, identificando la restricción `UNIQUE` que falló por su nombre exacto (`Usuario_Nick_Uk` / `Usuario_Email_Uk`). En Flutter, `AuthApiService` mapea el `409` a «Este nombre de usuario ya está en uso. Intenta con otro.».
+
+**Decisiones técnicas:** se identifica la restricción por su nombre en el mensaje del error (`nick_uk` / `email_uk`), sin coincidencias ambiguas. La base de datos sigue siendo la fuente de verdad mediante las restricciones `UNIQUE` del esquema.
+
+**Verificación:** 33 pruebas del backend en verde; verificación manual con `IntegrityError` simulado → `409` para nickname y email. `flutter analyze` y `flutter test` en verde.
+
+**Pendientes:** probar el registro duplicado desde la app Flutter con el backend en ejecución.
