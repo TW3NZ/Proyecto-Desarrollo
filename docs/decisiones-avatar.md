@@ -1,5 +1,29 @@
 # Decisiones sobre el avatar
 
+## 2026-11-10 — Boca cansada y mechón derecho
+
+El usuario detectó una sonrisa residual en Cansado y un mechón del peinado original que no recibía el color. La boca de la referencia neutra conservaba las comisuras levantadas: para cansancio se refleja verticalmente solo su región interior, con transición gradual y límites por personaje para no muestrear el borde de la mejilla. No se modifica la boca elegida ni los demás estados.
+
+La máscara rectangular que protegía el rostro excluía también el mechón derecho. Se reemplaza esa exclusión general por las regiones concretas de ojos, nariz y boca. Se conserva el filtro de color y altura para proteger ropa y piel.
+
+Se revisó visualmente la lámina de expresiones de ambos personajes y se añadieron regresiones para distinguir la boca cansada de la boca de aburrimiento y teñir el mechón derecho del peinado original con plateado, rubio y negro conservando los ojos. Once pruebas de expresiones, peinados y rostro pasan; formato y análisis de los tests sin incidencias.
+
+## 2026-11-10 — Expresiones vinculadas al progreso
+
+El usuario pidió que el avatar refleje el desempeño: ánimo positivo con estadísticas altas y cansancio o aburrimiento con valores bajos. Se implementan cuatro reacciones temporales en el inicio, separadas de `AvatarConfig`. Se actualizan al notificarse cambios del almacén de estadísticas y se calculan con el progreso general de la cuenta actual.
+
+**Umbrales provisionales de implementación:** menos de 25, cansado; de 25 a menos de 50, aburrido; de 50 a menos de 75, tranquilo; desde 75, alegre. Si no hay categorías activas, se muestra tranquilo. Las cuentas nuevas con progreso cero se muestran cansadas. Esto representa un estado del juego, no salud o emociones reales del usuario. El promedio sigue la configuración existente de categorías activas, por lo que cambiar esas preferencias también puede cambiar la expresión.
+
+El shader estrecha suavemente los ojos para cansancio/aburrimiento y mezcla la boca neutra o sonriente de los recursos existentes. Tranquilo conserva los rasgos elegidos. No se sobrescribe la apariencia ni se generan imágenes nuevas. La transición dura 450 ms y se desactiva si el usuario deshabilita movimiento o el sistema solicita movimiento reducido. El editor incorpora **Expresiones** para previsualizar las cuatro sin modificar estadísticas ni guardar una expresión forzada.
+
+Se corrigió además la asignación de puntos: `procesarTareaCompletada` ahora usa `tarea.usuarioId`, en vez de la cuenta abierta, para no atribuir progreso ajeno al avatar actual. No se cambia el sistema de puntos, vencimientos ni recompensas.
+
+**Límites:** las estadísticas actuales acumulan puntos y no decaen por inactividad; por tanto, no existe todavía cansancio progresivo por dejar tareas pendientes. Las tareas/estadísticas siguen en memoria y se reinician con el proceso. Los gestos usan deformación y mezcla de los recursos actuales, no un sistema de animación facial por huesos.
+
+**Validación:** 24 pruebas del avatar pasan, incluidas cuatro de expresiones: umbrales, actualización del inicio al ganar puntos, aislamiento por usuario y renderizado de ambos personajes. Se revisó `build/avatar-expressions-preview.png`: ojos más cerrados en cansancio, gesto intermedio de aburrimiento y sonrisa amplia en alegría. Las variantes solo alteran el rostro y conservan la configuración guardada. La revisión interactiva en el teléfono sigue pendiente.
+
+Se recompiló y verificó el APK release ARM64 de prueba con las expresiones, actualizando `artifacts/my-daily-rutine-android-arm64.apk` (aproximadamente 49.4 MB), enlazado en la primera línea del README. Conserva firma de desarrollo y no incluye credenciales del servicio de fotos.
+
 ## 2026-11-10 — Colores libres, ojos y cejas
 
 El usuario pidió ampliar los colores de la ropa, añadir color de ojos, confirmar el vínculo de cejas/cabello y preparar un APK descargable con instrucciones. Se conservan los IDs anteriores y se admiten colores `#RRGGBB` para camiseta y pantalón. El editor ofrece veinte muestras adicionales y un diálogo de tono/saturación/brillo con entrada hexadecimal; aplica solo al confirmar. No añade tipos de prendas ni un suéter nuevo.

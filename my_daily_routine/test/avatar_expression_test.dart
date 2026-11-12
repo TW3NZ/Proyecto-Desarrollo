@@ -115,12 +115,28 @@ void main() {
       );
       final original = await render(config, AvatarExpression.neutral);
       final before = config.toJson();
+      ByteData? bored;
       for (final expression in [
         AvatarExpression.happy,
         AvatarExpression.bored,
         AvatarExpression.tired,
       ]) {
         final changed = await render(config, expression);
+        if (expression == AvatarExpression.bored) bored = changed;
+        if (expression == AvatarExpression.tired) {
+          var mouthChanges = 0;
+          for (var y = 82; y < 94; y++) {
+            for (var x = 121; x < 144; x++) {
+              final i = (y * 240 + x) * 4;
+              if (bored!.getUint32(i) != changed.getUint32(i)) mouthChanges++;
+            }
+          }
+          expect(
+            mouthChanges,
+            greaterThan(5),
+            reason: 'Cansado no reutiliza la boca con sonrisa leve.',
+          );
+        }
         var faceChanges = 0;
         for (var y = 0; y < 480; y++) {
           for (var x = 0; x < 240; x++) {
@@ -163,7 +179,13 @@ void main() {
                           height: 250,
                           child: Column(
                             children: [
-                                Text(expression.label, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                              Text(
+                                expression.label,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.black,
+                                ),
+                              ),
                               SizedBox(
                                 height: 210,
                                 child: ClipRect(
