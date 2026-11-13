@@ -4,6 +4,8 @@ const state = {tables: [], table: null, q: '', filters: {}, page: 1, size: 25, s
 const externalPage = location.protocol !== 'file:' &&
   (!/^\/admin\/?$/.test(location.pathname) || /^55\d\d$/.test(location.port));
 let apiOrigin = location.origin;
+let adminAuthorization = '';
+const renderOrigin = 'https://my-daily-rutine.onrender.com';
 const node = (tag, text, cls) => {const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (cls) n.className = cls; return n;};
 const format = value => value === null ? 'NULL' : typeof value === 'object' ? JSON.stringify(value) : String(value);
 function status(text, error = false) {$('status').textContent = text; $('status').className = error ? 'error' : '';}
@@ -12,13 +14,14 @@ async function api(path) {
   try {
     response = await fetch(apiOrigin + '/admin/api/' + path, {
       credentials: externalPage ? 'omit' : 'same-origin', cache: 'no-store',
+      headers: adminAuthorization ? {Authorization: adminAuthorization} : {},
       signal: AbortSignal.timeout(45000),
     });
   } catch {
     throw new Error(`No se pudo contactar con ${apiOrigin}. Comprueba que FastAPI esté iniciado y que ADMIN_ALLOWED_ORIGINS incluya ${location.origin}.`);
   }
-  if (response.status === 404) throw new Error(`No existe /admin/api/${path.split('?')[0]} en ${apiOrigin}. Usa el puerto del backend (normalmente 8000), no el de Live Server.`);
-  if (response.status === 401) throw new Error('El acceso sin contraseña solo está disponible desde este equipo. Abre el panel mediante localhost o 127.0.0.1 y revisa el origen permitido.');
+  if (response.status === 404) throw new Error(`El panel no está disponible en ${apiOrigin}. En Render configura ADMIN_ENABLED=true y despliega las rutas administrativas actualizadas.`);
+  if (response.status === 401) throw new Error('Introduce el usuario y la contraseña administrativos configurados en Render. El acceso automático solo aplica al backend local.');
   if (!response.ok) {let body; try {body = await response.json();} catch {} throw new Error(typeof body?.detail === 'string' ? body.detail : 'No se pudo completar la consulta.');}
   if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('El servidor respondió con una página, no con datos. Revisa la dirección de la API.');
   return response.json();
@@ -116,11 +119,13 @@ $('connectionButton').onclick = () => $('connectionDialog').showModal();
 $('connectionForm').onsubmit = async event => {
   event.preventDefault(); $('connectionError').textContent = ''; $('connectSubmit').disabled = true;
   try {
-    const url = new URL($('apiOrigin').value);
-    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || !['', '/'].includes(url.pathname)) throw new Error('Introduce solo el origen del backend, por ejemplo http://127.0.0.1:8000.');
-    if (url.origin === location.origin) throw new Error('Esa es la dirección de Live Server. Indica el puerto del backend, normalmente 8000.');
-    if (url.protocol !== 'https:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) throw new Error('Usa HTTPS para conectar a un backend fuera de tu equipo.');
-    apiOrigin = url.origin;
+    adminAuthorization = '';
+    const username = $('adminUser').value;
+    const password = $('adminPassword').value;
+    if (!username || !password || username.includes(':')) throw new Error('Completa usuario y contrase\u00f1a; el usuario no puede contener dos puntos.');
+    const bytes = new TextEncoder().encode(`${username}:${password}`);
+    adminAuthorization = 'Basic ' + btoa(Array.from(bytes, byte => String.fromCharCode(byte)).join(''));
+    $('adminPassword').value = '';
     state.request++; state.tables = []; state.table = null; state.total = 0;
     $('grid').replaceChildren(); $('tables').replaceChildren();
     if (await init()) {
@@ -137,11 +142,11 @@ if (location.protocol === 'file:') {
   $('refresh').disabled = true;
 } else if (externalPage) {
   $('connectionButton').hidden = false;
-  apiOrigin = 'http://127.0.0.1:8000';
-  init().then(ok => {
-    if (!ok) { $('connectionError').textContent = $('status').textContent; $('connectionDialog').showModal(); }
-    else $('connectionButton').textContent = 'Conexión API';
-  });
+  apiOrigin = renderOrigin;
+  status('Inicia sesi\u00f3n para consultar las tablas.');
+  $('refresh').disabled = true;
+  $('connectionDialog').showModal();
+
 } else {
   init();
 }

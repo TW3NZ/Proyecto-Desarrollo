@@ -30,10 +30,10 @@
 </main>
 <dialog id="detail"><div class="dialog-head"><div><span class="eyebrow">VISTA DEL REGISTRO</span><h2 id="detailTitle">Detalle</h2></div><button id="closeDetail" class="outline" aria-label="Cerrar detalle">✕</button></div><dl id="fields"></dl><h3>Registros relacionados</h3><div id="links" class="relations"></div></dialog>
 <dialog id="connectionDialog" aria-labelledby="connectionTitle"><form id="connectionForm">
-  <span class="eyebrow">CONEXIÓN CON EL SERVIDOR</span><h2 id="connectionTitle">Conecta tu panel</h2>
-  <p class="hint">Live Server muestra esta página. Para consultar las tablas, conecta con el backend de My Daily Rutine.</p>
-  <label for="apiOrigin">Dirección del backend</label><input id="apiOrigin" type="url" value="http://127.0.0.1:8000" required>
-  <p class="hint">El acceso desde este equipo no necesita contraseña. El backend utiliza las credenciales de Aiven guardadas en su .env.</p>
-  <p id="connectionError" role="alert"></p><button id="connectSubmit" type="submit">Conectar y ver tablas</button>
+  <span class="eyebrow">ADMINISTRACIÓN</span><h2 id="connectionTitle">Inicia sesión</h2>
+  <p class="hint">Ingresa con tu cuenta administrativa para consultar las tablas.</p>
+  <label for="adminUser">Usuario</label><input id="adminUser" autocomplete="username" required>
+  <label for="adminPassword">Contraseña</label><input id="adminPassword" type="password" autocomplete="current-password" required>
+  <p id="connectionError" role="alert"></p><button id="connectSubmit" type="submit">Entrar al panel</button>
 </form></dialog>
 </body></html>

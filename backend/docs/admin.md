@@ -1,5 +1,41 @@
 # Panel administrativo de la base de datos
 
+## Consultar Render desde el HTML local — 2026-11-13
+
+El formulario contiene solo usuario y contraseña: la dirección de Render es fija.
+La API compara esas credenciales con `ADMIN_USER` y `ADMIN_PASSWORD` de su entorno.
+Si Render muestra «Duplicate key», elimina la fila nueva duplicada y edita la
+variable existente. Debe quedar una sola entrada por nombre. La contraseña del
+servidor debe tener al menos 24 caracteres; una más corta provoca un error de
+configuración aunque coincida con la introducida en el formulario.
+
+Abre `backend/admin/index.html` con Live Server. Ahora conecta por defecto a
+`https://my-daily-rutine.onrender.com`. El formulario pide las credenciales
+administrativas del servidor remoto y conserva la autorización solo en memoria.
+Recargar la página requiere autenticarse otra vez. No se cargan secretos del `.env`
+en el HTML ni se guardan en localStorage.
+
+Antes de usarlo, configura en **Render → Environment**:
+
+```dotenv
+ADMIN_ENABLED=true
+ADMIN_USER=tu_usuario_administrativo
+ADMIN_PASSWORD=una_contrasena_aleatoria_de_al_menos_24_caracteres
+ADMIN_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+```
+
+Usa una contraseña real independiente de Aiven y guarda los cambios con despliegue.
+Si Live Server usa otro puerto, añade ese origen exacto. Sube también los cambios
+del backend a GitHub para que Render despliegue la misma versión. La API administrativa
+remota exige autenticación incluso cuando el HTML se abre desde tu equipo.
+También puedes abrir `https://my-daily-rutine.onrender.com/admin/`: el navegador
+solicitará autenticación HTTP Basic y no necesitará CORS entre servidores.
+
+404 significa panel deshabilitado o versión sin estas rutas; 401, credenciales
+ausentes o incorrectas; 503 puede indicar ADMIN_USER/ADMIN_PASSWORD sin configurar.
+Un error de red puede deberse al origen CORS o al arranque del servicio Free.
+Las instrucciones de acceso sin contraseña que siguen aplican únicamente al backend local.
+
 ## Iniciar y entrar
 
 Desde la raíz del repositorio, inicia el backend habitual:
@@ -24,12 +60,9 @@ Reinicia el backend tras cambiar el `.env`. Mantén el servidor enlazado a `127.
 
 ### Abrir desde Live Server (puerto 5500)
 
-También puedes abrir `backend/admin/index.html` con Live Server. Mantén FastAPI iniciado en otra terminal con el comando anterior. El panel conecta automáticamente a `http://127.0.0.1:8000`, sin credenciales en el navegador. Si el backend usa otro puerto o la conexión falla, mostrará **Conecta tu panel**:
-
-1. Dirección del backend: `http://127.0.0.1:8000` (o el puerto que hayas usado al iniciar Uvicorn).
-2. Pulsa **Conectar y ver tablas**. Puedes cambiar la conexión con el botón **Conexión API**. No hay campos de usuario o contraseña.
-
-El frontend envía las consultas a `http://127.0.0.1:8000/admin/api/...`, no al puerto 5500. No lee el `.env` ni envía cabeceras de contraseña: el backend gestiona la conexión MySQL.
+El HTML abierto con Live Server usa la URL fija de Render y pide solo usuario y
+contrase?a. Para consultar mediante el backend local, abre directamente
+`http://127.0.0.1:8000/admin/`; ese acceso conserva la excepci?n local existente.
 
 El backend permite estos orígenes locales mediante:
 
