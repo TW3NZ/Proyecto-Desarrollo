@@ -111,3 +111,10 @@ Después cambia `DB_NAME` a `BD_my_daily_routine` y repite la prueba del paso 3.
 | `2026` | Certificado CA y coincidencia del host con el certificado del servicio. |
 
 El backend unificado ya contiene registro y login de usuarios mediante MySQL. Los endpoints de equipos y tareas siguen pendientes. El conector Python está en `backend/database/`; los scripts SQL permanecen en esta carpeta `database/` de la raíz. Para probar ese conector directamente, ejecuta `.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion` desde la raíz. Los comandos para ejecutar la API y probar Flutter están en [backend/README.md](../backend/README.md).
+# Migración de perfiles — 2026-11-13
+
+Para una base existente, usar `migrations/001_perfil_usuario.sql` mediante
+`python -m backend.utils.migrate_profile --apply` desde la raíz del repositorio.
+Conserva usuarios y tareas, amplía estadísticas a decimales y crea `PerfilUsuario`.
+No reinicializar la base con el esquema completo. Detalles en
+[backend/docs/perfil.md](../backend/docs/perfil.md).

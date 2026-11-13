@@ -28,6 +28,8 @@ from backend.database.db import get_connection
 from backend.core.seguridad import crear_token, password_hash, verificar_token
 from backend.utils.generadores import generar_id_unico, generar_id_unico_tarea
 from backend.database import admin as explorer
+from backend.database import perfil
+from backend.models.perfil import AvatarConfig, PreferenciasEstadisticas
 
 load_settings()
 
@@ -306,6 +308,48 @@ def usuario_actual_id(
     return id_usuario
 
 
+# Account data: ownership comes exclusively from the verified JWT.
+def perfil_transaccion(usuario_id, operation):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            perfil.lock_usuario(cursor, usuario_id)
+            result = operation(cursor)
+        connection.commit()
+        return result
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+@app.get('/usuarios/me/avatar', response_model=AvatarConfig)
+def obtener_avatar(id_usuario: int = Depends(usuario_actual_id)):
+    return perfil_transaccion(id_usuario, lambda c: perfil.leer_config(c, id_usuario, 'avatar'))
+
+
+@app.put('/usuarios/me/avatar', response_model=AvatarConfig)
+def guardar_avatar(config: AvatarConfig, id_usuario: int = Depends(usuario_actual_id)):
+    def operation(cursor):
+        perfil.guardar_config(cursor, id_usuario, 'avatar', config)
+        return config
+    return perfil_transaccion(id_usuario, operation)
+
+
+@app.get('/usuarios/me/estadisticas')
+def obtener_estadisticas(id_usuario: int = Depends(usuario_actual_id)):
+    return perfil_transaccion(id_usuario, lambda c: perfil.estadisticas(c, id_usuario))
+
+
+@app.put('/usuarios/me/estadisticas/preferencias')
+def guardar_preferencias(config: PreferenciasEstadisticas, id_usuario: int = Depends(usuario_actual_id)):
+    def operation(cursor):
+        perfil.guardar_config(cursor, id_usuario, 'preferencias', config)
+        return perfil.estadisticas(cursor, id_usuario)
+    return perfil_transaccion(id_usuario, operation)
+
+
 # FUNCIÓN PARA CREAR TAREA
 @app.post("/tareas", status_code=201)
 def nueva_tarea(nuevaTarea: tareaCreate, id_usuario: int = Depends(usuario_actual_id)):
@@ -333,7 +377,7 @@ def nueva_tarea(nuevaTarea: tareaCreate, id_usuario: int = Depends(usuario_actua
                 nuevaTarea.Descripcion,
                 nuevaTarea.Fecha,
                 nuevaTarea.Fecha_Fin,
-                nuevaTarea.Completada,
+                False,
             )
 
             cursor.execute(sql, valores)
@@ -429,31 +473,20 @@ def historial_tareas(id_usuario: int = Depends(usuario_actual_id)):
 # FUNCIÓN PARA COMPLETAR TAREA
 @app.patch("/tareas/{idTarea}/completar")
 def completar_tarea(idTarea: int, id_usuario: int = Depends(usuario_actual_id)):
-    conexion = get_connection()
-
-    try:
-        with conexion.cursor() as cursor:
-            cursor.execute(
-                "SELECT idTarea FROM Tarea WHERE idTarea = %s AND idUsu = %s",
-                (idTarea, id_usuario),
-            )
-            if cursor.fetchone() is None:
-                raise HTTPException(404, "Tarea no encontrada.")
-            cursor.execute(
-                "UPDATE Tarea SET completada = TRUE WHERE idTarea = %s AND idUsu = %s",
-                (idTarea, id_usuario),
-            )
-
-        conexion.commit()
-
-        return {"mensaje": "Tarea completada correctamente"}
-
-    except Exception:
-        conexion.rollback()
-        raise
-
-    finally:
-        conexion.close()
+    def operation(cursor):
+        cursor.execute(
+            'SELECT idTarea FROM Tarea WHERE idTarea = %s AND idUsu = %s FOR UPDATE',
+            (idTarea, id_usuario),
+        )
+        if cursor.fetchone() is None:
+            raise HTTPException(404, 'Tarea no encontrada.')
+        cursor.execute(
+            'UPDATE Tarea SET completada = TRUE WHERE idTarea = %s AND idUsu = %s',
+            (idTarea, id_usuario),
+        )
+        return {'mensaje': 'Tarea completada correctamente',
+                'estadisticas': perfil.estadisticas(cursor, id_usuario)}
+    return perfil_transaccion(id_usuario, operation)
 
 
 # Administrative HTML and JSON API.

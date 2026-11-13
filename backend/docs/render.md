@@ -134,6 +134,32 @@ ni SECRET_KEY en la configuración Flutter.
 
 ## Diagnóstico
 
+### Petición periódica desde el computador
+
+El usuario propuso el 2026-11-13 una petición cada 40 segundos para evitar la
+inactividad durante las pruebas. Se implementó como utilidad externa al servidor:
+
+```powershell
+# Desde la raíz del repositorio; mantener esta terminal abierta.
+.\.venv\Scripts\python.exe -m backend.utils.keep_render_awake
+
+# Comprobar una sola vez:
+.\.venv\Scripts\python.exe -m backend.utils.keep_render_awake --once
+```
+
+Consulta exclusivamente `https://my-daily-rutine.onrender.com/health`, sin claves,
+consultas a Aiven ni solicitudes a OpenAI. Detener con **Ctrl+C**. Tiene un timeout
+de 30 segundos y continúa en el siguiente intervalo si falla; no solapa peticiones.
+No se instala como tarea automática ni se ejecuta dentro de FastAPI: un proceso
+en el servidor dormido no puede despertarlo. El computador debe permanecer
+encendido, sin suspensión y con conexión. Un 404 requiere desplegar `/health`.
+
+Render Free se suspende tras 15 minutos sin tráfico y dispone de 750 horas
+mensuales compartidas por workspace. Mantenerlo activo consume esas horas y no
+garantiza disponibilidad ante reinicios o límites del plan. Para disponibilidad
+continua independiente de este equipo, considerar una instancia de pago.
+Fuente: [limitaciones oficiales](https://render.com/docs/free).
+
 - `No module named backend`: dejar Root Directory vacío y usar el Start Command indicado.
 - Error PEM/certificado: revisar saltos de línea y contenido completo de DB_SSL_CA.
 - Tiempo de espera MySQL: revisar host, puerto y acceso de red en Aiven.

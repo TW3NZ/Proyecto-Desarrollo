@@ -1,8 +1,7 @@
 /// Valores de progreso y preferencias de aura asociados a una cuenta.
 ///
-/// `usuarioId` funciona como referencia a la identidad propietaria de estas
-/// estadísticas y puede usarse como clave primaria compartida en la base de
-/// datos futura.
+/// `usuarioId` identifica la cuenta propietaria. Para cuentas reales, los
+/// valores proceden de MySQL y los puntos se calculan en el backend.
 class Estadisticas {
   Estadisticas({
     required this.usuarioId,

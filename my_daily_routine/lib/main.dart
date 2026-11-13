@@ -21,8 +21,10 @@ import 'data/usuarios_store.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await UsuariosStore.load();
-  await AvatarStore.instancia.load();
-  await TareasStore.instancia.inicializarWidget();
+  if ((UsuariosStore.usuarioActual?.id ?? -1) <= 0) {
+    await AvatarStore.instancia.load();
+    await TareasStore.instancia.inicializarWidget();
+  }
   final uriInicial = await HomeWidget.initiallyLaunchedFromHomeWidget();
   _aplicarAccionWidget(uriInicial);
   HomeWidget.widgetClicked.listen(_aplicarAccionWidget);
@@ -31,6 +33,7 @@ Future<void> main() async {
 
 void _aplicarAccionWidget(Uri? uri) {
   if (uri?.host != 'toggle-task') return;
+  if ((UsuariosStore.usuarioActual?.id ?? -1) > 0) return;
   final indice = int.tryParse(uri?.queryParameters['index'] ?? '');
   if (indice != null) {
     TareasStore.instancia.alternarCompletadaPorIndice(indice);

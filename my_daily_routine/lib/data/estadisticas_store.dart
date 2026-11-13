@@ -1,11 +1,94 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/estadisticas.dart';
+import '../services/perfil_api_service.dart';
 import '../models/tarea_modelo.dart';
 import 'usuarios_store.dart';
 
 class EstadisticasStore extends ChangeNotifier {
-  EstadisticasStore._();
+  EstadisticasStore._() {
+    UsuariosStore.sessionVersion.addListener(() {
+      _porUsuario.removeWhere((key, _) => key > 0);
+      error = null;
+      notifyListeners();
+    });
+  }
+  final _api = PerfilApiService();
+  String? error;
+  bool saving = false;
+
+  Future<void> load() async {
+    final id = _usuarioIdActual;
+    if (id <= 0) return;
+    final epoch = UsuariosStore.sessionVersion.value;
+    try {
+      final data = await _api.request('estadisticas', UsuariosStore.token!);
+      if (epoch != UsuariosStore.sessionVersion.value) return;
+      aplicar(data);
+    } catch (_) {
+      if (epoch == UsuariosStore.sessionVersion.value) {
+        error = 'No se pudieron cargar las estadisticas. Reintenta la sincronizacion.';
+        notifyListeners();
+      }
+      rethrow;
+    }
+  }
+
+  void aplicar(Map<String, dynamic> data) {
+    final id = _usuarioIdActual;
+    if (data['usuarioId'] != id) return;
+    _porUsuario[id] = Estadisticas(
+      usuarioId: id,
+      inteligencia: (data['inteligencia'] as num).toDouble(),
+      finanzas: (data['finanzas'] as num).toDouble(),
+      salud: (data['salud'] as num).toDouble(),
+      disciplina: (data['disciplina'] as num).toDouble(),
+      inteligenciaActiva: data['inteligenciaActiva'] as bool,
+      finanzasActiva: data['finanzasActiva'] as bool,
+      saludActiva: data['saludActiva'] as bool,
+      disciplinaActiva: data['disciplinaActiva'] as bool,
+    );
+    error = null;
+    notifyListeners();
+  }
+
+  Future<void> _toggle(String field) async {
+    if (saving) return;
+    final epoch = UsuariosStore.sessionVersion.value;
+    final a = actual;
+    final values = <String, dynamic>{
+      'inteligenciaActiva': a.inteligenciaActiva,
+      'finanzasActiva': a.finanzasActiva,
+      'saludActiva': a.saludActiva,
+      'disciplinaActiva': a.disciplinaActiva,
+    };
+    values[field] = !(values[field] as bool);
+    if (_usuarioIdActual <= 0) {
+      a.inteligenciaActiva = values['inteligenciaActiva'];
+      a.finanzasActiva = values['finanzasActiva'];
+      a.saludActiva = values['saludActiva'];
+      a.disciplinaActiva = values['disciplinaActiva'];
+      notifyListeners();
+      return;
+    }
+    saving = true;
+    notifyListeners();
+    try {
+      final data = await _api.request(
+        'estadisticas/preferencias',
+        UsuariosStore.token!,
+        data: values,
+      );
+      if (epoch == UsuariosStore.sessionVersion.value) aplicar(data);
+    } catch (_) {
+      if (epoch == UsuariosStore.sessionVersion.value) {
+        error = 'No se pudo guardar la preferencia. Intentalo de nuevo.';
+      }
+    } finally {
+      saving = false;
+      notifyListeners();
+    }
+  }
 
   static final EstadisticasStore instancia = EstadisticasStore._();
 
@@ -36,7 +119,7 @@ class EstadisticasStore extends ChangeNotifier {
   bool get disciplinaActiva => actual.disciplinaActiva;
 
   void procesarTareaCompletada(NuevaTarea tarea) {
-    if (tarea.categorias.isEmpty) return;
+    if (tarea.usuarioId > 0 || tarea.categorias.isEmpty) return;
 
     final puntosTotales = _puntosPorPrioridad(tarea.prioridad);
     final puntosPorCategoria = puntosTotales / tarea.categorias.length;
@@ -90,23 +173,8 @@ class EstadisticasStore extends ChangeNotifier {
     return nuevoValor >= 100 ? 100 : nuevoValor;
   }
 
-  void cambiarInteligenciaActiva() {
-    actual.inteligenciaActiva = !actual.inteligenciaActiva;
-    notifyListeners();
-  }
-
-  void cambiarFinanzasActiva() {
-    actual.finanzasActiva = !actual.finanzasActiva;
-    notifyListeners();
-  }
-
-  void cambiarSaludActiva() {
-    actual.saludActiva = !actual.saludActiva;
-    notifyListeners();
-  }
-
-  void cambiarDisciplinaActiva() {
-    actual.disciplinaActiva = !actual.disciplinaActiva;
-    notifyListeners();
-  }
+  Future<void> cambiarInteligenciaActiva() => _toggle('inteligenciaActiva');
+  Future<void> cambiarFinanzasActiva() => _toggle('finanzasActiva');
+  Future<void> cambiarSaludActiva() => _toggle('saludActiva');
+  Future<void> cambiarDisciplinaActiva() => _toggle('disciplinaActiva');
 }
