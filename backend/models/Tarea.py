@@ -32,5 +32,5 @@ class tareaCreate(BaseModel):
     Fecha : date = Field(default_factory=date.today)
     Fecha_Fin : date | None = None
     Completada : bool = False
-    categorias: list[int] = Field(min_length=1)
+    categorias: set[Literal[1, 2, 3, 4]] = Field(min_length=1)
     

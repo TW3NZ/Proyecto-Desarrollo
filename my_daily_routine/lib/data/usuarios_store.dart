@@ -40,6 +40,7 @@ class UsuariosStore {
   static String? _nickConTutorialPendiente;
   static int? _usuarioActualId;
   static String? _token;
+  static final sessionVersion = ValueNotifier<int>(0);
 
   static Future<void> _pending = Future<void>.value();
 
@@ -172,6 +173,7 @@ class UsuariosStore {
   static void _establecerSesionPractica() {
     _token = null;
     _usuarioActualId = idUsuarioPractica;
+    sessionVersion.value++;
   }
 
   static void _establecerSesionApi(String token, Usuario usuario) {
@@ -179,6 +181,7 @@ class UsuariosStore {
     _usuarios.removeWhere((u) => u.id == usuario.id);
     _usuarios.add(usuario);
     _usuarioActualId = usuario.id;
+    sessionVersion.value++;
   }
 
   static void _limpiarMemoria() {
@@ -186,6 +189,7 @@ class UsuariosStore {
     _usuarioActualId = null;
     _nickConTutorialPendiente = null;
     _usuarios.removeWhere((u) => u.id != idUsuarioPractica);
+    sessionVersion.value++;
   }
 
   static Future<void> _guardarPersistencia(String token, Usuario usuario) {

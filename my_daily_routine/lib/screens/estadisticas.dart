@@ -18,9 +18,7 @@ class EstadisticaScreen extends StatelessWidget {
               titulo: 'Estadísticas',
               alVolver: () => Navigator.maybePop(context),
             ),
-            const Expanded(
-              child: _ContenidoEstadisticas(),
-            ),
+            const Expanded(child: _ContenidoEstadisticas()),
           ],
         ),
       ),
@@ -41,9 +39,13 @@ class _ContenidoEstadisticas extends StatelessWidget {
         return ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           children: [
-            _TarjetaGeneral(
-              valor: estadisticas.general,
-            ),
+            if (estadisticas.error != null)
+              Text(
+                estadisticas.error!,
+                style: const TextStyle(color: Colors.red),
+              ),
+            if (estadisticas.saving) const LinearProgressIndicator(),
+            _TarjetaGeneral(valor: estadisticas.general),
 
             const SizedBox(height: 26),
 
@@ -60,10 +62,7 @@ class _ContenidoEstadisticas extends StatelessWidget {
 
             const Text(
               'Activa las estadísticas que quieres que influyan en tu aura.',
-              style: TextStyle(
-                color: AppColors.textMuted,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.textMuted, fontSize: 13),
             ),
 
             const SizedBox(height: 16),
@@ -123,9 +122,7 @@ class _ContenidoEstadisticas extends StatelessWidget {
 class _TarjetaGeneral extends StatelessWidget {
   final double valor;
 
-  const _TarjetaGeneral({
-    required this.valor,
-  });
+  const _TarjetaGeneral({required this.valor});
 
   @override
   Widget build(BuildContext context) {
@@ -184,9 +181,7 @@ class _TarjetaGeneral extends StatelessWidget {
               value: porcentaje.clamp(0.0, 1.0),
               minHeight: 10,
               backgroundColor: Colors.white.withValues(alpha: 0.20),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Colors.white,
-              ),
+              valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             ),
           ),
 
@@ -233,9 +228,7 @@ class _TarjetaEstadistica extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: AppColors.fieldBorder,
-          ),
+          border: Border.all(color: AppColors.fieldBorder),
         ),
         child: Column(
           children: [
@@ -248,11 +241,7 @@ class _TarjetaEstadistica extends StatelessWidget {
                     color: AppColors.primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(13),
                   ),
-                  child: Icon(
-                    icono,
-                    color: AppColors.primary,
-                    size: 23,
-                  ),
+                  child: Icon(icono, color: AppColors.primary, size: 23),
                 ),
 
                 const SizedBox(width: 12),
@@ -299,9 +288,7 @@ class _TarjetaEstadistica extends StatelessWidget {
                 minHeight: 8,
                 backgroundColor: AppColors.fieldBorder,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  activa
-                      ? AppColors.primary
-                      : AppColors.textHint,
+                  activa ? AppColors.primary : AppColors.textHint,
                 ),
               ),
             ),

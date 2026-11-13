@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../assets_paths.dart';
 import '../data/estadisticas_store.dart';
+import '../data/avatar_store.dart';
 import '../data/usuarios_store.dart';
 import '../data/tareas_store.dart';
 import '../routes.dart';
@@ -35,6 +36,30 @@ class _HomeScreenState extends State<HomeScreen> {
   final _anadirTareaKey = GlobalKey();
   final _teamsKey = GlobalKey();
   int _bgIndex = 0;
+  String? _syncError;
+  bool _syncing = false;
+
+  Future<void> _sync() async {
+    if (_syncing) return;
+    setState(() {
+      _syncing = true;
+      _syncError = null;
+    });
+    try {
+      await Future.wait([
+        AvatarStore.instancia.load(),
+        EstadisticasStore.instancia.load(),
+        TareasStore.instancia.refresh(),
+      ]);
+    } catch (_) {
+      if (mounted) {
+        setState(() => _syncError = 'No se pudieron cargar todos tus datos.');
+      }
+    } finally {
+      if (mounted) setState(() => _syncing = false);
+    }
+  }
+
   String _estadisticaSeleccionada = 'Inteligencia';
 
   static const _frases = [
@@ -80,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _frase = _frases[Random().nextInt(_frases.length)];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _sync();
+    });
     ShowcaseView.register(skipIfTargetNotPresent: true);
     if (widget.mostrarTutorial) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -522,6 +550,30 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            if (_syncing || _syncError != null)
+              Positioned(
+                top: 0,
+                left: 12,
+                right: 12,
+                child: SafeArea(
+                  child: Material(
+                    borderRadius: BorderRadius.circular(16),
+                    child: ListTile(
+                      title: Text(_syncError ?? 'Recuperando tus datos...'),
+                      trailing: _syncing
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(),
+                            )
+                          : TextButton(
+                              onPressed: _sync,
+                              child: const Text('Reintentar'),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -300,3 +300,12 @@ Los prompts de generación y refinamiento se guardan en `avatar-prompts.md`.
 - Análisis de esos tres archivos con el ejecutable Dart del SDK local: sin incidencias. El lanzador habitual de Flutter/Dart no produjo salida, por lo que se usó directamente el ejecutable del SDK.
 - PNG confirmado en formato de 32 bits con canal alfa y muestras externas completamente transparentes.
 - No se ejecutó la aplicación en un dispositivo: queda pendiente comprobar visualmente la composición con los controles y todos los fondos. No se afirma que exista una prueba visual interactiva ni animaciones implementadas.
+# 2026-11-13 — Apariencia persistida por cuenta
+
+El usuario pidió guardar rasgos y personalización en MySQL. Las cuentas reales
+cargan y guardan el catálogo completo mediante `/usuarios/me/avatar`, identificado
+por JWT. La cuenta de práctica conserva preferencias locales. La apariencia
+anterior global del dispositivo no se asigna automáticamente a ninguna cuenta;
+cada usuario guarda su selección. Las expresiones siguen derivadas de estadísticas.
+Detalles y pruebas en [perfil](../backend/docs/perfil.md). No se modificaron PNG,
+colores, proporciones aprobadas ni el catálogo de estilos.

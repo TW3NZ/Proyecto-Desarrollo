@@ -65,21 +65,20 @@ class TareasApiService {
   }
 
   /// Marca una tarea como completada en el servidor.
-  Future<void> completarTarea({
+  Future<Map<String, dynamic>> completarTarea({
     required int idTarea,
     required String token,
   }) async {
     final uri = _uri('/tareas/$idTarea/completar');
     try {
       final response = await _client
-          .patch(
-            uri,
-            headers: {'Authorization': 'Bearer $token'},
-          )
+          .patch(uri, headers: {'Authorization': 'Bearer $token'})
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) {
         throw TareasApiException(_mensajePorEstado(response.statusCode));
       }
+      return (jsonDecode(response.body) as Map<String, dynamic>)['estadisticas']
+          as Map<String, dynamic>;
     } on TareasApiException {
       rethrow;
     } catch (_) {
@@ -94,10 +93,7 @@ class TareasApiService {
     final uri = _uri('/tareas');
     try {
       final response = await _client
-          .get(
-            uri,
-            headers: {'Authorization': 'Bearer $token'},
-          )
+          .get(uri, headers: {'Authorization': 'Bearer $token'})
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) {
         throw TareasApiException(_mensajePorEstado(response.statusCode));

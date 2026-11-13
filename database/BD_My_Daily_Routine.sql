@@ -20,15 +20,22 @@ CREATE TABLE Usuario (
 
 CREATE TABLE Estadistica (
     idUsu INT NOT NULL,
-    inteligencia INT NOT NULL DEFAULT 0,
-    salud INT NOT NULL DEFAULT 0,
-    finanzas INT NOT NULL DEFAULT 0,
-    disciplina INT NOT NULL DEFAULT 0,
+    inteligencia DECIMAL(8,4) NOT NULL DEFAULT 0,
+    salud DECIMAL(8,4) NOT NULL DEFAULT 0,
+    finanzas DECIMAL(8,4) NOT NULL DEFAULT 0,
+    disciplina DECIMAL(8,4) NOT NULL DEFAULT 0,
 
     CONSTRAINT Estadistica_pk PRIMARY KEY (idUsu),
     CONSTRAINT Estadistica_Usuario_fk FOREIGN KEY (idUsu) REFERENCES Usuario(idUsu)
 );
 
+
+CREATE TABLE PerfilUsuario (
+    idUsu INT NOT NULL PRIMARY KEY,
+    avatar JSON NULL,
+    preferencias JSON NULL,
+    CONSTRAINT PerfilUsuario_Usuario_fk FOREIGN KEY (idUsu) REFERENCES Usuario(idUsu)
+);
 
 CREATE TABLE Equipo (
     idEquipo INT NOT NULL,

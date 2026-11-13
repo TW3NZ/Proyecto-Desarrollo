@@ -24,7 +24,26 @@ class TareasStore extends ChangeNotifier {
            ((value) =>
                SharedPreferencesAsync().setString(preferenceKey, value)),
        _publishWidgetOverride = publishWidget,
-       _api = api ?? TareasApiService();
+       _api = api ?? TareasApiService() {
+    UsuariosStore.sessionVersion.addListener(_reset);
+  }
+
+  void _reset() {
+    _loading = null;
+    _tareas.clear();
+    _enProceso.clear();
+    loadFailed = false;
+    notifyListeners();
+    _pending = _pending
+        .then((_) => _publicarWidget('[]'))
+        .catchError((Object _) {});
+  }
+
+  @override
+  void dispose() {
+    UsuariosStore.sessionVersion.removeListener(_reset);
+    super.dispose();
+  }
 
   static final TareasStore instancia = TareasStore();
   static const preferenceKey = 'tareas.v1';
@@ -44,7 +63,7 @@ class TareasStore extends ChangeNotifier {
 
   List<NuevaTarea> get tareas => List.unmodifiable(_tareas);
 
-  /// Recupera las tareas locales y publica la instantánea que usa el widget.
+  /// Recupera las tareas de la cuenta y publica la instantánea del widget.
   /// No borra la instantánea si la lectura falla, para no perder el progreso
   /// que ya estaba visible en la pantalla de inicio.
   Future<void> inicializarWidget() async {
@@ -55,9 +74,36 @@ class TareasStore extends ChangeNotifier {
 
   Future<void> load() => _loading ??= _load();
 
+  Future<void> refresh() {
+    _loading = null;
+    return load();
+  }
+
   Future<void> _load() async {
+    final epoch = UsuariosStore.sessionVersion.value;
+    if (_esUsuarioReal()) {
+      try {
+        final restored = await _api.obtenerTareas(token: UsuariosStore.token!);
+        if (epoch != UsuariosStore.sessionVersion.value) return;
+        _tareas
+          ..clear()
+          ..addAll(restored);
+        loadFailed = false;
+        notifyListeners();
+        await _sincronizar();
+      } catch (_) {
+        if (epoch == UsuariosStore.sessionVersion.value) {
+          loadFailed = true;
+          _loading = null;
+          notifyListeners();
+        }
+        rethrow;
+      }
+      return;
+    }
     try {
       final raw = await _read();
+      if (epoch != UsuariosStore.sessionVersion.value) return;
       if (raw != null) {
         final decoded = jsonDecode(raw);
         if (decoded is! List) throw const FormatException();
@@ -65,7 +111,7 @@ class TareasStore extends ChangeNotifier {
         for (final item in decoded) {
           if (item is! Map) continue;
           final tarea = _tareaDesdeJson(Map<String, dynamic>.from(item));
-          if (tarea != null) restored.add(tarea);
+          if (tarea != null && tarea.usuarioId <= 0) restored.add(tarea);
         }
         _tareas
           ..clear()
@@ -81,12 +127,19 @@ class TareasStore extends ChangeNotifier {
   }
 
   Future<void> agregarTarea(NuevaTarea tarea) {
+    if (_esUsuarioReal() &&
+        tarea.usuarioId != UsuariosStore.usuarioActual?.id) {
+      return Future<void>.value();
+    }
     _tareas.add(tarea);
     notifyListeners();
     return _sincronizar();
   }
 
   Future<void> eliminarTarea(NuevaTarea tarea) {
+    if (_esUsuarioReal()) {
+      throw StateError('El borrado remoto no esta disponible.');
+    }
     if (!_tareas.remove(tarea)) return Future<void>.value();
     notifyListeners();
     return _sincronizar();
@@ -96,6 +149,7 @@ class TareasStore extends ChangeNotifier {
     if (!_tareas.contains(tarea)) return;
     if (_enProceso.contains(tarea.id)) return;
 
+    final epoch = UsuariosStore.sessionVersion.value;
     final estabaCompletada = tarea.completada;
     final usuarioReal = _esUsuarioReal();
 
@@ -109,7 +163,12 @@ class TareasStore extends ChangeNotifier {
       if (token == null || token.isEmpty) return;
       _enProceso.add(tarea.id);
       try {
-        await _api.completarTarea(idTarea: tarea.id, token: token);
+        final stats = await _api.completarTarea(
+          idTarea: tarea.id,
+          token: token,
+        );
+        if (epoch != UsuariosStore.sessionVersion.value) return;
+        EstadisticasStore.instancia.aplicar(stats);
       } finally {
         _enProceso.remove(tarea.id);
       }
@@ -137,6 +196,8 @@ class TareasStore extends ChangeNotifier {
   /// falla, la cadena se recupera para que el siguiente cambio vuelva a
   /// intentarlo, en lugar de quedar bloqueada para siempre.
   Future<void> _sincronizar() {
+    final remote = _esUsuarioReal();
+    final epoch = UsuariosStore.sessionVersion.value;
     final tareasJson = jsonEncode(_tareas.map(_tareaAJson).toList());
     final widgetJson = jsonEncode(
       _tareas
@@ -153,7 +214,8 @@ class TareasStore extends ChangeNotifier {
 
     _pending = _pending
         .then((_) async {
-          await _write(tareasJson);
+          if (epoch != UsuariosStore.sessionVersion.value) return;
+          if (!remote) await _write(tareasJson);
           await _publicarWidget(widgetJson);
         })
         .catchError((Object error, StackTrace stack) {

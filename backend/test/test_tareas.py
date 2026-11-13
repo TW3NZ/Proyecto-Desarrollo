@@ -35,14 +35,14 @@ def patch(client, id_tarea, con_token=True):
 def test_completar_con_token_valido_actualiza_y_commitea(connection, monkeypatch):
     autenticado(monkeypatch)
     cursor = connection.cursor.return_value.__enter__.return_value
-    cursor.fetchone.return_value = {"idTarea": 96047524}
+    cursor.fetchone.side_effect = [{"idUsu": 12345678}, {"idTarea": 96047524}, None]
 
     response = patch(TestClient(api.app), 96047524)
 
     assert response.status_code == 200
     # Se ejecutan SELECT (verificación) y UPDATE.
-    assert cursor.execute.call_count == 2
-    update_sql, update_params = cursor.execute.call_args_list[1].args
+    assert cursor.execute.call_count == 6
+    update_sql, update_params = cursor.execute.call_args_list[2].args
     assert "UPDATE Tarea" in update_sql
     assert "idTarea" in update_sql and "idUsu" in update_sql
     assert update_params == (96047524, 12345678)
@@ -60,7 +60,7 @@ def test_completar_sin_token_es_rechazado(connection, monkeypatch):
 def test_completar_tarea_inexistente_o_ajena_devuelve_404(connection, monkeypatch):
     autenticado(monkeypatch)
     cursor = connection.cursor.return_value.__enter__.return_value
-    cursor.fetchone.return_value = None  # no existe o no pertenece al usuario
+    cursor.fetchone.side_effect = [{"idUsu": 12345678}, None]  # tarea ajena
 
     response = patch(TestClient(api.app), 96047524)
 
@@ -71,13 +71,17 @@ def test_completar_tarea_inexistente_o_ajena_devuelve_404(connection, monkeypatc
 def test_completar_dos_veces_es_idempotente(connection, monkeypatch):
     autenticado(monkeypatch)
     cursor = connection.cursor.return_value.__enter__.return_value
-    cursor.fetchone.return_value = {"idTarea": 96047524}
+    cursor.fetchone.side_effect = [{"idUsu": 12345678}, {"idTarea": 96047524}, None]
+    cursor.fetchone.side_effect = [{"idUsu": 12345678}, {"idTarea": 96047524}, None] * 2
+    cursor.fetchall.return_value = [{"idCategoria": 1, "puntos": 5}]
     client = TestClient(api.app)
 
     assert patch(client, 96047524).status_code == 200
     assert patch(client, 96047524).status_code == 200
     # Dos peticiones: dos UPDATE, sin errores ni efectos secundarios.
     assert connection.commit.call_count == 2
+    writes = [c.args[1] for c in cursor.execute.call_args_list if 'INSERT INTO Estadistica' in c.args[0]]
+    assert writes[0] == writes[1]  # recomputation never increments twice
 
 
 def test_completar_con_token_expirado_es_rechazado(connection, monkeypatch):
