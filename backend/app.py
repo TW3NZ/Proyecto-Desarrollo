@@ -12,7 +12,7 @@ from typing import Literal
 from urllib.parse import urlsplit
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from openai import AsyncOpenAI, APIError, APITimeoutError, RateLimitError
@@ -130,6 +130,14 @@ async def suggest(encoded: str, character: str) -> Suggestion:
 
 
 app = FastAPI(title="My Daily Rutine API")
+
+
+@app.get("/health", include_in_schema=False)
+def health():
+    """Process health only; does not query Aiven or consume OpenAI quota."""
+    return {"status": "ok"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.environ.get(
@@ -143,6 +151,10 @@ app.add_middleware(
 
 @app.middleware("http")
 async def protect_admin_responses(request: Request, call_next):
+    if request.url.path == "/admin" or request.url.path.startswith("/admin/"):
+        if os.environ.get("ADMIN_ENABLED", "true").lower() != "true":
+            return JSONResponse({"detail": "Not Found"}, status_code=404,
+                                headers={"Cache-Control": "no-store"})
     response = await call_next(request)
     if request.url.path == "/admin" or request.url.path.startswith("/admin/"):
         response.headers["Cache-Control"] = "no-store"

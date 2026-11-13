@@ -11,9 +11,12 @@ if ($ConfigFile) {
     $configPath = (Resolve-Path -LiteralPath $ConfigFile).Path
     $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
     foreach ($property in $config.PSObject.Properties.Name) {
-        if ($property -notin @('AVATAR_API_URL', 'AVATAR_API_TOKEN')) {
-            throw 'El JSON solo debe contener AVATAR_API_URL y AVATAR_API_TOKEN, nunca claves de OpenAI.'
+        if ($property -notin @('API_URL', 'AVATAR_API_URL', 'AVATAR_API_TOKEN')) {
+            throw 'El JSON solo debe contener API_URL, AVATAR_API_URL y AVATAR_API_TOKEN, nunca claves de OpenAI.'
         }
+    }
+    if ($config.API_URL -and $config.API_URL -notmatch '^https://') {
+        throw 'Para release API_URL debe usar HTTPS.'
     }
     if ($config.AVATAR_API_URL -notmatch '^https://' -or $config.AVATAR_API_TOKEN.Length -lt 24) {
         throw 'Para release usa una URL HTTPS y un token del servicio de al menos 24 caracteres.'

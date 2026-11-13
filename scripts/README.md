@@ -26,7 +26,7 @@ Para un emulador x86_64:
 
 ## APK con servicio de fotos
 
-El backend debe estar ejecutándose en una dirección **HTTPS accesible desde el teléfono**. Crea un JSON privado con únicamente `AVATAR_API_URL` y `AVATAR_API_TOKEN`; nunca incluyas `OPENAI_API_KEY` ni uses `backend/.env`. Después:
+El backend debe estar ejecutándose en una dirección **HTTPS accesible desde el teléfono**. Crea un JSON privado con `API_URL` (usuarios y tareas), `AVATAR_API_URL` y `AVATAR_API_TOKEN`; nunca incluyas `OPENAI_API_KEY` ni uses `backend/.env`. Las dos URLs actuales son `https://my-daily-rutine.onrender.com`. Puedes usar `.tools/avatar-flutter.json`, ya configurado para Render, como `-ConfigFile`. Después:
 
 ```powershell
 .\scripts\build-apk.ps1 -ConfigFile .\.tools\avatar-release.json

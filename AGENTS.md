@@ -42,6 +42,8 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 
 ## Continuidad y documentación
 
+- El panel HTML abierto con Live Server usa una URL fija de Render y muestra únicamente usuario y contraseña administrativos (2026-11-13). Reutilizar `ADMIN_USER` y `ADMIN_PASSWORD` del entorno del servidor; no duplicar variables ni pedir al usuario la URL en el formulario.
+
 - Consultar `docs/decisiones-avatar.md` antes de trabajar en el avatar.
 - Registrar decisiones relevantes con fecha, motivo, alcance y pendientes. Distinguir acuerdos del usuario de propuestas y elecciones provisionales de implementación.
 - Actualizar este archivo cuando el usuario establezca o cambie una regla duradera. Sus nuevas instrucciones prevalecen sobre acuerdos anteriores.
@@ -50,6 +52,7 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 ## Trabajo en el repositorio
 
 - Todo el código de API y backend debe vivir exclusivamente en `backend/`. No crear servicios paralelos en `api/`, `API/` u otra carpeta. `backend/app.py` es el único punto de entrada FastAPI y reúne las rutas de usuarios, autenticación y avatar; reutilizar sus módulos auxiliares antes de crear otros.
+- El despliegue en Render se configura mediante **New → Web Service**, por elección del usuario (2026-11-13). Mantener los comandos y variables en `backend/docs/render.md`, con Root Directory vacío para resolver imports `backend.*`; el panel administrativo permanece local y se deshabilita en Render mediante `ADMIN_ENABLED=false`.
 - Mapa del repositorio: `my_daily_routine/` es el frontend Flutter; `backend/` es el servidor Python; `backend/database/` contiene conexión y consultas Python de MySQL; `database/` en la raíz contiene el esquema SQL y las instrucciones de inicialización/conexión (no otro servidor). `backend/models/` contiene modelos Pydantic; `backend/core/` la seguridad/JWT; `backend/utils/` utilidades y diagnósticos; `backend/test/` pruebas; `backend/docs/` contratos de la API; `docs/` decisiones del proyecto; `scripts/` compilación y `artifacts/` entregables.
 - En las rutas protegidas de datos, `idUsu` se obtiene exclusivamente del JWT (`sub`), nunca de un campo enviado por el cliente.
 - Usar un único `backend/.env`, su plantilla `backend/.env.example` y `backend/requirements.txt` para OpenAI, Aiven y autenticación. Iniciar desde la raíz con `python -m uvicorn backend.app:app`; usar imports absolutos `backend.*`. No duplicar el SQL de `database/` dentro del backend.
@@ -57,6 +60,7 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 - Mantener `app.py`, `requirements.txt` y los archivos `.env` del servicio en la raíz de `backend/`. Agrupar las pruebas en `backend/test/` y las utilidades en `backend/utils/`. Documentar los comandos de ejecución y prueba en el emulador en `backend/README.md`.
 - Mantener el certificado CA de Aiven completo dentro de `DB_SSL_CA` en `backend/.env`, como PEM multilínea entre comillas, por preferencia del usuario. No exigir una ruta persistente a otro archivo; los clientes que necesiten un archivo pueden usar una copia temporal eliminada al terminar. Mantener las credenciales exclusivamente en el backend y verificar TLS.
 - El usuario autorizó acceso automático al panel desde el mismo equipo: no pedir contraseñas en localhost ni enviarlas al HTML/JS. El backend lee el `.env` para acceder a Aiven. Limitar la excepción a loopback, host local y origen local permitido, sin proxies; conservar autenticación para conexiones no locales. Esta regla sustituye el requisito inicial de credenciales para cada acceso al panel.
+- El 2026-11-13 el usuario solicitó que el HTML administrativo consulte Render. Live Server apunta a `https://my-daily-rutine.onrender.com`; el backend remoto requiere `ADMIN_ENABLED=true`, credenciales administrativas y orígenes CORS explícitos. Esto sustituye la decisión inicial de mantener el panel deshabilitado en Render. Conservar autorización solo en memoria del navegador; no incrustar secretos ni ampliar la excepción de acceso local al servidor remoto.
 
 - Revisar el estado de Git y conservar cambios existentes ajenos a la tarea.
 - Mantener las responsabilidades de pantallas, widgets y datos separadas; reutilizar la estructura Flutter existente.

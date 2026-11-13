@@ -1,5 +1,7 @@
 # Backend de My Daily Rutine
 
+Para publicarlo en Render mediante **New → Web Service**, consulta [la guía de despliegue](docs/render.md), con los campos del formulario, comandos y variables de entorno.
+
 Servicio FastAPI único para registro de usuarios, login con JWT y propuesta de atributos del avatar mediante OpenAI. Todas las rutas se ejecutan desde `backend.app:app` en el mismo puerto; la antigua carpeta `api/` se integró aquí.
 
 ## Organización
