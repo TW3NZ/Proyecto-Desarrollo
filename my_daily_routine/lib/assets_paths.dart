@@ -23,6 +23,7 @@ class AppAssets {
     'lib/assets/background/background2.png',
     'lib/assets/background/background3.png',
     'lib/assets/background/background4.png',
+    'lib/assets/background/background5.png',
   ];
 
   static const String iconNotificaciones =

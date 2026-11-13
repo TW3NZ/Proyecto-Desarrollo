@@ -10,6 +10,7 @@ import '../widgets/avatar/avatar_character.dart';
 import '../widgets/avatar/avatar_preview.dart';
 import '../widgets/avatar/avatar_hairstyle_selector.dart';
 import '../widgets/avatar/avatar_face_selector.dart';
+import '../widgets/avatar/avatar_outfit_selector.dart';
 import '../widgets/avatar/avatar_body_controls.dart';
 import '../widgets/avatar/avatar_expression_preview.dart';
 import '../widgets/common/cabecera_app.dart';
@@ -277,6 +278,13 @@ class _AvatarScreenState extends State<AvatarScreen> {
                                 () => _draft = _draft.withColor(part, colorId),
                               ),
                             ),
+                          const SizedBox(height: 16),
+                          AvatarOutfitSelector(
+                            config: _draft,
+                            onSelected: (outfit) => setState(
+                              () => _draft = _draft.withOutfit(outfit),
+                            ),
+                          ),
                           const Divider(height: 28),
                           AvatarMotionControls(
                             motionEnabled: _draft.motion,

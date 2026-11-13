@@ -41,6 +41,19 @@ enum AvatarHairstyle {
   const AvatarHairstyle(this.label);
 }
 
+enum AvatarOutfit {
+  ninguno('Ninguno', null, false),
+  developerSkin('Developer skin', 'lib/assets/items/github.png', true);
+
+  final String label;
+  final String? assetPath;
+  final bool soloHombre;
+  const AvatarOutfit(this.label, this.assetPath, this.soloHombre);
+
+  bool disponiblePara(AvatarCharacterType type) =>
+      !soloHombre || type == AvatarCharacterType.hombre;
+}
+
 @immutable
 class AvatarColorOption {
   final String id;
@@ -96,6 +109,7 @@ class AvatarConfig {
   final String hair;
   final String shirt;
   final String trousers;
+  final AvatarOutfit outfit;
   final AvatarCharacterType characterType;
   final AvatarHairstyle hairstyle;
   final AvatarEyes eyes;
@@ -119,6 +133,7 @@ class AvatarConfig {
     this.hair = 'original',
     this.shirt = 'original',
     this.trousers = 'original',
+    this.outfit = AvatarOutfit.ninguno,
     this.characterType = AvatarCharacterType.hombre,
     this.hairstyle = AvatarHairstyle.original,
     this.eyes = AvatarEyes.original,
@@ -155,6 +170,7 @@ class AvatarConfig {
     String? hair,
     String? shirt,
     String? trousers,
+    AvatarOutfit? outfit,
     AvatarCharacterType? characterType,
     AvatarHairstyle? hairstyle,
     AvatarEyes? eyes,
@@ -169,6 +185,7 @@ class AvatarConfig {
     hair: hair ?? this.hair,
     shirt: shirt ?? this.shirt,
     trousers: trousers ?? this.trousers,
+    outfit: outfit ?? this.outfit,
     characterType: characterType ?? this.characterType,
     hairstyle: hairstyle ?? this.hairstyle,
     eyes: eyes ?? this.eyes,
@@ -196,17 +213,30 @@ class AvatarConfig {
     };
   }
 
-  AvatarConfig withCharacterType(AvatarCharacterType value) =>
-      copyWith(characterType: value);
+  AvatarConfig withCharacterType(AvatarCharacterType value) {
+    final next = copyWith(characterType: value);
+    if (value == AvatarCharacterType.mujer && next.outfit.soloHombre) {
+      return next.copyWith(outfit: AvatarOutfit.ninguno);
+    }
+    return next;
+  }
+
   AvatarConfig withMotion(bool value) => copyWith(motion: value);
   AvatarConfig withHairstyle(AvatarHairstyle value) =>
       copyWith(hairstyle: value);
+  AvatarConfig withOutfit(AvatarOutfit value) {
+    if (value.soloHombre && characterType == AvatarCharacterType.mujer) {
+      return this;
+    }
+    return copyWith(outfit: value);
+  }
   Map<String, Object> toJson() => {
     'version': 1,
     'skin': skin,
     'hair': hair,
     'shirt': shirt,
     'trousers': trousers,
+    'outfit': outfit.name,
     'characterType': characterType.name,
     'hairstyle': hairstyle.name,
     'eyes': eyes.name,
@@ -234,6 +264,12 @@ class AvatarConfig {
           AvatarHairstyle.values.firstWhere(
             (value) => value.name == json['hairstyle'],
             orElse: () => AvatarHairstyle.original,
+          ),
+        )
+        .withOutfit(
+          AvatarOutfit.values.firstWhere(
+            (value) => value.name == json['outfit'],
+            orElse: () => AvatarOutfit.ninguno,
           ),
         )
         .withMotion(json['motion'] is bool ? json['motion'] as bool : true)

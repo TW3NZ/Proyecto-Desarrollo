@@ -98,6 +98,16 @@ class AvatarResources {
       rethrow;
     }
   }
+
+  static final Map<AvatarOutfit, Future<ui.Image>> _outfits = {};
+
+  static Future<ui.Image> loadOutfit(AvatarOutfit outfit) {
+    final path = outfit.assetPath;
+    if (path == null) {
+      return Future.error(StateError('El vestuario no tiene asset: $outfit'));
+    }
+    return _outfits[outfit] ??= _readImage(path);
+  }
 }
 
 class AvatarCharacter extends StatelessWidget {
@@ -177,6 +187,35 @@ class _RenderedAvatar extends StatefulWidget {
 class _RenderedAvatarState extends State<_RenderedAvatar> {
   late final ui.FragmentShader _shader = widget.resources.program
       .fragmentShader();
+  ui.Image? _outfit;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOutfit();
+  }
+
+  @override
+  void didUpdateWidget(_RenderedAvatar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.config.outfit != widget.config.outfit) {
+      _loadOutfit();
+    }
+  }
+
+  Future<void> _loadOutfit() async {
+    final outfit = widget.config.outfit;
+    if (outfit == AvatarOutfit.ninguno) {
+      if (_outfit != null && mounted) setState(() => _outfit = null);
+      return;
+    }
+    try {
+      final image = await AvatarResources.loadOutfit(outfit);
+      if (mounted) setState(() => _outfit = image);
+    } catch (_) {
+      if (mounted) setState(() => _outfit = null);
+    }
+  }
 
   @override
   void dispose() {
@@ -210,6 +249,7 @@ class _RenderedAvatarState extends State<_RenderedAvatar> {
                 widget.config,
                 widget.portrait,
                 intensity,
+                _outfit,
               ),
             ),
           ),
@@ -225,12 +265,14 @@ class _AvatarPainter extends CustomPainter {
   final AvatarConfig config;
   final bool portrait;
   final double expression;
+  final ui.Image? outfit;
   _AvatarPainter(
     this.shader,
     this.resources,
     this.config,
     this.portrait,
     this.expression,
+    this.outfit,
   );
 
   @override
@@ -273,6 +315,14 @@ class _AvatarPainter extends CustomPainter {
     shader.setImageSampler(1, resources.faceA);
     shader.setImageSampler(2, resources.faceB);
     canvas.drawRect(Offset.zero & size, Paint()..shader = shader);
+    final outfit = this.outfit;
+    if (outfit != null) {
+      canvas.drawImage(
+        outfit,
+        Offset.zero,
+        Paint()..filterQuality = FilterQuality.high,
+      );
+    }
   }
 
   @override
@@ -280,7 +330,8 @@ class _AvatarPainter extends CustomPainter {
       oldDelegate.config != config ||
       oldDelegate.resources != resources ||
       oldDelegate.portrait != portrait ||
-      oldDelegate.expression != expression;
+      oldDelegate.expression != expression ||
+      oldDelegate.outfit != outfit;
 }
 
 /// Movimiento global sutil, anclado en los pies. No es una animación por huesos.

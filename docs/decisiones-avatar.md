@@ -1,5 +1,17 @@
 # Decisiones sobre el avatar
 
+## 2026-11-12 — Vestuario superpuesto al personaje
+
+A petición del usuario, se añade un sistema de prendas que se dibujan sobre el avatar. La primera prenda es **Developer skin** (camiseta de estilo GitHub), disponible solo para el personaje hombre porque su silueta encaja únicamente con el torso masculino.
+
+- **Recursos:** `my_daily_routine/lib/assets/items/` (declarada explícitamente en `pubspec.yaml`). Cada prenda es un PNG transparente con el **mismo lienzo de 887 × 1774** y el cuerpo en la misma posición que los avatares base, para superponerse píxel a píxel.
+- **Modelo:** enum `AvatarOutfit` (`ninguno`, `developerSkin`) con `label`, `assetPath` y `soloHombre`; `AvatarConfig` incorpora `outfit`, serializado por nombre y retrocompatible (`ninguno` por defecto). `withOutfit` rechaza prendas de hombre para mujer y `withCharacterType` revierte a `ninguno` al cambiar a mujer.
+- **Render:** la prenda se carga aparte (caché por outfit) y se dibuja con `canvas.drawImage` **después** del shader, en el mismo `CustomPaint`; queda alineada y cubre camiseta/pantalón sin alterar el rostro.
+- **Editor:** nueva sección **Vestuario** en `Tu avatar`, con tarjetas por prenda; «Ninguno» muestra el personaje base y cada prenda muestra su propia imagen. El selector filtra las prendas según el personaje.
+- **Coherencia visual:** se mantienen el lienzo y la pose de los personajes actuales; las prendas no introducen siluetas ni encuadres nuevos.
+
+**Límite v1:** la prenda no sigue la deformación de los deslizantes de complexión/altura (queda alineada con las proporciones por defecto). `flutter analyze` y `flutter test` en verde.
+
 ## 2026-11-10 — Boca cansada y mechón derecho
 
 El usuario detectó una sonrisa residual en Cansado y un mechón del peinado original que no recibía el color. La boca de la referencia neutra conservaba las comisuras levantadas: para cansancio se refleja verticalmente solo su región interior, con transición gradual y límites por personaje para no muestrear el borde de la mejilla. No se modifica la boca elegida ni los demás estados.

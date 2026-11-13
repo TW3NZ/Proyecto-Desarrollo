@@ -31,6 +31,7 @@ flutter:
     - lib/assets/avatar/faces/
     - lib/assets/background/
     - lib/assets/icons/
+    - lib/assets/items/
     - lib/assets/recursos/
     - lib/assets/davo_recursos/
   shaders:
