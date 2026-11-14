@@ -1,0 +1,8 @@
+{
+    "schema":  1,
+    "version":  "0.2.0",
+    "build":  2,
+    "abi":  "arm64-v8a",
+    "size":  49671453,
+    "sha256":  "84058ab815483f09f9c812c3c0dfcd91845dded3044bab12942d4512873e030d"
+}

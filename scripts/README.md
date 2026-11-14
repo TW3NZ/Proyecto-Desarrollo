@@ -1,5 +1,12 @@
 # Compilar el APK
 
+## Actualizaciones desde la app
+
+El script público ARM64 genera también `app-update.json` e incrementa el número de compilación respecto del manifiesto anterior. Publica el APK y ese JSON juntos en la rama principal de GitHub para que las instalaciones con el actualizador detecten la versión nueva. Usa la misma clave de firma. Las instrucciones completas, incluida la primera instalación manual, están en [actualizaciones Android](../docs/actualizaciones-android.md).
+
+Para fijar un número superior al anterior: `.\scripts\build-apk.ps1 -BuildNumber 10`.
+Los comandos Flutter directos de abajo no generan el manifiesto: para publicar una actualización usa el script.
+
 Requisitos: Flutter en `PATH`, Android SDK y Java configurados (Android Studio), licencias aceptadas y dependencias descargadas. Comprobar con `flutter doctor`. Ejecuta desde la raíz del repositorio en PowerShell:
 
 ```powershell

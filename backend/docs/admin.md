@@ -1,5 +1,17 @@
 # Panel administrativo de la base de datos
 
+## Corrección CORS del puerto 3000 — 2026-11-14
+
+Se verificó que Render respondía al preflight de `http://localhost:5500` con 200,
+pero al de `http://localhost:3000` con 400 sin `Access-Control-Allow-Origin`.
+El puerto forma parte del origen: permitir 5500 no permite 3000.
+
+En **Render → Environment**, editar la variable existente `ADMIN_ALLOWED_ORIGINS`
+con los cuatro orígenes del ejemplo siguiente, guardar y desplegar. No crear una
+segunda variable del mismo nombre. El `.env` local y los valores predeterminados
+del código no sustituyen una variable ya definida en Render. Después, recargar
+el HTML con `Ctrl+F5`. Se conserva la autenticación remota; no se usa `*`.
+
 ## Consultar Render desde el HTML local — 2026-11-13
 
 El formulario contiene solo usuario y contraseña: la dirección de Render es fija.
@@ -21,7 +33,7 @@ Antes de usarlo, configura en **Render → Environment**:
 ADMIN_ENABLED=true
 ADMIN_USER=tu_usuario_administrativo
 ADMIN_PASSWORD=una_contrasena_aleatoria_de_al_menos_24_caracteres
-ADMIN_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+ADMIN_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:3000,http://localhost:3000
 ```
 
 Usa una contraseña real independiente de Aiven y guarda los cambios con despliegue.
@@ -67,7 +79,7 @@ contrase?a. Para consultar mediante el backend local, abre directamente
 El backend permite estos orígenes locales mediante:
 
 ```dotenv
-ADMIN_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500
+ADMIN_ALLOWED_ORIGINS=http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:3000,http://localhost:3000
 ```
 
 Si Live Server utiliza otro puerto, añade su origen local exacto, separado por comas, y reinicia el backend. No uses `*`. Tanto el origen como la conexión deben ser locales para acceder sin contraseña. Al abrir mediante FastAPI en `/admin/`, también se entra automáticamente.

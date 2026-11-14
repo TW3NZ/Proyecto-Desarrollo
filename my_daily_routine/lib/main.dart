@@ -17,6 +17,7 @@ import 'screens/avatar.dart';
 import 'data/avatar_store.dart';
 import 'data/tareas_store.dart';
 import 'data/usuarios_store.dart';
+import 'widgets/common/app_update_gate.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +65,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      builder: (context, child) =>
+          AppUpdateGate(child: child ?? const SizedBox.shrink()),
       scrollBehavior: const AppScrollBehavior(),
       initialRoute: UsuariosStore.usuarioActual != null
           ? AppRoutes.home

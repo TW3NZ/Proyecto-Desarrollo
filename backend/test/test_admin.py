@@ -39,10 +39,13 @@ def test_loopback_does_not_require_credentials(monkeypatch):
     assert remote.get('/admin/api/schema').status_code == 401
 
 
-def test_live_server_preflight_and_authentication(client, monkeypatch):
+@pytest.mark.parametrize('origin', [
+    'http://127.0.0.1:5500', 'http://localhost:5500',
+    'http://127.0.0.1:3000', 'http://localhost:3000',
+])
+def test_live_server_preflight_and_authentication(client, monkeypatch, origin):
     connect = MagicMock()
     monkeypatch.setattr(admin, 'get_connection', connect)
-    origin = 'http://127.0.0.1:5500'
     headers = {'Origin': origin, 'Access-Control-Request-Method': 'GET',
                'Access-Control-Request-Headers': 'authorization'}
     response = client.options('/admin/api/schema', headers=headers)
