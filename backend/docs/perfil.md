@@ -26,6 +26,13 @@ Los campos desconocidos y valores fuera del catálogo/rango se rechazan.
 
 ## Persistencia y cálculo
 
+**Actualización 2026-11-14:** el cálculo vigente está documentado en
+[decisiones de estadísticas](../../docs/decisiones-estadisticas.md). Las cuentas
+nuevas empiezan en 100; los saldos se actualizan mediante eventos únicos de
+vencimiento y finalización. La recuperación es `30 × W / (N × K)` y la penalización
+única `10 × W / K`. Las reglas de recálculo histórico descritas debajo corresponden
+a la versión inicial y ya no se ejecutan. Los saldos existentes se conservan.
+
 - `Tarea` y `TareaCategoria` ya guardan propietario y finalización.
 - `Estadistica` conserva una fila por `idUsu`, con valores `DECIMAL(8,4)`.
 - `PerfilUsuario` tiene PK/FK `idUsu`, JSON `avatar` y JSON `preferencias`.
@@ -46,6 +53,16 @@ Los campos desconocidos y valores fuera del catálogo/rango se rechazan.
   puntos o un registro de recompensas; no modificar esta fórmula silenciosamente.
 
 ## Migración y despliegue
+
+Después de la migración 001, aplicar la 002 para esta versión:
+
+```powershell
+.\.venv\Scripts\python.exe -m backend.utils.migrate_profile --migration 002 --apply
+```
+
+La 002 configura el valor predeterminado 100 y crea `EventoPuntuacion`. Ya aplicada
+en Aiven; no elimina tareas ni reinicia saldos. Desplegar el nuevo backend después
+de migrar, sin mantener instancias antiguas que recalculen los saldos.
 
 La migración `database/migrations/001_perfil_usuario.sql` amplía las cuatro
 columnas de estadísticas y crea `PerfilUsuario`. No borra usuarios ni tareas.

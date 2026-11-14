@@ -12,6 +12,7 @@ import '../widgets/equipos/tarjeta_accion_team.dart';
 import '../widgets/equipos/tarjeta_id_usuario.dart';
 import '../widgets/equipos/tarjeta_team_activo.dart';
 import 'dentro_team.dart';
+import 'equipos_remotos.dart';
 
 /// Pantalla "Coworking" (sección Teams).
 ///
@@ -46,14 +47,14 @@ class _TeamsScreenState extends State<TeamsScreen> {
   void _entrarAlTeam(Equipo equipo) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) =>
-            DentroTeamScreen(equipo: equipo, usuarioId: _usuarioId),
+        builder: (_) => DentroTeamScreen(equipo: equipo, usuarioId: _usuarioId),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_usuarioId > 0) return EquiposRemotosScreen(key: ValueKey(_usuarioId));
     return Scaffold(
       body: Column(
         children: [

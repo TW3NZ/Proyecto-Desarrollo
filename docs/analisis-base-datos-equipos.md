@@ -1,5 +1,7 @@
 # Análisis de la base de datos para equipos
 
+Actualización 2026-11-14: este análisis histórico precede a la implementación. El usuario confirmó participantes seleccionados por tarea, finalización cuando todos marcan su parte y recompensa completa por asignado. La migración 003 y las transacciones implementan esas garantías; ver [decisiones-teams.md](decisiones-teams.md) y [contrato de equipos](../backend/docs/equipos.md).
+
 Fecha: 2026-11-10. Fuente: `database/BD_My_Daily_Routine.sql`, contrastada con los modelos, almacenes y pantallas Flutter actuales. Es una revisión estática del script; no se conectó a una instancia SQL ni se ejecutaron sus instrucciones. No se modificó el esquema ni se implementó la función colaborativa.
 
 ## Objetivo confirmado
