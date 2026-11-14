@@ -172,11 +172,13 @@ async def protect_admin_responses(request: Request, call_next):
 @app.post("/avatar/suggest", response_model=Suggestion)
 async def avatar_suggest(request: Request):
     token = os.environ.get("AVATAR_SERVICE_TOKEN", "")
-    if len(token) < 24:
-        raise HTTPException(503, "Configura un token local de al menos 24 caracteres.")
     supplied = request.headers.get("authorization", "")
-    if not hmac.compare_digest(supplied.encode(), f"Bearer {token}".encode()):
-        raise HTTPException(401, "Acceso al servicio no autorizado.")
+    shared_access = len(token) >= 24 and hmac.compare_digest(supplied.encode(), f"Bearer {token}".encode())
+    if not shared_access:
+        scheme, _, credentials = supplied.partition(' ')
+        if scheme.lower() != 'bearer' or not credentials:
+            raise HTTPException(401, "Acceso al servicio no autorizado.")
+        usuario_actual_id(HTTPAuthorizationCredentials(scheme=scheme, credentials=credentials))
     body = bytearray()
     async for chunk in request.stream():
         if len(body) + len(chunk) > MAX_BODY:

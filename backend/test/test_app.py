@@ -35,6 +35,22 @@ def test_unauthorized_never_calls_openai(client, monkeypatch):
     mock.assert_not_called()
 
 
+def test_photo_accepts_user_jwt_without_shared_secret(client, monkeypatch):
+    from backend.core.seguridad import crear_token
+    monkeypatch.setenv('SECRET_KEY', 'test-jwt-secret-' * 4)
+    monkeypatch.setenv('ALGORITHM', 'HS256')
+    monkeypatch.delenv('AVATAR_SERVICE_TOKEN', raising=False)
+    token = crear_token({'idUsu': 42})
+    mock = AsyncMock(return_value=api.Suggestion(status='no_face', **{field: None for field in
+        ['skin', 'hair', 'shirt', 'trousers', 'hairstyle', 'eyes', 'nose', 'mouth']}))
+    monkeypatch.setattr(api, 'suggest', mock)
+    response = client.post('/avatar/suggest', headers={'Authorization': f'Bearer {token}'},
+                           json={'image_base64': photo(), 'character_type': 'hombre'})
+    assert response.status_code == 200
+    mock.assert_awaited_once()
+    assert client.post('/avatar/suggest', headers={'Authorization': 'Bearer invalid'}, json={}).status_code == 401
+
+
 def test_bad_input_is_not_echoed_or_sent(client, monkeypatch):
     mock = AsyncMock()
     monkeypatch.setattr(api, "suggest", mock)

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../models/avatar_config.dart';
+import '../data/usuarios_store.dart';
 
 class AvatarPhotoException implements Exception {
   final String message;
@@ -15,13 +16,17 @@ class AvatarPhotoException implements Exception {
 class AvatarPhotoService {
   final http.Client _client;
   final String baseUrl;
-  final String token;
+  final String _token;
+  String get token => UsuariosStore.token ?? _token;
 
   AvatarPhotoService({
     http.Client? client,
     this.baseUrl = const String.fromEnvironment('AVATAR_API_URL'),
-    this.token = const String.fromEnvironment('AVATAR_API_TOKEN'),
-  }) : _client = client ?? http.Client();
+    String token = const String.fromEnvironment('AVATAR_API_TOKEN'),
+    // Keep the public named parameter `token` for existing callers and tests.
+    // ignore: prefer_initializing_formals
+  }) : _token = token,
+       _client = client ?? http.Client();
 
   bool get configured => baseUrl.isNotEmpty && token.length >= 24;
 

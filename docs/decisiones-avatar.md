@@ -1,5 +1,12 @@
 # Decisiones sobre el avatar
 
+## 2026-11-13 — APK descargable sin token compartido
+
+Para publicar el APK conectado a Render, el servicio de fotos admite el JWT
+de una sesión real. Flutter lo utiliza después de iniciar sesión; la compilación
+pública no contiene el token compartido del servicio ni claves de OpenAI.
+El token de desarrollo anterior sigue siendo compatible con compilaciones privadas.
+
 ## 2026-11-12 — Vestuario superpuesto al personaje
 
 A petición del usuario, se añade un sistema de prendas que se dibujan sobre el avatar. La primera prenda es **Developer skin** (camiseta de estilo GitHub), disponible solo para el personaje hombre porque su silueta encaja únicamente con el torso masculino.

@@ -6,17 +6,17 @@ Requisitos: Flutter en `PATH`, Android SDK y Java configurados (Android Studio),
 .\scripts\build-apk.ps1
 ```
 
-El script ejecuta `flutter pub get`, construye un APK release para teléfonos **ARM64** y lo copia a `artifacts/my-daily-rutine-android-arm64.apk`. Esa es la descarga enlazada al inicio del README principal. No incluye claves ni tokens locales; la personalización manual funciona y el análisis de fotos requiere configuración adicional.
+El script ejecuta `flutter pub get`, construye un APK release para teléfonos **ARM64** y lo copia a `my-daily-rutine-android-arm64.apk` en la raíz del repositorio. Esa es la descarga enlazada al inicio del README principal. Incluye las URLs públicas de Render y usa la sesión del usuario para el análisis de fotos; no incluye claves ni tokens compartidos. El backend debe tener desplegado el soporte de JWT en `/avatar/suggest`.
 
 Si prefieres los comandos directos:
 
 ```powershell
 cd my_daily_routine
 flutter pub get
-flutter build apk --release --target-platform android-arm64
+flutter build apk --release --target-platform android-arm64 --dart-define=API_URL=https://my-daily-rutine.onrender.com --dart-define=AVATAR_API_URL=https://my-daily-rutine.onrender.com
 ```
 
-Resultado: `my_daily_routine/build/app/outputs/flutter-apk/app-release.apk`. Para actualizar el enlace del README, usa el script o copia ese archivo a la ruta `artifacts` indicada. En otro equipo, el enlace de descarga requiere que el APK también se haya incluido en el repositorio compartido; no basta con subir el README. No se publica automáticamente en GitHub Releases ni en Play Store.
+Resultado: `my_daily_routine/build/app/outputs/flutter-apk/app-release.apk`. Para actualizar el enlace del README, usa el script o copia ese archivo a la raiz del proyecto. En otro equipo, el enlace de descarga requiere que el APK también se haya incluido en el repositorio compartido; no basta con subir el README. No se publica automáticamente en GitHub Releases ni en Play Store.
 
 Para un emulador x86_64:
 
@@ -24,7 +24,7 @@ Para un emulador x86_64:
 .\scripts\build-apk.ps1 -TargetPlatform android-x64
 ```
 
-## APK con servicio de fotos
+## APK privado con token compartido (compatibilidad)
 
 El backend debe estar ejecutándose en una dirección **HTTPS accesible desde el teléfono**. Crea un JSON privado con `API_URL` (usuarios y tareas), `AVATAR_API_URL` y `AVATAR_API_TOKEN`; nunca incluyas `OPENAI_API_KEY` ni uses `backend/.env`. Las dos URLs actuales son `https://my-daily-rutine.onrender.com`. Puedes usar `.tools/avatar-flutter.json`, ya configurado para Render, como `-ConfigFile`. Después:
 
