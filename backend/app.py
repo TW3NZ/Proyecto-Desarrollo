@@ -144,7 +144,7 @@ def health():
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[origin.strip() for origin in os.environ.get(
-        "ADMIN_ALLOWED_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500"
+        "ADMIN_ALLOWED_ORIGINS", "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:3000,http://localhost:3000"
     ).split(",") if origin.strip() and origin.strip() != "*"],
     allow_credentials=False,
     allow_methods=["GET"],
@@ -575,7 +575,7 @@ def local_admin_request(request: Request) -> bool:
     origin = request.headers.get('origin')
     if origin:
         allowed = {item.strip() for item in os.environ.get(
-            'ADMIN_ALLOWED_ORIGINS', 'http://127.0.0.1:5500,http://localhost:5500'
+            'ADMIN_ALLOWED_ORIGINS', 'http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:3000,http://localhost:3000'
         ).split(',')}
         allowed.add(str(request.base_url).rstrip('/'))
         if origin not in allowed or not loopback(urlsplit(origin).hostname):
