@@ -85,7 +85,7 @@ Ambos modos exigen `VERIFY_IDENTITY`. El cliente MySQL necesita leer el certific
 
 ## 5. Script de creación: solo para una base nueva
 
-`BD_My_Daily_Routine.sql` crea la base y sus 10 tablas. **La base actual ya está inicializada; no vuelvas a ejecutar el script sobre ella.** No es una migración ni está preparado para repetirse.
+`BD_My_Daily_Routine.sql` crea la base y sus tablas, incluidos perfiles, puntuación y equipos. **La base actual ya está inicializada; no vuelvas a ejecutar el script sobre ella.** No es una migración ni está preparado para repetirse.
 
 Para inicializar otro servicio nuevo, configura sus credenciales en el `.env` y usa temporalmente `DB_NAME=defaultdb`, porque la base de la aplicación todavía no existe. Abre la sesión del paso 4 y ejecuta, manteniendo PowerShell inicialmente en la raíz del repositorio:
 
@@ -110,8 +110,16 @@ Después cambia `DB_NAME` a `BD_my_daily_routine` y repite la prueba del paso 3.
 | `2003` / `2005` | Estado del servicio, host, puerto, red y restricciones de acceso. |
 | `2026` | Certificado CA y coincidencia del host con el certificado del servicio. |
 
-El backend unificado ya contiene registro y login de usuarios mediante MySQL. Los endpoints de equipos y tareas siguen pendientes. El conector Python está en `backend/database/`; los scripts SQL permanecen en esta carpeta `database/` de la raíz. Para probar ese conector directamente, ejecuta `.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion` desde la raíz. Los comandos para ejecutar la API y probar Flutter están en [backend/README.md](../backend/README.md).
+El backend unificado contiene registro, login, tareas, perfil y equipos mediante MySQL. El conector Python está en `backend/database/`; los scripts SQL permanecen en esta carpeta `database/` de la raíz. Para probar ese conector directamente, ejecuta `.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion` desde la raíz. Los comandos para ejecutar la API y probar Flutter están en [backend/README.md](../backend/README.md).
 # Migración de perfiles — 2026-11-13
+
+Equipos requiere `003_equipos.sql`, después de 001 y 002:
+`python -m backend.utils.migrate_profile --migration 003 --apply`.
+Aplicada al Aiven de desarrollo el 2026-11-14. **No repetir 003** ni aplicarla después del esquema completo actualizado. Añade invitaciones, participantes por tarea y garantías de pertenencia. Ver [prueba de equipos](../backend/docs/equipos.md).
+
+La puntuación dinámica requiere también la migración 002:
+`python -m backend.utils.migrate_profile --migration 002 --apply`.
+Añade `EventoPuntuacion` y defaults de 100 sin reiniciar los saldos existentes.
 
 Para una base existente, usar `migrations/001_perfil_usuario.sql` mediante
 `python -m backend.utils.migrate_profile --apply` desde la raíz del repositorio.

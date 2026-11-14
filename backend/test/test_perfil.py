@@ -48,22 +48,22 @@ def test_rejects_owner_and_invalid_appearance(setup, changes):
     connection.commit.assert_not_called()
 
 
-def test_scores_are_server_owned_and_fractional(setup):
+def test_scores_are_server_owned_and_fractional(setup, monkeypatch):
     client, connection, cursor = setup
     cursor.fetchone.side_effect = [{'idUsu': 42}, None]
-    cursor.fetchall.return_value = [{'idCategoria': 1, 'puntos': 1.6667}]
+    monkeypatch.setattr(api.perfil, 'actualizar_estadisticas', lambda c, u: {'inteligencia': 1.6667, 'finanzas': 100, 'salud': 100, 'disciplina': 100})
     result = client.get('/usuarios/me/estadisticas', headers={'Authorization': 'Bearer 42'})
     assert result.status_code == 200
     assert result.json()['inteligencia'] == 1.6667
     assert result.json()['usuarioId'] == 42
-    assert result.json()['finanzas'] == 0
+    assert result.json()['finanzas'] == 100
     assert client.put('/usuarios/me/estadisticas/preferencias', headers={'Authorization': 'Bearer 42'},
                       json={'inteligencia': 100}).status_code == 422
 
 
 def test_completion_rolls_back_when_score_write_fails(setup):
     client, connection, cursor = setup
-    cursor.fetchone.side_effect = [{'idUsu': 42}, {'idTarea': 8}]
+    cursor.fetchone.side_effect = [{'idUsu': 42}, {'idTarea': 8, 'idProyecto': None}]
     def execute(sql, params):
         if 'INSERT INTO Estadistica' in sql:
             raise RuntimeError('write failed')

@@ -28,7 +28,8 @@ from backend.database.db import get_connection
 from backend.core.seguridad import crear_token, password_hash, verificar_token
 from backend.utils.generadores import generar_id_unico, generar_id_unico_tarea
 from backend.database import admin as explorer
-from backend.database import perfil
+from backend.database import perfil, puntuacion, equipos
+from backend.models.equipos import CrearEquipo, UnirseEquipo, CrearProyecto, AsignarTarea
 from backend.models.perfil import AvatarConfig, PreferenciasEstadisticas
 
 load_settings()
@@ -265,6 +266,7 @@ def create_user(usuario: createUser):
             )
 
             cursor.execute(sql, valores)
+            puntuacion.inicializar(cursor, valores[0])
 
         conexion.commit()
 
@@ -355,12 +357,15 @@ def guardar_preferencias(config: PreferenciasEstadisticas, id_usuario: int = Dep
 # FUNCIÓN PARA CREAR TAREA
 @app.post("/tareas", status_code=201)
 def nueva_tarea(nuevaTarea: tareaCreate, id_usuario: int = Depends(usuario_actual_id)):
+    if nuevaTarea.idProyecto is not None or nuevaTarea.idResponsable is not None:
+        raise HTTPException(422, 'Usa el flujo de equipos para asignar tareas de proyecto.')
     conexion = get_connection()
 
     try:
         id_tarea = generar_id_unico_tarea()
 
         with conexion.cursor() as cursor:
+            perfil.lock_usuario(cursor, id_usuario)
             sql = """
                 INSERT INTO Tarea
                 (idTarea, idUsu, responsable_id, idProyecto,
@@ -434,7 +439,7 @@ def historial_tareas(id_usuario: int = Depends(usuario_actual_id)):
                     ON t.idTarea = tc.idTarea
                 INNER JOIN Categoria c
                     ON tc.idCategoria = c.idCategoria
-                WHERE t.idUsu = %s
+                WHERE t.idUsu = %s AND t.idProyecto IS NULL
                 ORDER BY t.fecha DESC
             """
 
@@ -477,11 +482,16 @@ def historial_tareas(id_usuario: int = Depends(usuario_actual_id)):
 def completar_tarea(idTarea: int, id_usuario: int = Depends(usuario_actual_id)):
     def operation(cursor):
         cursor.execute(
-            'SELECT idTarea FROM Tarea WHERE idTarea = %s AND idUsu = %s FOR UPDATE',
+            'SELECT idTarea, prioridad, completada, idProyecto FROM Tarea WHERE idTarea = %s AND idUsu = %s FOR UPDATE',
             (idTarea, id_usuario),
         )
-        if cursor.fetchone() is None:
+        tarea = cursor.fetchone()
+        if tarea is None:
             raise HTTPException(404, 'Tarea no encontrada.')
+        if tarea['idProyecto'] is not None:
+            raise HTTPException(403, 'Completa tu parte desde el equipo.')
+        puntuacion.sincronizar(cursor, id_usuario)
+        puntuacion.recompensar(cursor, id_usuario, tarea)
         cursor.execute(
             'UPDATE Tarea SET completada = TRUE WHERE idTarea = %s AND idUsu = %s',
             (idTarea, id_usuario),
@@ -489,6 +499,59 @@ def completar_tarea(idTarea: int, id_usuario: int = Depends(usuario_actual_id)):
         return {'mensaje': 'Tarea completada correctamente',
                 'estadisticas': perfil.estadisticas(cursor, id_usuario)}
     return perfil_transaccion(id_usuario, operation)
+
+
+# Teams share this FastAPI entry point and the existing JWT authentication.
+def equipo_transaccion(operation):
+    connection = get_connection()
+    try:
+        with connection.cursor() as cursor:
+            # Membership reads happen before user locks. Read the latest balances
+            # after those locks, including rewards committed by another team.
+            cursor.execute('SET TRANSACTION ISOLATION LEVEL READ COMMITTED')
+            result = operation(cursor)
+        connection.commit()
+        return result
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+@app.get('/equipos')
+def mis_equipos(uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.listar(c,uid))
+
+
+@app.post('/equipos', status_code=201)
+def crear_equipo(data: CrearEquipo, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.crear(c,uid,data))
+
+
+@app.post('/equipos/unirse')
+def unirse_equipo(data: UnirseEquipo, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.unirse(c,uid,data.codigo))
+
+
+@app.get('/equipos/{equipo_id}')
+def detalle_equipo(equipo_id: int, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.detalle(c,equipo_id,uid))
+
+
+@app.post('/equipos/{equipo_id}/proyectos', status_code=201)
+def crear_proyecto_equipo(equipo_id: int, data: CrearProyecto, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.crear_proyecto(c,equipo_id,uid,data))
+
+
+@app.post('/equipos/{equipo_id}/proyectos/{proyecto_id}/tareas', status_code=201)
+def asignar_tarea_equipo(equipo_id: int, proyecto_id: int, data: AsignarTarea, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.asignar(c,equipo_id,proyecto_id,uid,data))
+
+
+@app.patch('/equipos/{equipo_id}/tareas/{tarea_id}/mi-parte')
+def completar_mi_parte(equipo_id: int, tarea_id: int, uid: int = Depends(usuario_actual_id)):
+    return equipo_transaccion(lambda c: equipos.completar_parte(c,equipo_id,tarea_id,uid))
 
 
 # Administrative HTML and JSON API.

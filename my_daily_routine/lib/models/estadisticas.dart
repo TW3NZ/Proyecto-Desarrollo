@@ -5,10 +5,10 @@
 class Estadisticas {
   Estadisticas({
     required this.usuarioId,
-    this.inteligencia = 0,
-    this.finanzas = 0,
-    this.salud = 0,
-    this.disciplina = 0,
+    this.inteligencia = 100,
+    this.finanzas = 100,
+    this.salud = 100,
+    this.disciplina = 100,
     this.inteligenciaActiva = true,
     this.finanzasActiva = true,
     this.saludActiva = true,

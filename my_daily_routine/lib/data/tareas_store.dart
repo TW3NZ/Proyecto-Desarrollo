@@ -117,6 +117,7 @@ class TareasStore extends ChangeNotifier {
           ..clear()
           ..addAll(restored);
         IdTemporalStore.reservar(restored.map((tarea) => tarea.id));
+        EstadisticasStore.instancia.procesarVencidas(_tareas);
       }
       loadFailed = false;
     } catch (_) {
@@ -174,10 +175,22 @@ class TareasStore extends ChangeNotifier {
       }
     }
 
+    final pendientes = _tareas
+        .where(
+          (t) =>
+              !t.completada &&
+              t.proyectoId == null &&
+              t.usuarioId == tarea.usuarioId,
+        )
+        .length;
+    if (!usuarioReal) EstadisticasStore.instancia.procesarVencidas(_tareas);
     tarea.completada = !estabaCompletada;
 
     if (!estabaCompletada && tarea.completada) {
-      EstadisticasStore.instancia.procesarTareaCompletada(tarea);
+      EstadisticasStore.instancia.procesarTareaCompletada(
+        tarea,
+        pendientes: pendientes,
+      );
     }
 
     notifyListeners();

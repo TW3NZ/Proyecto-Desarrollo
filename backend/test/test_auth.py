@@ -29,11 +29,13 @@ def test_registration_hashes_password_and_commits(connection):
     response = TestClient(api.app).post("/usuarios", json=registration())
     assert response.status_code == 201
     cursor = connection.cursor.return_value.__enter__.return_value
-    sql, params = cursor.execute.call_args.args
+    sql, params = cursor.execute.call_args_list[0].args
     assert "INSERT INTO Usuario" in sql
     assert params[0] == 12345678
     assert params[5] != "test-password"
     assert api.password_hash.verify("test-password", params[5])
+    assert "100,100,100,100" in cursor.execute.call_args.args[0]
+    assert cursor.execute.call_args.args[1] == (12345678,)
     connection.commit.assert_called_once()
     connection.rollback.assert_not_called()
     connection.close.assert_called_once()

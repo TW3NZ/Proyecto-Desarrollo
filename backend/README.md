@@ -184,3 +184,7 @@ La prueba real envía la ilustración del avatar incluida en el proyecto y muest
 - **ModuleNotFoundError:** ejecuta desde la raíz e instala las dependencias en `.venv`.
 
 Estos comandos son para el emulador Android y una compilación debug. Para un teléfono físico se necesita una dirección alcanzable desde el dispositivo; para distribución, HTTPS y autenticación real. Consulta [el alcance y tratamiento de fotos](../docs/avatar-foto.md).
+## Equipos colaborativos
+
+Creación, unión con código, proyectos y tareas con varios asignados: consultar
+[el contrato y la guía de prueba](docs/equipos.md). Requiere migración 003 y cuentas reales.

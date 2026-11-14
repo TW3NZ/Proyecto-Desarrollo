@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/estadisticas.dart';
 import '../services/perfil_api_service.dart';
 import '../models/tarea_modelo.dart';
+import '../models/puntuacion.dart';
 import 'usuarios_store.dart';
 
 class EstadisticasStore extends ChangeNotifier {
@@ -118,10 +119,38 @@ class EstadisticasStore extends ChangeNotifier {
   bool get saludActiva => actual.saludActiva;
   bool get disciplinaActiva => actual.disciplinaActiva;
 
-  void procesarTareaCompletada(NuevaTarea tarea) {
+  final Set<(int, int)> _recompensadas = {};
+  final Set<(int, int)> _penalizadas = {};
+
+  void procesarTareaCompletada(NuevaTarea tarea, {int pendientes = 1}) {
+    if (tarea.usuarioId > 0 ||
+        !_recompensadas.add((tarea.usuarioId, tarea.id))) {
+      return;
+    }
+    _aplicarTarea(tarea, puntosTarea(tarea.prioridad, pendientes));
+  }
+
+  void procesarVencidas(Iterable<NuevaTarea> tareas) {
+    final now = DateTime.now();
+    final hoy = DateTime(now.year, now.month, now.day);
+    for (final tarea in tareas) {
+      final fin = tarea.fechaFinalizacion;
+      if (tarea.usuarioId > 0 ||
+          tarea.proyectoId != null ||
+          tarea.completada ||
+          fin == null) {
+        continue;
+      }
+      if (DateTime(fin.year, fin.month, fin.day).isBefore(hoy) &&
+          _penalizadas.add((tarea.usuarioId, tarea.id))) {
+        _aplicarTarea(tarea, puntosTarea(tarea.prioridad, 1, vencida: true));
+      }
+    }
+  }
+
+  void _aplicarTarea(NuevaTarea tarea, double puntosTotales) {
     if (tarea.usuarioId > 0 || tarea.categorias.isEmpty) return;
 
-    final puntosTotales = _puntosPorPrioridad(tarea.prioridad);
     final puntosPorCategoria = puntosTotales / tarea.categorias.length;
     final estadisticas = paraUsuario(tarea.usuarioId);
 
@@ -157,20 +186,9 @@ class EstadisticasStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  double _puntosPorPrioridad(PrioridadTarea prioridad) {
-    switch (prioridad) {
-      case PrioridadTarea.baja:
-        return 5;
-      case PrioridadTarea.media:
-        return 10;
-      case PrioridadTarea.alta:
-        return 15;
-    }
-  }
-
   double _sumarPuntos(double actual, double puntos) {
     final nuevoValor = actual + puntos;
-    return nuevoValor >= 100 ? 100 : nuevoValor;
+    return nuevoValor.clamp(0.0, 100.0);
   }
 
   Future<void> cambiarInteligenciaActiva() => _toggle('inteligenciaActiva');
