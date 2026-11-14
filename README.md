@@ -1,12 +1,12 @@
-[Descargar APK de prueba para Android ARM64](artifacts/my-daily-rutine-android-arm64.apk) · [Cómo compilar el APK](scripts/README.md)
+[Descargar APK de prueba para Android ARM64](https://github.com/TW3NZ/Proyecto-Desarrollo/raw/refs/heads/master/my-daily-rutine-android-arm64.apk) · [Cómo compilar el APK](scripts/README.md)
 
 # My Daily Routine
 
-El APK incluye la personalización manual y no lleva credenciales del servicio de fotos. Es una compilación de prueba con firma de desarrollo; consulta la guía para generar una versión conectada a tu backend HTTPS.
+El APK está en la raíz del repositorio y se conecta a la API de Render. El análisis de fotos usa la sesión del usuario; no incluye claves de OpenAI ni contraseñas del backend. Es una compilación de prueba ARM64 con firma de desarrollo.
 
 El avatar del inicio refleja el progreso general con expresiones de cansancio, aburrimiento, tranquilidad o alegría. Puedes probarlas en **Tu avatar → Expresiones**. Los umbrales iniciales y sus límites están documentados en [las decisiones del avatar](docs/decisiones-avatar.md).
 
-Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Incluye flujos locales y un servicio FastAPI para sugerir atributos del avatar desde una foto. Las tareas personales se conservan localmente; las cuentas, estadísticas y equipos siguen en memoria.
+Aplicación móvil Flutter para organizar tareas, seguir su cumplimiento y consultar estadísticas. Las cuentas reales guardan tareas, estadísticas y apariencia en MySQL mediante FastAPI; la cuenta de práctica conserva flujos locales. La colaboración por equipos sigue en desarrollo.
 
 **Versión del paquete:** `0.1.0+1`
 

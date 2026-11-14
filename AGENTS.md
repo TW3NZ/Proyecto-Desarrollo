@@ -43,6 +43,8 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 
 ## Continuidad y documentación
 
+- Desde el 2026-11-13 el APK de prueba público se guarda en la raíz como `my-daily-rutine-android-arm64.apk` y se enlaza para descarga desde la primera línea del README. Compilarlo con las URLs públicas de Render y usar el JWT del usuario para fotos; no incluir el token compartido ni secretos del backend. Las compilaciones privadas permanecen ignoradas en `artifacts/`.
+
 - El panel HTML abierto con Live Server usa una URL fija de Render y muestra únicamente usuario y contraseña administrativos (2026-11-13). Reutilizar `ADMIN_USER` y `ADMIN_PASSWORD` del entorno del servidor; no duplicar variables ni pedir al usuario la URL en el formulario.
 
 - Consultar `docs/decisiones-avatar.md` antes de trabajar en el avatar.

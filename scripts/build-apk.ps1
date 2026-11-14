@@ -7,6 +7,10 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $appRoot = Join-Path $repoRoot 'my_daily_routine'
 $buildArgs = @('build', 'apk', '--release', '--target-platform', $TargetPlatform)
+if (!$ConfigFile) {
+    $buildArgs += '--dart-define=API_URL=https://my-daily-rutine.onrender.com'
+    $buildArgs += '--dart-define=AVATAR_API_URL=https://my-daily-rutine.onrender.com'
+}
 if ($ConfigFile) {
     $configPath = (Resolve-Path -LiteralPath $ConfigFile).Path
     $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
@@ -29,11 +33,11 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Falló flutter pub get.' }
     & flutter @buildArgs
     if ($LASTEXITCODE -ne 0) { throw 'Falló la compilación del APK.' }
-    $destination = Join-Path $repoRoot 'artifacts'
+    $destination = if ($ConfigFile) { Join-Path $repoRoot 'artifacts' } else { $repoRoot }
     New-Item -ItemType Directory -Force -Path $destination | Out-Null
     $name = if ($ConfigFile) { "my-daily-rutine-$TargetPlatform-private.apk" } else { "my-daily-rutine-$TargetPlatform.apk" }
     Copy-Item -LiteralPath (Join-Path $appRoot 'build/app/outputs/flutter-apk/app-release.apk') -Destination (Join-Path $destination $name) -Force
-    Write-Output "APK generado: artifacts/$name"
+    Write-Output "APK generado: $(Join-Path $destination $name)"
 } finally {
     Pop-Location
 }
