@@ -20,23 +20,15 @@ import 'token_storage.dart';
 class UsuariosStore {
   UsuariosStore._();
 
-  static const nickNamePractica = 'admin';
-  static const passwordPractica = '12345678';
+  /// Centinela de "sin sesión" que conservan las pantallas en modo local.
+  ///
+  /// La cuenta de práctica se retiró en la versión 1.0; el valor se mantiene
+  /// para no cambiar las comprobaciones `id <= 0` existentes.
   static const int idUsuarioPractica = -1;
 
   static const _profileKey = 'usuario.actual.v1';
 
-  static final Usuario _usuarioPractica = Usuario(
-    id: idUsuarioPractica,
-    name: 'Admin',
-    lastName: 'Práctica',
-    nickName: nickNamePractica,
-    email: 'admin@mydailyroutine.local',
-    password: passwordPractica,
-    createDate: DateTime(2026, 1, 1),
-  );
-
-  static final List<Usuario> _usuarios = [_usuarioPractica];
+  static final List<Usuario> _usuarios = [];
   static String? _nickConTutorialPendiente;
   static int? _usuarioActualId;
   static String? _token;
@@ -122,16 +114,11 @@ class UsuariosStore {
     _establecerSesionApi(token, perfil);
   }
 
-  /// Inicia sesión real contra FastAPI. La cuenta de práctica (solo desarrollo)
-  /// no llama a la API ni escribe en el almacenamiento seguro.
+  /// Inicia sesión real contra FastAPI.
   static Future<void> iniciarSesion(
     String identificador,
     String password,
   ) async {
-    if (_esCuentaPractica(identificador, password)) {
-      _establecerSesionPractica();
-      return;
-    }
     final resultado = await api.login(identificador.trim(), password);
     _establecerSesionApi(resultado.token, resultado.usuario);
     unawaited(_guardarPersistencia(resultado.token, resultado.usuario));
@@ -143,37 +130,15 @@ class UsuariosStore {
     _nickConTutorialPendiente = usuario.nickName;
   }
 
-  /// Autenticación síncrona de la cuenta de práctica (solo desarrollo).
-  /// Mantenida por compatibilidad; la autenticación real es [iniciarSesion].
-  static bool autenticar(String identificador, String password) {
-    if (!_esCuentaPractica(identificador, password)) return false;
-    _establecerSesionPractica();
-    return true;
-  }
-
   /// Cierra la sesión: borra el estado en memoria y, en segundo plano, el JWT
   /// del almacenamiento seguro y el perfil persistido. Solo toca el
-  /// almacenamiento si había una sesión real persistida (la cuenta de práctica
-  /// no persiste nada).
+  /// almacenamiento si había una sesión persistida.
   static void cerrarSesion() {
     final habiaSesionPersistida = _token != null;
     _limpiarMemoria();
     if (habiaSesionPersistida) {
       unawaited(_borrarPersistencia());
     }
-  }
-
-  static bool _esCuentaPractica(String identificador, String password) {
-    if (!kDebugMode || password != passwordPractica) return false;
-    final valor = identificador.trim().toLowerCase();
-    return valor == nickNamePractica.toLowerCase() ||
-        valor == _usuarioPractica.email.toLowerCase();
-  }
-
-  static void _establecerSesionPractica() {
-    _token = null;
-    _usuarioActualId = idUsuarioPractica;
-    sessionVersion.value++;
   }
 
   static void _establecerSesionApi(String token, Usuario usuario) {
@@ -188,7 +153,7 @@ class UsuariosStore {
     _token = null;
     _usuarioActualId = null;
     _nickConTutorialPendiente = null;
-    _usuarios.removeWhere((u) => u.id != idUsuarioPractica);
+    _usuarios.clear();
     sessionVersion.value++;
   }
 

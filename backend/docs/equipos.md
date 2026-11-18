@@ -52,7 +52,7 @@ flutter run --dart-define=API_URL=http://10.0.2.2:8000
 5. Con B, actualizar y marcar su parte: la tarea queda completada para ambos. Actualizar A para consultar el nuevo saldo.
 6. Repetir la petición o actualizar no suma de nuevo. Una cuenta no asignada no puede completar partes ajenas.
 
-Las estadísticas tienen tope 100: si ya están en 100, el saldo no sube aunque la tarea genere un evento. La cuenta de práctica conserva el prototipo local y no sirve para probar colaboración remota.
+Las estadísticas tienen tope 100: si ya están en 100, el saldo no sube aunque la tarea genere un evento. Para probar la colaboración remota se necesitan dos cuentas reales registradas contra el backend.
 
 ## Verificación automatizada
 

@@ -6,12 +6,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_daily_routine/data/estadisticas_store.dart';
+import 'package:my_daily_routine/data/token_storage.dart';
 import 'package:my_daily_routine/data/usuarios_store.dart';
 import 'package:my_daily_routine/models/avatar_config.dart';
 import 'package:my_daily_routine/models/avatar_expression.dart';
 import 'package:my_daily_routine/models/tarea_modelo.dart';
+import 'package:my_daily_routine/models/usuario.dart';
+import 'package:my_daily_routine/services/auth_api_service.dart';
 import 'package:my_daily_routine/widgets/avatar/avatar_character.dart';
 import 'package:my_daily_routine/widgets/home/home_scene.dart';
+
+class _MemoryTokenStorage implements TokenStorage {
+  String? _token;
+
+  @override
+  Future<String?> read() async => _token;
+
+  @override
+  Future<void> write(String token) async => _token = token;
+
+  @override
+  Future<void> delete() async => _token = null;
+}
+
+class _FakeAuthApi extends AuthApiService {
+  _FakeAuthApi(this._usuario);
+
+  final Usuario _usuario;
+
+  @override
+  Future<LoginResult> login(String identificador, String password) async =>
+      LoginResult('token-de-prueba', _usuario);
+}
 
 void main() {
   test('Expression thresholds and disabled categories', () {
@@ -30,7 +56,20 @@ void main() {
   testWidgets(
     'Home reacts to earned points and keeps user statistics separate',
     (tester) async {
-      UsuariosStore.autenticar('admin', '12345678');
+      final usuario = Usuario(
+        id: -2,
+        name: 'Usuario',
+        lastName: 'Expresión',
+        nickName: 'avatar_expression_test',
+        email: 'avatar.expression@example.test',
+        password: 'password-segura',
+        createDate: DateTime(2026, 11, 17),
+      );
+      UsuariosStore.api = _FakeAuthApi(usuario);
+      UsuariosStore.tokenStorage = _MemoryTokenStorage();
+      UsuariosStore.writeProfile = (_) async {};
+      UsuariosStore.removeProfile = () async {};
+      await UsuariosStore.iniciarSesion(usuario.nickName, 'password-segura');
       final store = EstadisticasStore.instancia;
       final stats = store.actual;
       stats.inteligencia = 70;
@@ -62,7 +101,7 @@ void main() {
       store.procesarTareaCompletada(task(-99999));
       await tester.pump();
       expect(stats.inteligencia, 70);
-      store.procesarTareaCompletada(task(UsuariosStore.idUsuarioPractica));
+      store.procesarTareaCompletada(task(usuario.id));
       await tester.pump(const Duration(milliseconds: 500));
       expect(
         tester.widget<AvatarCharacter>(find.byType(AvatarCharacter)).expression,

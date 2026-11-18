@@ -53,13 +53,24 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final usuario = Usuario(
+      id: 990000,
+      name: 'Usuario',
+      lastName: 'Prueba',
+      nickName: 'login_directo_test',
+      email: 'login.directo@example.test',
+      password: 'password-segura',
+      createDate: DateTime(2026, 11, 17),
+    );
+    UsuariosStore.api = _FakeAuthApi(usuario);
+
     await tester.runAsync(AvatarResources.load);
     await tester.pumpWidget(const MyApp());
     await tester.pump();
 
     final campos = find.byType(TextField);
-    await tester.enterText(campos.at(0), UsuariosStore.nickNamePractica);
-    await tester.enterText(campos.at(1), UsuariosStore.passwordPractica);
+    await tester.enterText(campos.at(0), usuario.nickName);
+    await tester.enterText(campos.at(1), 'password-segura');
     final iniciarSesion = find.text('Iniciar sesión');
     await tester.ensureVisible(iniciarSesion);
     await tester.tap(iniciarSesion);

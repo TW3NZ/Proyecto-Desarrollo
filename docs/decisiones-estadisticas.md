@@ -46,7 +46,7 @@ antes de esta versión no reciben una segunda recompensa. Las pendientes vencida
 existentes reciben su penalización única al sincronizar con la nueva versión.
 La penalización se materializa al consultar estadísticas o completar una tarea,
 no mediante un proceso diario independiente. Sin abrir la app, se aplicará en la
-siguiente sincronización. La cuenta de práctica simula la regla en memoria.
+siguiente sincronización. La cuenta de práctica, retirada en la versión 1.0, simulaba la regla en memoria.
 
 La migración `002_puntuacion_dinamica.sql` ya se aplicó a Aiven y se verificó con
 una transacción de prueba revertida. El código aún debe desplegarse en Render;

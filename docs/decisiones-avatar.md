@@ -311,7 +311,7 @@ Los prompts de generación y refinamiento se guardan en `avatar-prompts.md`.
 
 El usuario pidió guardar rasgos y personalización en MySQL. Las cuentas reales
 cargan y guardan el catálogo completo mediante `/usuarios/me/avatar`, identificado
-por JWT. La cuenta de práctica conserva preferencias locales. La apariencia
+por JWT. La cuenta de práctica conservaba preferencias locales y se retiró en la versión 1.0. La apariencia
 anterior global del dispositivo no se asigna automáticamente a ninguna cuenta;
 cada usuario guarda su selección. Las expresiones siguen derivadas de estadísticas.
 Detalles y pruebas en [perfil](../backend/docs/perfil.md). No se modificaron PNG,

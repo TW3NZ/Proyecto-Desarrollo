@@ -8,7 +8,6 @@ import '../data/usuarios_store.dart';
 import '../data/tareas_store.dart';
 import '../routes.dart';
 import '../theme.dart';
-import '../utils/snackbar_utils.dart';
 import '../widgets/home/home_bottom_bar.dart';
 import '../widgets/home/home_scene.dart';
 import '../widgets/home/round_buttons.dart';
@@ -196,7 +195,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.pushNamed(context, AppRoutes.teams);
         return;
       case 2:
-        showAppSnackBar(context, message: 'Buscar próximamente');
+        UsuariosStore.cerrarSesion();
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          (_) => false,
+        );
         return;
     }
   }
@@ -235,22 +239,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 maxWidth: width * 0.68,
                               ),
                               child: _GreetingChip(text: _frase),
-                            ),
-                            const SizedBox(height: 8),
-                            Tooltip(
-                              message: 'Cerrar sesión',
-                              child: CircleMenuButton(
-                                icon: Icons.logout_rounded,
-                                size: 44,
-                                onTap: () {
-                                  UsuariosStore.cerrarSesion();
-                                  Navigator.pushNamedAndRemoveUntil(
-                                    context,
-                                    AppRoutes.login,
-                                    (_) => false,
-                                  );
-                                },
-                              ),
                             ),
                           ],
                         ),

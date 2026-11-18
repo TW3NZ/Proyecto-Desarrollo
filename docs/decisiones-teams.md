@@ -3,7 +3,7 @@
 
 **Acuerdo confirmado:** el líder asigna una tarea a uno o varios miembros del mismo equipo. Cada uno marca su parte; solo cuando todos terminan se completa la tarea. Cada asignado recibe los puntos completos. No se reparten entre personas ni se entregan al resto del proyecto. La finalización requiere confirmación y no se puede deshacer.
 
-**Implementación:** API única en `backend/app.py`, consultas en `backend/database/equipos.py`, frontend real en `screens/equipos_remotos.dart` y servicio HTTP separado. La cuenta de práctica conserva su flujo local. Equipos nuevos incluyen un proyecto General como elección de usabilidad; el líder puede crear otros. La pertenencia a un proyecto se incorpora al asignar su primera tarea, y sus tareas son visibles para sus miembros y el líder del equipo.
+**Implementación:** API única en `backend/app.py`, consultas en `backend/database/equipos.py`, frontend real en `screens/equipos_remotos.dart` y servicio HTTP separado. La cuenta de práctica conservaba su flujo local y se retiró en la versión 1.0. Equipos nuevos incluyen un proyecto General como elección de usabilidad; el líder puede crear otros. La pertenencia a un proyecto se incorpora al asignar su primera tarea, y sus tareas son visibles para sus miembros y el líder del equipo.
 
 Invitaciones: ocho caracteres aleatorios en mayúsculas, sin caracteres visualmente ambiguos. El código identifica el equipo, no sustituye el JWT. Solo el líder lo consulta para compartirlo. Reingresar no duplica la membresía. No hay todavía rotación del código, expulsión, transferencia de liderazgo, edición de asignados ni reapertura de tareas.
 
@@ -19,7 +19,7 @@ Contrato y prueba manual: [backend/docs/equipos.md](../backend/docs/equipos.md).
 
 ## 2026-11-12 — La tarjeta «Mi ID de usuario» muestra el idUsu real
 
-Con la integración de autenticación, la tarjeta «Mi ID de usuario» de la pantalla Teams dejó de estar vacía: ahora muestra el `idUsu` del usuario que inició sesión (`UsuariosStore.usuarioActual.id`; `-1` para la cuenta de práctica) e incluye un botón para copiarlo al portapapeles. Esto reemplaza la nota del 2026-11-05 en la que el campo se dejaba vacío.
+Con la integración de autenticación, la tarjeta «Mi ID de usuario» de la pantalla Teams dejó de estar vacía: ahora muestra el `idUsu` del usuario que inició sesión (`UsuariosStore.usuarioActual.id`; `-1` era el centinela de la cuenta de práctica, retirada en la versión 1.0) e incluye un botón para copiarlo al portapapeles. Esto reemplaza la nota del 2026-11-05 en la que el campo se dejaba vacío.
 
 ## 2026-11-10 — Recompensa por tarea y pertenencia al equipo confirmadas
 

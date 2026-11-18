@@ -24,7 +24,7 @@ Flutter  ──(HTTP JSON + Authorization: Bearer)──▶  FastAPI (backend/) 
 ```
 
 - Flutter **nunca** habla directamente con MySQL; solo con FastAPI.
-- El JWT se obtiene en el login y se guarda en almacenamiento seguro. Se envía como `Authorization: Bearer <token>` en las rutas protegidas (hoy `POST /tareas` y `GET /tareas`; ver [`backend/docs/tareas.md`](../../backend/docs/tareas.md)).
+- El JWT se obtiene en el login y se guarda en almacenamiento seguro. Se envía como `Authorization: Bearer <token>` en todas las rutas protegidas (tareas, estadísticas, avatar y equipos; ver [`backend/docs/`](../../backend/docs/)).
 
 ---
 
@@ -50,7 +50,7 @@ Flutter  ──(HTTP JSON + Authorization: Bearer)──▶  FastAPI (backend/) 
 
 | Archivo | Responsabilidad |
 | --- | --- |
-| `backend/app.py` | Endpoints `POST /usuarios`, `POST /auth/login/user`, `POST /tareas`, `GET /tareas` y `/avatar/suggest`; dependencia de autenticación `usuario_actual_id`. |
+| `backend/app.py` | Punto de entrada único: registro, login, tareas, estadísticas, avatar, equipos y panel administrativo; dependencia de autenticación `usuario_actual_id`. |
 | `backend/models/usuario.py` | Modelos `User`, `createUser` y `LoginUser`. |
 | `backend/models/Tarea.py` | Modelos de tareas y categorías. |
 | `backend/core/seguridad.py` | Emite el JWT (`crear_token`) y lo verifica (`verificar_token`); hasher Argon2. |
@@ -60,6 +60,8 @@ Flutter  ──(HTTP JSON + Authorization: Bearer)──▶  FastAPI (backend/) 
 ---
 
 ## C. Configuración del entorno local
+
+La aplicación en uso se conecta al backend desplegado en Render (`https://my-daily-rutine.onrender.com`). Esta sección describe cómo reproducir el backend y la base de datos en un equipo para desarrollar; es una alternativa, no el camino principal.
 
 ### Requisitos
 
@@ -119,24 +121,28 @@ Flutter obtiene la URL mediante:
 const String.fromEnvironment('API_URL')
 ```
 
-Ese valor se inyecta con `--dart-define-from-file`, usando un archivo **local y excluido de Git** (`.tools/`), por ejemplo `.tools/avatar-flutter.json`:
+Ese valor se inyecta con `--dart-define-from-file`, usando un archivo **local y excluido de Git** (`.tools/`), por ejemplo `.tools/avatar-flutter.json`.
+
+Para el backend de Render:
 
 ```json
 {
-  "API_URL": "http://IP_DEL_COMPUTADOR:8000",
-  "AVATAR_API_URL": "http://IP_DEL_COMPUTADOR:8000",
-  "AVATAR_API_TOKEN": "TU_TOKEN_LOCAL"
+  "API_URL": "https://my-daily-rutine.onrender.com",
+  "AVATAR_API_URL": "https://my-daily-rutine.onrender.com"
 }
 ```
 
-- `API_URL` configura registro, login y tareas; `AVATAR_API_URL` configura las fotos. Ambas apuntan al mismo backend unificado.
-- Para el **emulador Android** se usa `http://10.0.2.2:8000`.
-- Para un **dispositivo físico**, el teléfono y el equipo deben estar en la **misma red Wi-Fi**, y FastAPI debe escuchar en `0.0.0.0`.
+- `API_URL` configura registro, login, tareas, estadísticas y equipos; `AVATAR_API_URL` configura las fotos. Ambas apuntan al mismo backend unificado.
+- No hace falta `AVATAR_API_TOKEN`: después del login, la app envía el JWT de la cuenta.
+- Para un **backend local en el emulador Android** se usa `http://10.0.2.2:8000`, con el servidor ejecutándose en el equipo anfitrión.
+- Para un **dispositivo físico** contra un backend local, el teléfono y el equipo deben estar en la **misma red Wi-Fi**, y FastAPI debe escuchar en `0.0.0.0`.
 - El HTTP plano solo está habilitado en compilaciones **debug** de Android; para release se requiere HTTPS.
 
 ---
 
-## E. Cómo ejecutar FastAPI
+## E. Cómo ejecutar FastAPI (alternativa local)
+
+El backend de producción ya está desplegado en Render y la app puede usarlo sin ejecutar nada en local. Esta sección describe cómo levantar una copia propia para desarrollar.
 
 Desde la raíz del repositorio:
 
@@ -172,6 +178,8 @@ flutter build apk --debug --dart-define-from-file=../.tools/avatar-flutter.json
 ---
 
 ## G. Endpoints implementados
+
+Esta sección detalla el registro, el inicio de sesión y las tareas personales. Los contratos del resto de rutas actuales —estadísticas, avatar, equipos, proyectos y panel administrativo— están en [`backend/docs/`](../../backend/docs/).
 
 ### `POST /usuarios` — registro (público)
 
@@ -257,7 +265,6 @@ Requieren `Authorization: Bearer <JWT>`; el `idUsu` se obtiene del token. Detall
 | Validación | Dónde |
 | --- | --- |
 | Campos obligatorios, formato de email, longitud de contraseña, confirmación | Flutter (formulario). |
-| Cuenta de práctica `admin` / `12345678` (solo `kDebugMode`) | Flutter (no llama a la API). |
 | Expiración del JWT y coherencia token/perfil | Flutter (sin verificar firma). |
 | Firma, algoritmo, expiración y `sub`/`exp` del JWT | FastAPI (`verificar_token`). |
 | Tipos de datos, email válido, `genero`, formato de fecha | FastAPI (Pydantic). |

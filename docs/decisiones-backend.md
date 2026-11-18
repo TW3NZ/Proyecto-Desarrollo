@@ -4,7 +4,7 @@
 
 Al revisar la conexión solicitada por el usuario, Flutter ya contenía registro y login HTTP mediante `AuthApiService`, pero `.tools/avatar-flutter.json` no tenía `API_URL`: solo configuraba las fotos. Se añadió `API_URL=http://10.0.2.2:8000` conservando las demás variables. Es necesario detener y volver a iniciar Flutter para incorporar ese valor de compilación.
 
-La consulta real de solo lectura encontró 0 filas en `Usuario` en ese momento. El código de registro ejecuta INSERT y commit en Aiven, pero esta comprobación no creó una cuenta ni demuestra un registro completo desde el emulador. El usuario de práctica debug permanece local. La configuración local corregida no actualiza APK existentes.
+La consulta real de solo lectura encontró 0 filas en `Usuario` en ese momento. El código de registro ejecuta INSERT y commit en Aiven, pero esta comprobación no creó una cuenta ni demuestra un registro completo desde el emulador. El usuario de práctica debug era local y se retiró en la versión 1.0. La configuración local corregida no actualiza APK existentes.
 
 ## 2026-11-11 — Acceso local sin contraseña
 
@@ -68,7 +68,7 @@ Verificación: 26 pruebas del backend y comprobación en Chrome de estilos calcu
 
 **Alcance:** se añadió `PATCH /tareas/{idTarea}/completar` (protegido por JWT, verifica pertenencia, idempotente). En Flutter, `alternarCompletada` sincroniza el completado con el backend de forma pesimista, y `HistorialScreen` consulta `GET /tareas` con estado local de la pantalla.
 
-**Decisiones técnicas:** el `UPDATE` incluye `idTarea` e `idUsu` en el `WHERE`. Para usuario real, una tarea completada no se puede desmarcar (no hay endpoint de "desmarcar"); la cuenta de práctica conserva el comportamiento local. Las estadísticas solo se procesan en la transición `false→true`, tras confirmar el servidor.
+**Decisiones técnicas:** el `UPDATE` incluye `idTarea` e `idUsu` en el `WHERE`. Para usuario real, una tarea completada no se puede desmarcar (no hay endpoint de "desmarcar"); la cuenta de práctica conservaba el comportamiento local y se retiró en la versión 1.0. Las estadísticas solo se procesan en la transición `false→true`, tras confirmar el servidor.
 
 **Verificación:** 33 pruebas del backend (incluidas 5 del PATCH con mocks) y `flutter analyze`/`flutter test` en verde.
 

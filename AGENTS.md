@@ -18,7 +18,8 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 - La aplicación Flutter relaciona el cumplimiento de tareas con estadísticas y la evolución de un avatar.
 - Cada registro de estadísticas pertenece a un usuario mediante `usuarioId`; sus valores y preferencias son independientes por cuenta.
 - Las cuentas nuevas comienzan con inteligencia, finanzas, salud y disciplina en 100. Solo las tareas pendientes con fecha límite vencida penalizan; las que no tienen fecha no penalizan. La recuperación al completar debe ser mayor con pocas tareas pendientes y menor con muchas. Los coeficientes iniciales y la penalización única por tarea son elecciones de implementación documentadas en `docs/decisiones-estadisticas.md`; no recalcular recompensas pasadas al cambiar la lista de tareas.
-- Desde el 2026-11-13, las cuentas reales guardan tareas y su finalización, estadísticas y apariencia del avatar en MySQL mediante la API y el JWT. El teléfono conserva solo estado en memoria y una instantánea de lectura del widget; la cuenta de práctica conserva su comportamiento local. No asignar automáticamente la antigua apariencia global del dispositivo a una cuenta. Las expresiones se derivan de estadísticas y no se guardan como estado separado.
+- Desde el 2026-11-13, las cuentas reales guardan tareas y su finalización, estadísticas y apariencia del avatar en MySQL mediante la API y el JWT. El teléfono conserva solo estado en memoria y una instantánea de lectura del widget. No asignar automáticamente la antigua apariencia global del dispositivo a una cuenta. Las expresiones se derivan de estadísticas y no se guardan como estado separado.
+- Desde la versión 1.0 no se distribuyen cuentas de prueba ni credenciales de demostración. Las cuentas se crean con el registro contra el backend. `idUsuarioPractica = -1` se conserva únicamente como centinela de «sin sesión» en las pantallas; no representa un usuario real.
 - Los IDs de entidades y sus referencias son enteros. Los IDs negativos son temporales de Flutter en memoria; los definitivos los entrega FastAPI.
 - `Equipo` representa el espacio de trabajo y sus miembros; `Proyecto` es una entidad propia y cada proyecto pertenece a un equipo mediante `equipoId`. Las tareas de proyecto se relacionan con `proyectoId`.
 - Los equipos deben poder formarse seleccionando usuarios, y cada proyecto puede incluir un subconjunto de sus miembros. Todo participante de un proyecto debe pertenecer al equipo de ese proyecto; pertenecer únicamente a otro equipo no permite asociarlo. Validar esta regla también en el backend y la base de datos.
@@ -39,8 +40,8 @@ Antes de realizar cualquier tarea, análisis, modificación, implementación, de
 - Las categorías de tarea son un conjunto fijo de cuatro: Educación (id 1), Finanzas (id 2), Salud (id 3) y Disciplina (id 4). No se crean categorías nuevas desde la API ni desde la app.
 - Una tarea puede ser personal (sin `idProyecto` ni `idResponsable`) o de proyecto. La regla "todo participante de un proyecto debe pertenecer a su equipo" solo aplica a las tareas de proyecto.
 - Toda tarea tiene al menos una categoría; el endpoint de creación lo exige (`min_length=1`).
-- Para usuarios reales, una tarea completada no se puede desmarcar mientras no exista un endpoint que sincronice esa operación; la cuenta de práctica conserva el desmarcado local.
-- Para usuarios reales, completar una tarea requiere confirmación previa (modal), porque la acción no se puede deshacer; la cuenta de práctica completa sin confirmación.
+- Una tarea completada no se puede desmarcar mientras no exista un endpoint que sincronice esa operación.
+- Completar una tarea requiere confirmación previa (modal), porque la acción no se puede deshacer.
 
 ## Continuidad y documentación
 

@@ -1,190 +1,167 @@
-# Backend de My Daily Rutine
+# Backend de My Daily Routine
 
-Persistencia de tareas, estadísticas y apariencia por cuenta: [contrato, migración y pruebas](docs/perfil.md).
+Servicio FastAPI único del proyecto: registro e inicio de sesión con JWT, tareas personales y de equipo, estadísticas por cuenta, apariencia del avatar, propuesta de atributos desde una foto y panel administrativo de consulta. La persistencia está en MySQL (Aiven).
 
-Para publicarlo en Render mediante **New → Web Service**, consulta [la guía de despliegue](docs/render.md), con los campos del formulario, comandos y variables de entorno.
+## Producción: Render
 
-Servicio FastAPI único para registro de usuarios, login con JWT y propuesta de atributos del avatar mediante OpenAI. Todas las rutas se ejecutan desde `backend.app:app` en el mismo puerto; la antigua carpeta `api/` se integró aquí.
+El backend desplegado está en `https://my-daily-rutine.onrender.com` y es el que usa la app por defecto.
+
+- Salud: `GET /health` → `{"status":"ok"}`
+- Documentación interactiva: `https://my-daily-rutine.onrender.com/docs`
+- Esquema OpenAPI: `https://my-daily-rutine.onrender.com/openapi.json`
+
+Las variables de entorno se configuran en **Render → Environment** y no se versionan. La guía completa de despliegue está en [docs/render.md](docs/render.md). Para publicar cambios basta con subir el código a la rama conectada; no se requiere un servidor local.
+
+## Endpoints
+
+| Método y ruta | Descripción |
+| --- | --- |
+| `GET /health` | Estado del servicio |
+| `POST /usuarios` | Registro de cuenta |
+| `POST /auth/login/user` | Inicio de sesión; devuelve JWT |
+| `GET /tareas` | Tareas del usuario autenticado |
+| `POST /tareas` | Crear tarea personal |
+| `PATCH /tareas/{idTarea}/completar` | Completar tarea personal |
+| `GET /usuarios/me/estadisticas` | Estadísticas de la cuenta |
+| `PUT /usuarios/me/estadisticas/preferencias` | Preferencias de las estadísticas |
+| `GET /usuarios/me/avatar` | Apariencia guardada |
+| `PUT /usuarios/me/avatar` | Guardar apariencia |
+| `GET /equipos` | Equipos del usuario |
+| `POST /equipos` | Crear equipo |
+| `POST /equipos/unirse` | Unirse con código |
+| `GET /equipos/{equipo_id}` | Detalle del equipo y sus proyectos |
+| `POST /equipos/{equipo_id}/proyectos` | Crear proyecto |
+| `POST /equipos/{equipo_id}/proyectos/{proyecto_id}/tareas` | Asignar tarea a miembros |
+| `PATCH /equipos/{equipo_id}/tareas/{tarea_id}/mi-parte` | Marcar la parte propia |
+| `POST /avatar/suggest` | Propuesta de avatar desde una foto |
+| `/admin` y `/admin/api/*` | Panel administrativo de consulta |
+
+Los contratos con cuerpos y códigos de respuesta están en:
+
+- [Usuarios y login](docs/usuarios.md)
+- [Tareas](docs/tareas.md)
+- [Perfil, estadísticas y avatar](docs/perfil.md)
+- [Equipos y proyectos](docs/equipos.md)
+- [Panel administrativo](docs/admin.md)
+
+Las rutas protegidas obtienen el usuario del `sub` del JWT; nunca de un campo enviado por el cliente. La regla de pertenencia a equipos y la idempotencia de las recompensas se validan en el backend y en el esquema.
 
 ## Organización
 
-El explorador HTML de la base está en `/admin`; instrucciones en [docs/admin.md](docs/admin.md). Usa el mismo servidor y consulta tablas, registros, estructura y relaciones.
-
-Sus archivos separados son `backend/admin/index.html`, `backend/admin/admin.css` y `backend/admin/admin.js`. Toda la API HTTP administrativa está en `backend/app.py`; el JavaScript recibe las tablas y registros mediante sus endpoints JSON.
-
 ```text
 backend/
-├── app.py                    # /usuarios, /auth/login/user y /avatar/suggest
-├── requirements.txt          # Dependencias
-├── .env                      # Credenciales locales, ignoradas por Git
-├── .env.example              # Plantilla sin credenciales reales
-├── README.md
-├── core/                     # Hash Argon2 y JWT
-├── models/                   # Modelos Pydantic de usuarios, tareas y categorías
-├── database/                 # Conector MySQL con TLS y consultas Python
-├── docs/usuarios.md          # Contratos de registro y login
-├── utils/                    # Configuración, generadores y diagnósticos
-│   ├── __init__.py
-│   ├── settings.py           # Carga del entorno
-│   └── check_connection.py   # Prueba real opcional con OpenAI
-└── test/
-    ├── __init__.py
-    ├── test_app.py
-    └── test_settings.py
+├── app.py                 # Punto de entrada y todas las rutas FastAPI
+├── requirements.txt       # Dependencias
+├── .env.example           # Plantilla de variables (sin credenciales reales)
+├── core/                  # Hash Argon2 y utilidades del JWT
+├── models/                # Modelos Pydantic
+├── database/              # Conexión MySQL y consultas
+├── admin/                 # HTML, CSS y JavaScript del panel
+├── utils/                 # Configuración, generadores y diagnósticos
+├── docs/                  # Contratos de la API y guía de despliegue
+└── test/                  # Pruebas con pytest
 ```
 
-## 1. Preparar el entorno
+## Ejecutar en local (alternativa de desarrollo)
 
-Los comandos siguientes son para **PowerShell**, desde la raíz del repositorio (`Proyecto-Desarrollo`), no desde `backend`.
+Requisitos: Python 3.12 o superior, dependencias de `requirements.txt` y acceso a la base MySQL. La clave de OpenAI solo es necesaria para probar la función de fotos.
 
-Si ya existe `.venv`, conserva ese entorno. Para una instalación nueva con Python 3.12 o superior:
+### 1. Entorno virtual
+
+macOS o Linux, desde la raíz del repositorio:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements.txt
+```
+
+En Windows (PowerShell):
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 ```
 
-Si el entorno fue creado con `uv` y no tiene pip, en este equipo puedes instalar las dependencias con:
+### 2. Variables de entorno
 
-```powershell
-.\.tools\uv\uv.exe pip install --python .venv/Scripts/python.exe -r backend/requirements.txt
-```
-
-Configura `backend/.env` siguiendo `.env.example`. Si ya existe, no lo sobrescribas:
+Copia `backend/.env.example` a `backend/.env` y completa los valores. El archivo `.env` está ignorado por Git y nunca debe subirse.
 
 ```dotenv
 OPENAI_API_KEY=TU_CLAVE_PRIVADA
 OPENAI_AVATAR_MODEL=gpt-4.1-mini
-AVATAR_SERVICE_TOKEN=UN_TOKEN_LOCAL_ALEATORIO_DE_AL_MENOS_24_CARACTERES
-```
+AVATAR_SERVICE_TOKEN=UN_TOKEN_ALEATORIO_DE_AL_MENOS_24_CARACTERES
 
-Reemplaza los marcadores. El backend carga automáticamente ese archivo y sus valores tienen prioridad sobre variables del sistema. Reinicia el servidor si lo cambias. La clave de OpenAI pertenece exclusivamente al servidor.
-
-## Configuración de Aiven MySQL
-
-En `backend/.env` se reservan las siguientes variables, exclusivamente para el servidor:
-
-```dotenv
 DB_HOST=HOST_DE_TU_SERVICIO.aivencloud.com
 DB_PORT=10472
 DB_USER=avnadmin
 DB_PASSWORD='TU_CONTRASEÑA'
 DB_NAME=BD_my_daily_routine
 DB_SSL_CA="-----BEGIN CERTIFICATE-----
-CONTENIDO_COMPLETO_DEL_CERTIFICADO_CA_DE_AIVEN
+CONTENIDO_COMPLETO_DEL_CERTIFICADO_CA
 -----END CERTIFICATE-----"
 DB_SSL_VERIFY_CERT=true
 DB_CONNECT_TIMEOUT=10
-```
 
-Confirma host, puerto y usuario con tu servicio. Completa la contraseña localmente y pega el certificado CA completo de Aiven en `DB_SSL_CA`, entre comillas dobles y conservando sus saltos de línea. No pongas una ruta: por decisión del usuario, el certificado se mantiene explícito en el `.env`. `DB_NAME` corresponde a la base creada por `database/BD_My_Daily_Routine.sql`, no a `defaultdb`. El timeout está expresado en segundos. No copies estas variables al archivo de configuración de Flutter ni al APK.
-
-**Estado al 2026-11-11:** registro y login usan MySQL desde `backend/database/db.py`, con validación del certificado y del host mediante el PEM del `.env`. La comprobación previa encontró 10 tablas. Los endpoints de equipos y tareas siguen pendientes. El script SQL se conserva en `database/` en la raíz y no se ejecuta automáticamente.
-
-La configuración de autenticación comparte el mismo `.env`:
-
-```dotenv
 SECRET_KEY=UN_SECRETO_ALEATORIO_DE_AL_MENOS_32_CARACTERES
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=120
 ```
 
-`SECRET_KEY` firma el JWT y es independiente de `AVATAR_SERVICE_TOKEN`. En la consolidación se añadió un secreto aleatorio al `.env` local si no existía; no se sobrescribieron las credenciales de Aiven ni OpenAI. Las rutas y sus cuerpos JSON están en [docs/usuarios.md](docs/usuarios.md).
+- `DB_NAME` corresponde a la base creada por `database/BD_My_Daily_Routine.sql`, no a `defaultdb`.
+- El certificado de Aiven se pega completo dentro de `DB_SSL_CA`, entre comillas y conservando los saltos de línea. No se usa una ruta a otro archivo.
+- `SECRET_KEY` firma el JWT y es independiente de `AVATAR_SERVICE_TOKEN`.
+- El backend carga `backend/.env` automáticamente, sin importar el directorio desde el que se ejecute. Reinicia el servidor tras editarlo.
+- No copies estas variables a Flutter ni al APK.
 
-Para comprobar la conexión con el mismo conector Python de la API, sin modificar datos:
+### 3. Esquema y migraciones
 
-```powershell
-.\.venv\Scripts\python.exe -m backend.utils.prueba_conexion
-```
+Aplica el esquema de `database/BD_My_Daily_Routine.sql` en una base nueva y después las migraciones de `database/migrations/` en orden. La base de producción ya las tiene aplicadas.
 
-Para repetir la prueba de solo lectura desde la raíz:
-
-```powershell
-.\.venv\Scripts\python.exe -m backend.utils.check_database
-```
-
-La utilidad usa el cliente `mysql` del PATH o la instalación local de MySQL Server 8.0 en Windows. Ejecuta `SELECT 1`, consulta el cifrado TLS y cuenta las tablas. Usa exclusivamente las credenciales de `backend/.env`, sin imprimirlas, y siempre exige `VERIFY_IDENTITY`, aunque `DB_SSL_VERIFY_CERT` se cambie. El cliente MySQL requiere un archivo de CA: la utilidad crea una copia temporal del certificado y la elimina al terminar; no requiere mantener una ruta ni otro archivo de configuración. El timeout de conexión se toma de `DB_CONNECT_TIMEOUT` (1–120 segundos).
-
-## 2. Iniciar el backend — terminal 1
+### 4. Iniciar el servidor
 
 Desde la raíz:
+
+```bash
+.venv/bin/python -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
+```
+
+En Windows:
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn backend.app:app --host 127.0.0.1 --port 8000
 ```
 
-Espera el mensaje `Application startup complete` y deja esta terminal abierta. Para detener el servidor, pulsa `Ctrl+C`.
+Espera `Application startup complete`. La documentación local queda en `http://127.0.0.1:8000/docs`.
 
-La documentación interactiva está en `http://127.0.0.1:8000/docs`. Este mismo proceso sirve los tres endpoints; no se necesita un segundo servidor en el puerto 8001. El registro/login SQL está disponible en la API; esta consolidación no cambia el flujo de autenticación de Flutter.
+Para usar este backend desde el emulador Android, la URL es `http://10.0.2.2:8000` (el host visto desde el emulador). En un teléfono físico se necesita una dirección HTTPS alcanzable o un túnel. El HTTP plano solo está permitido en compilaciones debug de Android.
 
-## 3. Iniciar la app en el emulador Android — terminal 2
+### 5. Panel administrativo
 
-**Desde VS Code:** detén la sesión actual (Shift+F5) y pulsa **Debug/Depurar** sobre `main()` en `lib/main.dart`, o usa F5 con el perfil **My Daily Rutine - Avatar con fotos**. Los ajustes del workspace añaden automáticamente el archivo de configuración a `flutter run`, también para el inicio directo desde `main.dart`. Funciona al abrir la raíz del repositorio o solo `my_daily_routine`. Mantén el backend ejecutándose en su terminal. Si VS Code estaba abierto al cambiar estos ajustes, ejecuta **Developer: Reload Window** y vuelve a iniciar la depuración. No basta con hot reload. El botón de extensiones genéricas como Code Runner no equivale al depurador Dart/Flutter.
+El explorador de la base está en `/admin`. Usa `ADMIN_USER`, `ADMIN_PASSWORD`, `ADMIN_ALLOWED_ORIGINS` y `ADMIN_ENABLED` del entorno. Es de solo lectura y no expone contraseñas ni hashes. Instrucciones en [docs/admin.md](docs/admin.md).
 
-**Desde terminal:**
+## Pruebas
 
-Enciende tu emulador desde Android Studio (Device Manager). Abre otra terminal desde la raíz y ejecuta:
+Desde la raíz:
 
-```powershell
-cd my_daily_routine
-flutter pub get
-flutter devices
-flutter run --dart-define-from-file=../.tools/avatar-flutter.json
+```bash
+.venv/bin/python -m pytest backend/test -q
 ```
 
-Si aparecen varios dispositivos, selecciona el emulador Android o añade `-d ID_DEL_EMULADOR` al comando `flutter run`, usando el ID de `flutter devices`.
+Las pruebas usan respuestas simuladas y no llaman a OpenAI ni a MySQL, salvo las marcadas como integración, que se habilitan con `RUN_MYSQL_TESTS=1` y revierten sus datos.
 
-En este equipo ya está preparado `.tools/avatar-flutter.json`. Para reproducir la configuración en otro equipo, crea ese archivo en la raíz del repositorio con esta estructura y reemplaza el token por el mismo `AVATAR_SERVICE_TOKEN` de `backend/.env`:
+Prueba real opcional de la clave de OpenAI y del endpoint de fotos (consume una petición):
 
-```json
-{
-  "API_URL": "http://10.0.2.2:8000",
-  "AVATAR_API_URL": "http://10.0.2.2:8000",
-  "AVATAR_API_TOKEN": "EL_MISMO_TOKEN_LOCAL_DEL_BACKEND"
-}
+```bash
+.venv/bin/python -m backend.utils.check_connection
 ```
-
-`10.0.2.2` es la dirección del equipo anfitrión desde el emulador Android. `API_URL` configura registro y login; `AVATAR_API_URL` configura las fotos. Ambas apuntan al mismo backend. Este JSON está ignorado por Git y contiene solo URL y token local: **nunca agregues la clave de OpenAI ni pases `backend/.env` a Flutter**. Si cambias URL o token, detén la app y vuelve a ejecutar `flutter run`; hot reload no actualiza estos valores.
-
-El flujo actual de registro es `CrearUsuario → UsuariosStore.registrar → AuthApiService → POST /usuarios → INSERT Usuario + commit en Aiven`. El ingreso de práctica `admin / 12345678` en modo debug sigue siendo local y no crea un usuario en MySQL. La configuración del emulador no actualiza los APK ya construidos.
-
-## 4. Probar la personalización
-
-1. Inicia sesión con `admin` / `12345678`.
-2. Abre **Tu avatar → Crear desde una foto**.
-3. Toma una foto o elige una imagen de la galería del emulador. Puedes arrastrar una imagen al emulador para copiarla y seleccionarla.
-4. Pulsa **Analizar foto** para autorizar el envío.
-5. Revisa la propuesta, pulsa **Usar propuesta** y después **Guardar cambios**.
-
-Usa una foto con una sola persona, de frente y bien iluminada. Si el emulador no tiene cámara configurada, usa la galería. El parecido depende de las opciones disponibles en el catálogo.
-
-## Pruebas adicionales
-
-Desde la raíz, pruebas automáticas sin llamadas reales a OpenAI:
-
-```powershell
-.\.venv\Scripts\python.exe -m pytest backend/test -q
-```
-
-Prueba real opcional de la clave y del endpoint (consume una petición de API):
-
-```powershell
-.\.venv\Scripts\python.exe -m backend.utils.check_connection
-```
-
-La prueba real envía la ilustración del avatar incluida en el proyecto y muestra el código HTTP y los atributos recibidos. Usa FastAPI en proceso: no requiere tener uvicorn abierto y no verifica la conexión desde el emulador ni la cámara. Una respuesta correcta muestra `Backend HTTP: 200` y una propuesta validada.
 
 ## Problemas habituales
 
-- **La función de fotos no está configurada:** inicia Flutter con el JSON indicado y comprueba que el token tenga al menos 24 caracteres.
-- **Acceso no autorizado:** el token de Flutter debe coincidir con `AVATAR_SERVICE_TOKEN`; no es la clave de OpenAI.
-- **Error de conexión:** comprueba que uvicorn siga abierto en el puerto 8000 y que la app use `10.0.2.2`, no `localhost`.
-- **Puerto ocupado:** detén la instancia anterior o cambia el puerto tanto en uvicorn como en el JSON.
-- **Servicio ocupado o sin cuota:** revisa la cuota de la cuenta de API y vuelve a intentar más tarde.
-- **ModuleNotFoundError:** ejecuta desde la raíz e instala las dependencias en `.venv`.
+- **`/health` no responde:** el servicio de Render puede estar iniciando; espera y reintenta.
+- **Error de conexión desde la app:** revisa que `API_URL` apunte a la URL de Render y reinicia la app después de cambiar los `dart-define`.
+- **401 en el login:** verifica las credenciales o el estado de la base.
+- **La función de fotos responde 503:** falta `OPENAI_API_KEY` en el servidor.
+- **429 al analizar una foto:** cuota de OpenAI agotada o servicio ocupado.
+- **`ModuleNotFoundError`:** ejecuta desde la raíz e instala las dependencias en `.venv`.
 
-Estos comandos son para el emulador Android y una compilación debug. Para un teléfono físico se necesita una dirección alcanzable desde el dispositivo; para distribución, HTTPS y autenticación real. Consulta [el alcance y tratamiento de fotos](../docs/avatar-foto.md).
-## Equipos colaborativos
-
-Creación, unión con código, proyectos y tareas con varios asignados: consultar
-[el contrato y la guía de prueba](docs/equipos.md). Requiere migración 003 y cuentas reales.
+No existe una cuenta de prueba incluida en el backend: las cuentas se crean con `POST /usuarios`.

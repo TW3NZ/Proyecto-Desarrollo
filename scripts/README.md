@@ -31,7 +31,9 @@ Para un emulador x86_64:
 .\scripts\build-apk.ps1 -TargetPlatform android-x64
 ```
 
-## APK privado con token compartido (compatibilidad)
+## APK privado con token compartido (interno, opcional)
+
+> Esta variante es interna y no forma parte de la publicación de la versión 1.0. El APK público descrito arriba no incluye tokens compartidos: usa el JWT de cada cuenta.
 
 El backend debe estar ejecutándose en una dirección **HTTPS accesible desde el teléfono**. Crea un JSON privado con `API_URL` (usuarios y tareas), `AVATAR_API_URL` y `AVATAR_API_TOKEN`; nunca incluyas `OPENAI_API_KEY` ni uses `backend/.env`. Las dos URLs actuales son `https://my-daily-rutine.onrender.com`. Puedes usar `.tools/avatar-flutter.json`, ya configurado para Render, como `-ConfigFile`. Después:
 

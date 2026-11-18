@@ -12,7 +12,7 @@ class _NavItem {
 }
 
 /// Barra de navegación inferior en forma de píldora con degradado
-/// (Inicio, Teams, Buscar).
+/// (Inicio, Teams, Cerrar sesión).
 class HomeBottomBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int>? onTap;
@@ -28,7 +28,7 @@ class HomeBottomBar extends StatelessWidget {
   static const _items = [
     _NavItem('Inicio', Icons.home_rounded, AppAssets.iconNavInicio),
     _NavItem('Teams', Icons.groups_rounded, AppAssets.iconNavTeams),
-    _NavItem('Buscar', Icons.search_rounded, AppAssets.iconNavBuscar),
+    _NavItem('Cerrar sesión', Icons.logout_rounded, null),
   ];
 
   @override

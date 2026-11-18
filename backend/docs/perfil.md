@@ -91,11 +91,12 @@ instantánea local para mostrar el widget, que no es la fuente de verdad.
 La confirmación de finalización sigue en la app; el enlace del widget no completa
 tareas reales automáticamente. No hay edición/borrado ni desmarcado remoto nuevos.
 
-La cuenta de práctica sigue siendo local. El token de sesión permanece en el
-almacenamiento seguro; el perfil básico de sesión mantiene su caché existente.
-El avatar antiguo era una preferencia global sin propietario: se conserva su
-archivo local para práctica, pero no se copia automáticamente a usuarios reales.
-Cada usuario real debe guardar su selección una vez para tenerla en su cuenta.
+Desde la versión 1.0 no existe una cuenta de práctica: toda sesión es real. El
+token de sesión permanece en el almacenamiento seguro y el perfil básico de sesión
+mantiene su caché existente. El avatar antiguo era una preferencia global sin
+propietario: se conserva su archivo local como referencia, pero no se copia
+automáticamente a usuarios reales. Cada usuario real debe guardar su selección una
+vez para tenerla en su cuenta.
 Los puntos antiguos que solo existían en memoria se reconstruyen a partir de
 las tareas personales que sí constan completadas en MySQL.
 
