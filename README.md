@@ -1,12 +1,12 @@
+[Descargar APK de prueba para Android ARM64](https://github.com/TW3NZ/Proyecto-Desarrollo/raw/refs/heads/master/my-daily-rutine-android-arm64.apk) · [Cómo compilar el APK](scripts/README.md)
+
 # My Daily Routine — v1.0
 
 **Proyecto de desarrollo de software desarrollado por Miguel Rodríguez y Levis Ortiz.**
 
-[Descargar APK de prueba para Android ARM64](https://github.com/TW3NZ/Proyecto-Desarrollo/raw/refs/heads/master/my-daily-rutine-android-arm64.apk) · [Cómo compilar el APK](scripts/README.md)
-
 My Daily Routine es una aplicación móvil para organizar tareas personales y de equipo, medir su cumplimiento y reflejar el progreso en un avatar personalizable. Busca resolver un problema cotidiano: los pendientes, las fechas límite y el trabajo compartido suelen quedar dispersos y sin una retroalimentación clara. La aplicación reúne tareas, estadísticas por categoría, equipos con proyectos y un avatar que reacciona al avance de la cuenta.
 
-> El enlace de descarga corresponde a la versión `1.0.0+3`, compilada para Android ARM64. Es una compilación de prueba con firma de desarrollo.
+> El APK incluido corresponde a la versión `1.0.0+4`, compilada para Android ARM64 con la firma original de la compilación 2. El enlace se actualiza al publicar el APK y `app-update.json` juntos. La compilación 3 usa otra firma; consulta [compatibilidad de actualizaciones](docs/actualizaciones-android.md).
 
 ---
 

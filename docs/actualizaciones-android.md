@@ -37,6 +37,12 @@ El manifiesto incluye versión, número, ABI, tamaño y SHA-256. La descarga usa
 
 Se debe conservar la clave con la que se firmó el APK ya instalado. Actualmente se usa la clave debug de esta máquina para los APK de prueba: compilar con otra clave no permite actualizar esa instalación. No subir claves privadas al repositorio. Esta distribución es para los APK instalados directamente; una futura distribución mediante Play Store necesitará su propio flujo de actualización.
 
+## Recuperación de la firma original — 2026-11-18
+
+El usuario solicitó recuperar la firma anterior al cambio introducido en la compilación 3 para permitir actualizar las instalaciones originales. Se verificó con `apksigner` que el APK de la compilación 2 (commit `c595402`) y el nuevo APK `1.0.0+4` comparten el certificado SHA-256 `eb80f583cb373f7597cba03c4c40ca23d219d4b2e2540a364ec3a1afebd722ae`. La clave debug local corresponde a ese certificado. No se ha añadido ninguna clave privada al repositorio.
+
+La compilación 3 (commit `57981c4`) tiene un certificado distinto: `a7ee15e3b073fd7d8244c4319637756a6a885c5f1afd2b110dbefe20d17676de`. La compilación 4 conserva el ID de paquete y aumenta el número de versión, pero no puede actualizar directamente instalaciones con esa firma distinta. Queda pendiente publicar juntos el APK y su manifiesto y comprobar la actualización en un teléfono con la compilación 2; las comprobaciones locales verifican firma, versión, tamaño y SHA-256.
+
 ## Ubicación y pruebas
 
 - `lib/services/app_update_service.dart`: consulta de versiones y validación del manifiesto.
